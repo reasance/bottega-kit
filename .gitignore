@@ -1,0 +1,13 @@
+.DS_Store
+*.log
+*.bak
+.env*
+*.token
+
+# Python bytecode from the command and the test suites.
+__pycache__/
+*.py[cod]
+.ruff_cache/
+
+# Per-checkout agent state is machine-specific.
+.claude/settings.local.json

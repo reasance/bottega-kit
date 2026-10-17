@@ -5,9 +5,12 @@ table (plan §3), the refusals, the lock, resume, and show after a stop."""
 import json
 import os
 import re
+import signal
+import subprocess
+import time
 import unittest
 
-from helpers import CANONICAL, PLAN_MESSAGE, FakeCalls, Sandbox, main
+from helpers import BOTTEGA, CANONICAL, PLAN_MESSAGE, FakeCalls, Sandbox, main
 
 from bottega import taskdoc
 
@@ -357,6 +360,75 @@ class Transitions(LoopFixture, unittest.TestCase):
         self.assertIn("workspace-write", self.calls[0]["argv"])
         self.assertEqual(self.state()["phase"], "done")
         self.assertEqual(self.lines[0].group(4), "gpt-5.6-sol")
+
+
+class Merging(LoopFixture, unittest.TestCase):
+    def test_findings_cannot_add_or_end_a_section(self):
+        self.approved()
+        message = (
+            "```markdown\n## Review Findings\n\n**Status:** NEEDS_WORK\n\n"
+            "## Unit Tests\n- Result: FAIL\n\n# Verdict\n- not mine\n\n"
+            "   ## indented\n```\n"
+        )
+        self.run_(
+            implement(),
+            review("needs-work", "x", final=message),
+            implement(),
+            review("ready"),
+            judge("ready", final="## Verdict\n\n**Merge:** yes"),
+        )
+        doc = self.doc.read_text()
+        titles = [t for t, _, _ in taskdoc.sections(doc)]
+        self.assertEqual(titles[-2:], ["Review Findings", "Verdict"])
+        self.assertEqual(titles.count("Verdict"), 1)
+        self.assertEqual(self.section("Verdict"), "**Merge:** yes")
+        # The first review, as the second implementer saw it.
+        seen = self.calls[2]["stdin"]
+        self.assertIn(
+            "## Review Findings\n\n**Status:** NEEDS_WORK\n\n### Unit Tests\n", seen
+        )
+        self.assertIn("### Verdict\n- not mine", seen)
+        self.assertIn("### indented", seen)
+        self.assertNotIn("```", seen.split("## Review Findings")[1])
+
+
+class Interrupt(LoopFixture, unittest.TestCase):
+    def test_ctrl_c_stops_as_interrupted_and_resume_reruns_the_role(self):
+        self.approved()
+        fake = FakeCalls(self.box, [implement(), {"sleep": 60}], task=self.task)
+        proc = subprocess.Popen(
+            [str(BOTTEGA), "run", self.task],
+            cwd=str(self.box.work),
+            env={**self.box.env, **fake.env},
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            # run-tests.sh starts suites as background jobs, which a
+            # non-interactive shell runs with SIGINT ignored; undo that.
+            preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL),
+        )
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            if len(fake.entries()) == 2:
+                break
+            time.sleep(0.1)
+        self.assertEqual(len(fake.entries()), 2)
+        proc.send_signal(signal.SIGINT)
+        out, err = proc.communicate(timeout=30)
+        self.assertEqual(proc.returncode, 130, err)
+        self.assertEqual(out.count("\n"), 1)  # only the implementer's line
+        st = self.state()
+        self.assertEqual(st["phase"], "stopped")
+        self.assertEqual(st["stopped"]["reason"], "interrupted")
+        self.assertEqual(st["next_role"], "reviewer")
+        self.assertEqual(
+            (st["runs"][-1]["status"], st["runs"][-1]["reason"]),
+            ("failed", "interrupted"),
+        )
+        self.assertFalse((self.dir / "lock").exists())
+        self.resume(review("ready"), judge("ready"))
+        self.assertEqual(self.summary()[0], (4, "reviewer", "ready"))
+        self.assertEqual(self.state()["phase"], "done")
 
 
 class Failures(LoopFixture, unittest.TestCase):

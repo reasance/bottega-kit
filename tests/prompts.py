@@ -65,6 +65,116 @@ class Shipped(unittest.TestCase):
                 self.assertIn("<scratch_dir>", rendered)
                 self.assertIsNone(MODEL_WORDS.search(text), "a model name")
 
+    def test_all_four_roles_ship(self):
+        self.assertEqual(sorted(p.stem for p in SHIPPED), sorted(prompts.NAMES))
+        for path in SHIPPED:
+            with self.subTest(prompt=path.name):
+                text = path.read_text()
+                self.assertIn(
+                    "Empty means: find the project's documented test command", text
+                )
+                self.assertIn("{{test_cmd}}", text)
+                self.assertIn("only authority", text)
+                self.assertNotRegex(text, r"(?i)video|playwright")
+
+    def test_loop_prompts_name_round_cap_and_port(self):
+        values = full_values()
+        for name in ("implementer", "reviewer", "judge"):
+            with self.subTest(prompt=name):
+                text = (ROOT / "prompts" / (name + ".md")).read_text()
+                rendered = prompts.render(text, values)
+                self.assertIn("round <round> of <rounds>", rendered)
+                self.assertIn("<port>", rendered)
+                if name != "implementer":  # its message is not merged
+                    self.assertIn("no code fence around the message", rendered)
+
+    def test_reviewer_and_judge_end_with_the_signal_and_the_implementer_never_signals(
+        self,
+    ):
+        values = full_values()
+        implementer = (ROOT / "prompts" / "implementer.md").read_text()
+        self.assertNotIn("{{signal_cmd}}", implementer)
+        self.assertIn("You do not signal", implementer)
+        for name, statuses in (
+            ("reviewer", ("ready", "needs-work", "blocked")),
+            ("judge", ("ready", "needs-work")),
+        ):
+            with self.subTest(prompt=name):
+                text = (ROOT / "prompts" / (name + ".md")).read_text()
+                rendered = prompts.render(text, values).rstrip()
+                last = rendered.split("\n## ")[-1]
+                self.assertTrue(last.startswith("Signal: your last action"), last)
+                for status in statuses:
+                    self.assertIn("<signal_cmd> %s " % status, last)
+                self.assertEqual("blocked" in last.split("Run")[0], name == "reviewer")
+
+    def test_reviewer_keeps_bottegas_rules_and_formats(self):
+        rendered = prompts.render(
+            (ROOT / "prompts" / "reviewer.md").read_text(), full_values()
+        )
+        for rule in (
+            "**Status:** IN_PROGRESS",
+            "### Remaining Items",
+            "**Status:** READY",
+            "**Status:** NEEDS_WORK",
+            "**Status:** BLOCKED",
+            "### Checklist Verification",
+            "- [T1] VERIFIED",
+            "### Unit Tests",
+            "### Manual Testing",
+            "### Issues to Address",
+            "Apply strict matching, not spirit matching",
+            "is a **critical finding**",
+            "in the foreground",
+            "Do NOT background the suite",
+            "Do not launch a second suite while one is running",
+            "do not count automated tests as manual QA",
+            "ALL testing scenarios in the Testing Strategy are MANDATORY",
+            'Do NOT mark the test as "skipped"',
+            "**Key question:**",
+            "BLOCKED is a high bar",
+            "NEVER stop a server you did not start",
+            "lsof -i:<port>",
+            "Do NOT fix any code",
+            "never appends",
+            "--uncheck T3 T7",
+            "what is blocking, what you tried, what has to change",
+        ):
+            self.assertIn(rule, rendered)
+
+    def test_implementer_rules(self):
+        rendered = prompts.render(
+            (ROOT / "prompts" / "implementer.md").read_text(), full_values()
+        )
+        for rule in (
+            "## Review Findings",
+            "address them first",
+            "those are your priority",
+            "in order",
+            "Only tick a **Testing** item after you have actually run",
+            "The plan's Testing Strategy is mandatory",
+            "Do NOT ask any questions",
+            "Stay in scope",
+            "Never commit, push or open a pull request",
+            "Never switch branches",
+            "Do not spawn sub-agents",
+        ):
+            self.assertIn(rule, rendered)
+
+    def test_judge_rules(self):
+        rendered = prompts.render(
+            (ROOT / "prompts" / "judge.md").read_text(), full_values()
+        )
+        for rule in (
+            "would you merge this?",
+            "git diff <base_branch>...HEAD",
+            "three reasons",
+            "**Merge:** yes",
+            "You are read-only",
+            "Do not re-run the tests",
+        ):
+            self.assertIn(rule, rendered)
+
     def test_planner_prompt(self):
         text = (ROOT / "prompts" / "planner.md").read_text()
         rendered = prompts.render(text, full_values())

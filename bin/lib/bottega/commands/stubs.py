@@ -6,8 +6,6 @@ import sys
 from ..util import EXIT_USAGE
 
 PLANNED = {
-    "run": "implementer and reviewer rounds, then the judge",
-    "resume": "continue a stopped run with a fresh cap",
     "pr": "push the branch and open the pull request",
 }
 

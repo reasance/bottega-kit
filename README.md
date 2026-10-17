@@ -9,10 +9,10 @@ loop is this project.
 
 ## Current release: 0.0.0
 
-Nothing is released yet. The repository holds milestones M0 and M1:
+Nothing is released yet. The repository holds milestones M0 to M2:
 configuration, tasks, worktrees, the `signal` command, the `claude` and `codex`
-drivers, `plan` and `approve`. `run` and `pr` come next. The drivers have been
-tested against fake harnesses only.
+drivers, `plan`, `approve`, `run` and `resume`. `pr` comes next. The drivers
+have been tested against fake harnesses only.
 
 ## How it works
 
@@ -71,6 +71,8 @@ cd your-repo
 bottega new --title "Add a dry-run flag" --request "Add --dry-run to the export command."
 bottega plan <task>      # a unique prefix or suffix of the id is enough
 bottega approve <task> --rounds 2
+bottega run <task>
+bottega resume <task> --rounds 1   # after a stop
 bottega list
 bottega show <task>
 bottega rm <task> --yes  # removes the worktree and branch; keeps the task directory
@@ -90,10 +92,52 @@ the plan, edit it if you like, then `bottega approve`. Approval gives every
 to-do item an id such as `[T3]` and records a hash of the plan, the roles and
 the round cap; editing the plan afterwards means approving again.
 
+`bottega run` starts the implementer, then the reviewer, and repeats the pair
+until the reviewer is satisfied or the round cap is reached; then the judge, if
+one is bound, gives the final word. Each dispatch prints one line:
+
+```
+002 implementer opus-builder claude-opus-5 → done (6m02s)
+003 reviewer opus-reviewer claude-opus-5 → needs-work (2m14s)
+004 implementer opus-builder claude-opus-5 → done (3m40s)
+005 reviewer opus-reviewer claude-opus-5 → ready (1m55s)
+006 judge fable-judge claude-fable-5-1 → ready (48s)
+```
+
+The implementer edits the worktree and ticks the to-do items in `task.md`; it
+never commits. The reviewer's final message replaces `## Review Findings`, the
+items it names with `--uncheck` are unticked for the next implementer, and the
+judge's final message replaces `## Verdict`. A reviewer or judge that changes a
+tracked file or commits stops the task.
+
+A run ends in one of two ways:
+
+- **done** (exit 0): the reviewer signalled `ready`, and so did the judge if
+  there is one.
+- **stopped** (exit 3), with the reason on stderr and in `bottega show`:
+  `blocked` (the reviewer needs you), `cap-reached`, `judge-needs-work`,
+  `dispatch-failed`, `timeout`, `identity-mismatch` (the harness reported
+  another model), `role-modified-worktree`, or `interrupted` (Ctrl-C).
+
+`bottega resume <task> [--rounds N]` continues a stopped task with a cap of
+the current round plus N (default: the configuration's `rounds`). After
+`cap-reached` or `judge-needs-work` it starts a new round with the
+implementer; after any other stop it runs again the role that stopped. Nothing
+is retried for you. If you edit the plan, approve it again first: `run` and
+`resume` refuse a plan whose hash no longer matches the approval, and a
+profile that was removed or a variable that is no longer set.
+
+Exit codes: 0 done · 2 refused (wrong phase, plan changed, a binding no longer
+works, the task is locked by another bottega) · 3 stopped · 64 bad invocation.
+
+`bottega show <task>` prints the phase, the round and the cap, the next role,
+the last signal, the stop reason and one line per run;
+`bottega show <task> --json` adds every run's `run.json`.
+
 Every dispatch leaves a receipt in the task directory, under
-`runs/NNN-<role>/`: the prompt, the final message, the raw events, `run.json`
-and, when it failed, `error.json`. A failed dispatch exits 3 and changes
-nothing in `task.md`.
+`runs/NNN-<role>/`: the prompt, the final message, the raw events, `run.json`,
+`signal.json` when the agent signalled and, when it failed, `error.json`. A
+failed dispatch exits 3 and changes nothing in `task.md`.
 
 To change a prompt, copy it from the kit's `prompts/` directory to
 `~/.config/bottega-kit/prompts/<name>.md` and edit it. Variables are written

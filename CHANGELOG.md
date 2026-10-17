@@ -6,6 +6,22 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ### Added
 
+- Milestone M2: the loop. Tested against fake harnesses only.
+- `bottega run` runs the implementer and the reviewer in turns, up to the
+  approved round cap, then the judge if one is bound. It stops with a reason
+  (`blocked`, `cap-reached`, `judge-needs-work`, `dispatch-failed`, `timeout`,
+  `identity-mismatch`, `role-modified-worktree`, `interrupted`) and exit 3, or
+  ends done with exit 0. One line per dispatch on stdout.
+- `bottega resume [--rounds N]` continues a stopped task with a fresh cap.
+- The reviewer's findings replace `## Review Findings`, its `--uncheck` ids
+  are unticked, and the judge's verdict replaces `## Verdict`.
+- The implementer, reviewer and judge prompts, adapted from vdaubry/bottega.
+- `bottega show` prints the round, the next role, the last signal, the stop
+  reason and every run; `--json` adds each run's `run.json`.
+- A stopped task can be approved again after an edit to its plan.
+- The identity check compares only the model that did the work (Claude's
+  init and assistant events). Helper models listed in Claude's `modelUsage`
+  are recorded as `observed_models` and never stop a run.
 - Milestone M1: the harness layer, `plan` and `approve`. Tested against fake
   harnesses only; the live probe on real `claude` and `codex` has not run.
 - `bottega plan` runs the planner once. Its final message becomes the plan in
@@ -36,8 +52,7 @@ All notable changes to bottega-kit. Dates are when the version was cut.
   `bottega/<task-id>` branch. `show`, `list` and `rm` manage tasks.
 - `bottega signal`, the command agents run to report `ready`, `needs-work` or
   `blocked`, with every validation it will need in the loop.
-- `run`, `resume` and `pr` are registered and exit 64 until their milestones
-  land.
+- `pr` is registered and exits 64 until its milestone lands.
 - `install.sh`, `uninstall.sh`, `doctor.sh`, the parallel test runner, the
   version-surface check, CI, and fake `claude`/`codex` executables for the
   suites.

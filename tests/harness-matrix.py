@@ -117,8 +117,9 @@ class Fixture:
         }
         self.cfg = cfg
         self.box.write_config(cfg)
-        # The implementer, reviewer and judge prompts ship in M2; overrides
-        # stand in for them here (and exercise the override path).
+        # Short overrides stand in for the implementer, reviewer and judge
+        # prompts here (and exercise the override path); the loop suite
+        # dispatches the shipped ones.
         overrides = self.box.root / "config" / "bottega-kit" / "prompts"
         overrides.mkdir(parents=True)
         for role in ("implementer", "reviewer", "judge"):
@@ -361,11 +362,10 @@ class Failures(Fixture, unittest.TestCase):
         self.assertEqual(outcome.reason, "dispatch-failed")
         self.assertEqual(self.error(outcome)["phase"], "spawn")
 
-    def test_identity_mismatch_in_any_reported_field(self):
+    def test_identity_mismatch_in_a_content_model_field(self):
         for step in (
             {"model": "claude-other"},
             {"assistant_model": "claude-other"},
-            {"usage_model": "claude-other"},
         ):
             with self.subTest(step=step):
                 outcome, _ = self.dispatch("planner", "opus-builder", default=step)
@@ -376,10 +376,69 @@ class Failures(Fixture, unittest.TestCase):
         outcome, _ = self.dispatch("planner", "sol-builder", default={"model": "gpt-x"})
         self.assertEqual(outcome.reason, "identity-mismatch")
 
+    def test_helper_models_in_model_usage_are_observed_not_checked(self):
+        step = {"usage_extra": ["claude-haiku-5-5"]}
+        outcome, _ = self.dispatch("planner", "opus-builder", default=step)
+        self.assertTrue(outcome.ok, outcome.record)
+        record = outcome.record
+        self.assertEqual(record["identity_models"], ["claude-opus-5"])
+        self.assertEqual(
+            sorted(record["observed_models"]), ["claude-haiku-5-5", "claude-opus-5"]
+        )
+        self.assertEqual(record["provider_reported_model"], "claude-opus-5")
+        # A modelUsage key alone, even with no helper, is never compared.
+        outcome, _ = self.dispatch(
+            "planner", "opus-builder", default={"usage_model": "claude-other"}
+        )
+        self.assertTrue(outcome.ok, outcome.record)
+        # The content model still is.
+        step = {"usage_extra": ["claude-haiku-5-5"], "assistant_model": "claude-x"}
+        outcome, _ = self.dispatch("planner", "opus-builder", default=step)
+        self.assertEqual(outcome.reason, "identity-mismatch")
+        self.assertIn("claude-x", self.error(outcome)["detail"])
+        self.assertNotIn("haiku", self.error(outcome)["detail"])
+
+    def test_claude_parser_identity_lists(self):
+        stream = "\n".join(
+            json.dumps(event)
+            for event in (
+                {"type": "system", "subtype": "init", "model": "claude-opus-5"},
+                {"type": "assistant", "message": {"model": "claude-opus-5"}},
+                {
+                    "type": "result",
+                    "result": "done",
+                    "modelUsage": {"claude-opus-5": {}, "claude-haiku-5-5": {}},
+                },
+            )
+        )
+        parsed = harness.get("claude").parse(self.box.root, stream, "", 0)
+        self.assertEqual(parsed.identity_models, ["claude-opus-5"])
+        self.assertEqual(parsed.models, ["claude-opus-5", "claude-haiku-5-5"])
+        self.assertEqual(
+            harness.identity("claude-opus-5", parsed.identity_models, None),
+            ("provider-reported", []),
+        )
+
+    def test_codex_identity_from_session_and_turn_events_only(self):
+        step = {
+            "events": [
+                {"type": "item.completed", "item": {"type": "tool_call"}},
+                {"type": "item.updated", "payload": {"model": "helper-model"}},
+                {"type": "turn_context", "payload": {"model": "gpt-5.6-sol"}},
+            ]
+        }
+        outcome, _ = self.dispatch("planner", "sol-builder", default=step)
+        self.assertTrue(outcome.ok, outcome.record)
+        self.assertEqual(outcome.record["identity_models"], ["gpt-5.6-sol"])
+        self.assertIn("helper-model", outcome.record["observed_models"])
+        step = {"events": [{"type": "session_configured", "msg": {"model": "gpt-x"}}]}
+        outcome, _ = self.dispatch("planner", "sol-builder", default=step)
+        self.assertEqual(outcome.reason, "identity-mismatch")
+
     def test_alias_is_accepted(self):
         self.cfg["profiles"]["opus-builder"]["aliases"] = ["claude-other"]
         outcome, _ = self.dispatch(
-            "planner", "opus-builder", default={"usage_model": "claude-other"}
+            "planner", "opus-builder", default={"assistant_model": "claude-other"}
         )
         self.assertTrue(outcome.ok, outcome.record)
 

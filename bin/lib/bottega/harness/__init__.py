@@ -174,10 +174,18 @@ class Invocation:
 
 
 class Parsed:
-    """What a harness reported. `final` is None when there is no final message."""
+    """What a harness reported. `final` is None when there is no final message.
+
+    `identity_models` are the names that say which model did the work (the
+    session's and each turn's model); only they are checked against the
+    request. `models` is every name observed, helper models included (Claude
+    Code reports a small background model in `modelUsage`); it goes into the
+    receipt as `observed_models` and is never compared.
+    """
 
     def __init__(self):
         self.final = None
+        self.identity_models = []  # checked against the request and aliases
         self.models = []  # every model name the harness reported, first seen first
         self.primary_model = None  # the one recorded as provider_reported_model
         self.usage = None
@@ -189,9 +197,14 @@ class Parsed:
         self.events = 0
         self.unparsed_lines = 0
 
-    def saw_model(self, name):
-        if isinstance(name, str) and name.strip() and name not in self.models:
+    def saw_model(self, name, identity=False):
+        """Record a reported name; `identity=True` also makes it a checked one."""
+        if not isinstance(name, str) or not name.strip():
+            return
+        if name not in self.models:
             self.models.append(name)
+        if identity and name not in self.identity_models:
+            self.identity_models.append(name)
 
 
 def fill(args, values):
@@ -241,7 +254,8 @@ def identity(requested, reported, aliases):
 
     A reported name that is neither the requested model nor one of the
     profile's aliases is a mismatch (plan §2.8). Nothing reported means the
-    identity rests on the request alone.
+    identity rests on the request alone. Pass `Parsed.identity_models`, never
+    every observed name: helper models are not the content model.
     """
     if not reported:
         return "requested-only", []

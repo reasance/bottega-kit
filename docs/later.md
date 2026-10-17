@@ -35,3 +35,6 @@ until the owner decides otherwise. Seeded from the work plan (§7 and M4) on
   that holds only `task.md`. Today an implementer can technically touch the
   receipts and `state.json`; the orchestrator re-reads nothing from them
   mid-run, so the exposure is low.
+- Checking the plan hash after every implementer dispatch, not only when
+  `run` and `resume` start. Today an implementer that edits the plan text
+  mid-run is caught at the next `resume`, not at once.

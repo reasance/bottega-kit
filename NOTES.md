@@ -239,3 +239,119 @@ complete.
   when the final message is empty.
 - Whether `-c mcp_servers={}` and `-c features.multi_agent=false` are
   accepted as TOML overrides by `codex exec` 0.163.0.
+
+## 2026-10-17 — milestone M2
+
+- **No live probe, again.** The loop, its prompts and the identity fix are
+  tested against the fakes only. Built on branch `m2-loop`, merged into
+  `main` with `--no-ff`; nothing pushed or tagged.
+- **Identity check, fixed.** M1 compared every model name Claude reported,
+  including the `modelUsage` keys of the result event. Those keys also list
+  helper models (Claude Code runs a small model for background tasks), so a
+  correct run could stop as `identity-mismatch`. `Parsed` now has two lists:
+  `identity_models` (Claude: the init event's `.model` and each assistant
+  `.message.model`), which alone is compared with the request and the
+  aliases, and `models`, everything observed. `run.json` records both
+  (`identity_models`, `observed_models`). Codex identity comes from the
+  top-level `model` and `response.model` of any event, as delegation-kit's
+  driver reads them, and from the `session`/`payload`/`msg` model of a
+  session or turn event (`thread.*`, `turn.*`, `session*`,
+  `*_configured`); a model named in any other event is observed only. This
+  supersedes the M1 "Claude parse" note.
+- **Round accounting.** Plan §3 says "round += 1; round > cap → STOP". The
+  loop stops when `round + 1 > cap` and leaves `state.round` at the cap, so
+  `state.round` is always a round that ran. A resume after `cap-reached` or
+  `judge-needs-work` opens the new round when it is granted (`round + 1`,
+  implementer next) and sets the cap to the old round plus N, so
+  `resume --rounds 1` runs exactly one more pair. After any other stop the
+  role that stopped runs again in the same round, with cap = round + N.
+- **`run`/`resume` re-validate the loop's bindings only:** implementer,
+  reviewer, and the judge when one is approved. The team lead's brief said
+  "every approved binding"; the planner does not run in the loop, and
+  refusing a run because the planner's profile was deleted helps no one.
+- **Every loop prompt is rendered once before anything changes**, so an
+  override with an unknown or unset variable refuses (exit 2) with the task
+  untouched.
+- **A ninth stop reason, `interrupted`:** Ctrl-C or an unexpected exception
+  during a dispatch stops the task there (exit 130 for Ctrl-C, from the CLI),
+  with the run entry failed as `interrupted` and `next_role` set to the role
+  that was running. `resume` also accepts a task left `running` when it can
+  take the lock (the bottega that set `running` is gone): that run counts as
+  interrupted and the task resumes from it.
+- **`resume` on an approved task is `run`;** `--rounds N` then sets the cap.
+  `run` on a stopped task refuses and names `resume`.
+- **`approve` accepts a stopped task**, so the refusal "plan changed; run:
+  bottega approve" can be acted on. It resets `round` to 0 and `stopped` to
+  null; the next `run` starts at round 1 (run numbers keep counting). The
+  "at least one unchecked item" rule is waived for a stopped task, since the
+  loop may have ticked them all.
+- **Signal folding.** `state.last_signal` is `{status, reason, uncheck, by,
+  run, at}`, plus `implied: true` when the reviewer or judge did not signal
+  (status `needs-work`, reason `no-signal`). A failed dispatch's
+  `signal.json` is not folded; it stays in the run directory as evidence. A
+  `signal.json` that does not parse, names another run, or carries a status
+  the role may not emit counts as no signal, with a warning. An `--uncheck`
+  id no longer in `task.md` when the loop folds the signal is a warning; the
+  others are applied.
+- **Dispatch line words:** implementer `done`; reviewer and judge the signal
+  status, or `no-signal`; a failure `failed <reason>`, as in `plan`.
+- **Receipts:** each `state.runs` entry carries `round`, and for a reviewer or
+  judge `signal` (the status) and `reason: no-signal` when implied.
+  `run.json` adds `round`, `warnings` (for example `implementer-committed:
+  ...`) and `signal` (the folded record).
+- **Merging a final message into `task.md`:** one outer code fence is
+  removed; a leading `## Review Findings` or `## Verdict` heading the agent
+  wrote is dropped; any other level-1 or level-2 heading outside a code fence
+  becomes level 3. An agent's message can therefore never add, end or
+  duplicate a section, and the plan hash is never touched.
+- **The loop keeps the state in memory** from the moment it takes the lock and
+  only writes `state.json`, never reads it back mid-run: the implementer can
+  write in the task directory (`--add-dir`), so the file must not steer the
+  loop. It reads `task.md` (the implementer's ticks) and the current run's
+  `signal.json`, by design.
+- **Implementer prompt** (from `implementation.md`, `code-delivery.js`
+  170–198, `execution-loop.md`): kept the findings-first rule, plan order,
+  tick-as-you-go, Testing items ticked only after running them, tests
+  mandatory, no questions, stay in scope, never switch branches. Changed: it
+  never commits (plan §9 sides with the server), so code-delivery's "Commit
+  (required)" section and its TypeScript-only rule are dropped; it edits only
+  the checkboxes of `task.md`; no sub-agents; it does not signal; its final
+  message is a summary kept in the receipt and is not merged.
+- **Reviewer prompt** (from `review.md`, `code-delivery.js` 201–232): every
+  rule kept, mostly in bottega's words. Changed: findings by `[T<n>]` id; the
+  early return also signals `needs-work` ("implementation in progress"),
+  because no signal means the same thing and an explicit one reads better
+  in `show`; "check CLAUDE.md for the test command" became `{{test_cmd}}` or
+  the project's documented command; the Playwright and video rules are gone,
+  and the server-isolation rule applies to any scenario that needs a server,
+  with `{{port}}`; code-delivery's paragraph about live model conversations
+  is product-specific and was not carried, except "needing a dev server or a
+  live run is not a blocker"; the reviewer does not edit `task.md` (bottega
+  -kit writes the findings and applies `--uncheck`). The signal section is
+  last.
+- **Judge prompt** (ours): reads `git diff <base>...HEAD`, `git diff HEAD`
+  (the implementer never commits, so most of the change is uncommitted) and
+  new untracked files directly, because its Claude permission rules allow
+  only `git diff`, `git log`, `git show` and `bottega signal` (no
+  `git status`). Final message `**Merge:** yes|no` and three reasons.
+- **`show`:** the text view gains round, next role, last signal (and its
+  unchecked ids), the stop and one line per run; the approved roles now show
+  as `roles` and per-task overrides as `overrides`. `--json` adds `runs`, the
+  `run.json` records by sequence number.
+- **Fakes:** a step may set `usage_extra` (more `modelUsage` keys) and
+  `events` (extra JSON events).
+- **The Ctrl-C test** resets SIGINT in its child: `run-tests.sh` starts the
+  suites as background jobs, which a non-interactive shell runs with SIGINT
+  ignored, and that disposition is inherited.
+- **CHANGELOG:** the identity fix is an "Added" line, since the M1 behaviour
+  was never released.
+
+### Live-probe unknowns added by M2
+
+- Whether the judge, with only `Bash(git diff *)`, `Bash(git log *)`,
+  `Bash(git show *)` and `Bash(<abs bottega> signal *)` allowed, can run the
+  diff commands and the signal command as written in its prompt.
+- Whether a reviewer under `dontAsk` with `--allowedTools Bash` can run the
+  project's test suite in the foreground for up to ten minutes.
+- Which model names Claude Code lists in `modelUsage` besides the content
+  model.

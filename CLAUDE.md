@@ -18,8 +18,9 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
   (the strict `{{var}}` engine and overrides), `harness/` (`HARNESS_MATRIX`,
   the registry, `claude.py` and `codex.py` drivers and parsers), `receipts`
   (run directories, `run.json`, `error.json`), `dispatch` (one role dispatch
-  end to end), `cli` (argparse), `commands/` (one module per subcommand).
-- `prompts/<role>.md` — the role prompts (planner today).
+  end to end), `loop` (the transition table `run` and `resume` drive), `cli`
+  (argparse), `commands/` (one module per subcommand).
+- `prompts/<role>.md` — the planner, implementer, reviewer and judge prompts.
 - `templates/task.md` — the task document template.
 - `tests/<suite>.sh` runs `tests/<suite>.py` (unittest) in an isolated
   HOME/XDG/PATH set up by `tests/lib/sandbox.sh`. `tests/helpers.py` holds the

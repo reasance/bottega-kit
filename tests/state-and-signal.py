@@ -10,7 +10,7 @@ import threading
 import unittest
 from pathlib import Path
 
-from helpers import Sandbox, main
+from helpers import BOTTEGA, Sandbox, main
 
 from bottega import state
 from bottega.util import Refused, atomic_write_json
@@ -72,6 +72,41 @@ class Signal(TaskFixture, unittest.TestCase):
         self.assertEqual(record["run"], "002-reviewer")
         # The agent never writes state.json; the orchestrator folds the signal.
         self.assertEqual((self.dir / "state.json").read_bytes(), before)
+
+    def test_signal_by_task_directory_without_the_orchestrator_environment(self):
+        # An agent's shell may not inherit XDG_* or BOTTEGA_DATA_HOME (Codex
+        # drops them under shell_environment_policy.inherit = "core"), so the
+        # prompt names the task directory and the data home is never needed.
+        run_dir = self.start_run("reviewer")
+        bare = {"PATH": self.box.env["PATH"], "HOME": str(self.box.root / "other")}
+        proc = subprocess.run(
+            [str(BOTTEGA), "signal", str(self.dir), "ready", "all verified"],
+            cwd=str(self.box.root),
+            env=bare,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        record = json.loads((run_dir / "signal.json").read_text())
+        self.assertEqual(record["status"], "ready")
+        self.assertEqual(record["run"], "002-reviewer")
+        # The id form still needs the data home: without it there is no task.
+        proc = subprocess.run(
+            [str(BOTTEGA), "signal", self.task, "ready", "x"],
+            cwd=str(self.box.root),
+            env=bare,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        self.assertEqual(proc.returncode, 64)
+        self.assertIn("no task matches", proc.stderr)
+
+    def test_absolute_path_that_is_not_a_task_directory(self):
+        self.start_run("reviewer")
+        proc = self.signal(str(self.box.root), "ready", "x", rc=64)
+        self.assertIn("not a task directory", proc.stderr)
 
     def test_last_signal_wins_and_both_are_logged(self):
         run_dir = self.start_run("reviewer")

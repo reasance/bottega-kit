@@ -35,6 +35,13 @@ judge that changes tracked code stops the task, and so does a harness that
 reports another model. `bottega resume` continues a stopped task with a fresh
 cap.
 
+**Verified live.** On 2026-10-17 two tasks ran end to end on a throwaway
+repository with Claude Code 2.1.302 and Codex CLI 0.163.0, each harness as
+implementer and as reviewer (`docs/compatibility.md`). The run found one bug:
+a Codex reviewer could not find the task by id, because Codex does not pass
+the orchestrator's environment to the agent's shell. `bottega signal` now also
+accepts the absolute task directory, and every prompt names it.
+
 **Pull requests and packaging.** `bottega pr` commits what is left in the
 worktree, pushes the branch to `origin` and opens the pull request with `gh`.
 It works on a done or a stopped task, and a stopped task's pull request says

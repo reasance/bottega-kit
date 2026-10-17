@@ -11,8 +11,9 @@ loop is this project.
 
 The first release: `init`, `doctor`, `new`, `plan`, `approve`, `run`, `resume`,
 `pr` and the task commands, on the `claude` and `codex` harnesses. Every
-harness flag has been tested against fake CLIs only; no live run has been
-recorded yet. See [docs/compatibility.md](docs/compatibility.md).
+loop was verified live on 2026-10-17 with Claude Code 2.1.302 and Codex CLI
+0.163.0 in every agentic role; `bottega pr` is verified with a fake `gh` only.
+See [docs/compatibility.md](docs/compatibility.md).
 
 ## What you need
 

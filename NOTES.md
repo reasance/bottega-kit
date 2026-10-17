@@ -442,3 +442,36 @@ complete.
   and whether an ssh host alias in origin's URL needs handling.
 - What `gh pr view <branch> --json url,state` returns for a branch whose pull
   request was merged, and whether it ever prompts.
+
+## 2026-10-17 — live probe, part 1 of the release gate
+
+Authorized by the owner ("procedi intanto con 1"). Run by the lead, not by a
+builder, through the installed kit in scratch directories, on a throwaway
+repository. Full numbers in `docs/compatibility.md`.
+
+- **Profiles:** `claude-sonnet-5-5` (effort medium) for the Claude roles and
+  `gpt-5.6-terra` (effort medium) for the Codex roles, chosen for cost, not
+  as a recommendation. Task 1: Codex implements, Claude reviews and judges.
+  Task 2: Claude implements, Codex reviews, Claude judges.
+- **Found:** the Codex reviewer's `bottega signal <task-id>` exited 64 twice
+  ("no task matches"); the loop treated it as no signal and stopped at the
+  cap, exactly as specified. Codex runs agent commands with
+  `shell_environment_policy.inherit = "core"`, so `BOTTEGA_DATA_HOME` and
+  `XDG_*` never reach the shell. Claude's Bash inherits everything, which is
+  why task 1 worked.
+- **Fixed, here, by the lead (small, test-covered):** `state.resolve` accepts
+  an absolute task directory; `prompts.values` renders `signal_cmd` with the
+  task directory instead of the id; two tests in `state-and-signal`, the
+  `prompts` and `loop` expectations updated. The resumed round signalled
+  `ready` from the Codex sandbox. The id form still works for people.
+- **Not changed:** the Codex environment policy. Widening it
+  (`shell_environment_policy.inherit = "all"`) would leak the user's whole
+  environment into the agent's shell; naming the path is enough.
+- **Observed, recorded in `docs/compatibility.md`:** the exact `stream-json`
+  and Codex JSONL shapes; Codex names no model, so its identity stays
+  `requested-only`; the Claude implementer edited through Bash, so Edit and
+  Write stay unverified; a harmless Codex hooks "error" item.
+- **Still open for part 2:** `bottega pr` on a real GitHub repository (needs
+  the repository the owner has not created yet), the deny rules, the Opus and
+  Fable model names, a proxied profile.
+

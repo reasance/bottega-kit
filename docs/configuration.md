@@ -132,7 +132,7 @@ unknown variable is refused before anything runs; text such as
 | `task_id`, `task_title` | the task's id and title |
 | `worktree` | absolute path of the worktree |
 | `base_branch` | the base branch |
-| `signal_cmd` | absolute path of `bottega` plus `signal <task-id>` |
+| `signal_cmd` | absolute path of `bottega` plus `signal <absolute task directory>` (a path, so the agent's shell needs no environment variables) |
 | `test_cmd` | from `bottega.json`, or empty |
 | `round`, `rounds` | the current round and the cap |
 | `scratch_dir` | a writable directory for this dispatch |

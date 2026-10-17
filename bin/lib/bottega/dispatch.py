@@ -179,7 +179,7 @@ def _dispatch(st, seq, role, profile_name, profile, harness, invocation, name, r
     if parsed.final is not None and _read(run_dir / receipts.OUTPUT) != parsed.final:
         receipts.write_output(run_dir, parsed.final)
     source, mismatched = harnesses.identity(
-        profile["model"], parsed.models, profile.get("aliases")
+        profile["model"], parsed.identity_models, profile.get("aliases")
     )
     after = _snapshot(st["worktree"])
     rails = worktree.rails(before, after) if before and after else None
@@ -219,6 +219,7 @@ def _dispatch(st, seq, role, profile_name, profile, harness, invocation, name, r
         "requested_model": profile["model"],
         "provider_reported_model": parsed.primary_model,
         "model_identity_source": source,
+        "identity_models": parsed.identity_models,
         "observed_models": parsed.models,
         "effort": profile["effort"],
         "argv": invocation.argv,

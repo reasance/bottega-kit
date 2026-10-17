@@ -15,6 +15,8 @@ A step may hold, all optional:
 
     model           the model the fake reports (default: the requested one)
     assistant_model / usage_model   claude only: report a different name there
+    usage_extra     claude only: more modelUsage keys (helper models)
+    events          extra JSON events written after the first one
     final           the final message (default "fake final message")
     no_final        true: produce no final message
     is_error        claude only: the result event says is_error
@@ -212,6 +214,17 @@ def claude_main(argv):
                 },
             }
         )
+    for event in step.get("events") or []:
+        emit(event)
+    model_usage = {
+        name: {"inputTokens": 10, "outputTokens": 5, "costUSD": 0.0001}
+        for name in step.get("usage_extra") or []
+    }
+    model_usage[step.get("usage_model", model)] = {
+        "inputTokens": 120,
+        "outputTokens": 40,
+        "costUSD": 0.0123,
+    }
     result = {
         "type": "result",
         "subtype": "error_during_execution" if step.get("is_error") else "success",
@@ -221,13 +234,7 @@ def claude_main(argv):
         "session_id": "fake-session-%d" % number,
         "total_cost_usd": 0.0123,
         "usage": usage(),
-        "modelUsage": {
-            step.get("usage_model", model): {
-                "inputTokens": 120,
-                "outputTokens": 40,
-                "costUSD": 0.0123,
-            }
-        },
+        "modelUsage": model_usage,
     }
     if final is not None:
         result["result"] = final
@@ -262,6 +269,8 @@ def codex_main(argv):
         }
     )
     emit({"type": "turn.started"})
+    for event in step.get("events") or []:
+        emit(event)
     if final is not None:
         emit(
             {

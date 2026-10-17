@@ -4,6 +4,11 @@ Field names mirror delegation-kit's reader of the same stream: the
 `system/init` event's `.model`, each assistant event's `.message.model`, and
 the `result` event's `.result`, `.is_error`, `.usage`, `.modelUsage`,
 `.total_cost_usd`, `.duration_ms`, `.num_turns`.
+
+Identity: only the content model counts, the init event's `.model` and each
+assistant event's `.message.model`. The `modelUsage` keys also list helper
+models (Claude Code runs a small model for background tasks), so they are
+recorded as observed and never compared with the request.
 """
 
 import os
@@ -88,11 +93,11 @@ class ClaudeHarness(Harness):
             if kind == "system" and event.get("subtype") == "init":
                 if init_model is None and isinstance(event.get("model"), str):
                     init_model = event["model"]
-                parsed.saw_model(event.get("model"))
+                parsed.saw_model(event.get("model"), identity=True)
             elif kind == "assistant":
                 message = event.get("message")
                 if isinstance(message, dict):
-                    parsed.saw_model(message.get("model"))
+                    parsed.saw_model(message.get("model"), identity=True)
             elif kind == "result":
                 result = event
         if result is not None:
@@ -118,6 +123,6 @@ class ClaudeHarness(Harness):
             if isinstance(final, str) and final.strip():
                 parsed.final = final
         parsed.primary_model = init_model or (
-            parsed.models[0] if parsed.models else None
+            parsed.identity_models[0] if parsed.identity_models else None
         )
         return parsed

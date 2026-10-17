@@ -1,12 +1,16 @@
 """Codex (`codex exec`): argv and environment, and the JSONL parser.
 
-The final message is the file `-o <run_dir>/output.md` names. The reported
-model is read from any event carrying `model`, `response.model` or session
-metadata (as delegation-kit's driver does); usage from the last
-`turn.completed`. Event names on a given Codex version are a live-probe
-unknown, so unknown events are counted and kept, never fatal.
+The final message is the file `-o <run_dir>/output.md` names. Usage comes
+from the last `turn.completed`. Event names on a given Codex version are a
+live-probe unknown, so unknown events are counted and kept, never fatal.
+
+Identity: the names that say which model ran the session or the turn, the
+top-level `model` and `response.model` of any event (as delegation-kit's
+driver reads them), and the `session`, `payload` or `msg` model of a
+session or turn event. A model named anywhere else is observed only.
 """
 
+import re
 from pathlib import Path
 
 from ..util import bottega_executable
@@ -15,13 +19,31 @@ from . import Harness, Invocation, Parsed, base_env, matrix_argv, read_events
 FAILED_EVENTS = ("turn.failed",)
 
 
-def _models_in(event):
-    found = [event.get("model")]
-    for key in ("response", "session", "payload", "msg"):
+NESTED = ("session", "payload", "msg")
+SESSION_OR_TURN = re.compile(r"^(thread|turn|session)([._]|$)|_configured$|^turn_")
+
+
+def _is_session_or_turn(event):
+    kinds = [event.get("type")]
+    for key in NESTED:
         inner = event.get(key)
         if isinstance(inner, dict):
-            found.append(inner.get("model"))
-    return [name for name in found if isinstance(name, str) and name.strip()]
+            kinds.append(inner.get("type"))
+    return any(isinstance(k, str) and SESSION_OR_TURN.search(k) for k in kinds)
+
+
+def _models_in(event):
+    """[(name, counts for identity)] for every model the event names."""
+    found = [(event.get("model"), True)]
+    response = event.get("response")
+    if isinstance(response, dict):
+        found.append((response.get("model"), True))
+    session_or_turn = _is_session_or_turn(event)
+    for key in NESTED:
+        inner = event.get(key)
+        if isinstance(inner, dict):
+            found.append((inner.get("model"), session_or_turn))
+    return found
 
 
 class CodexHarness(Harness):
@@ -46,8 +68,8 @@ class CodexHarness(Harness):
         events, parsed.unparsed_lines = read_events(stdout)
         parsed.events = len(events)
         for event in events:
-            for name in _models_in(event):
-                parsed.saw_model(name)
+            for name, identity in _models_in(event):
+                parsed.saw_model(name, identity)
             kind = event.get("type")
             if kind == "turn.completed" and isinstance(event.get("usage"), dict):
                 parsed.usage = event["usage"]
@@ -56,7 +78,9 @@ class CodexHarness(Harness):
                 error = event.get("error")
                 message = error.get("message") if isinstance(error, dict) else error
                 parsed.error_detail = "%s: %s" % (kind, message or "no detail")
-        parsed.primary_model = parsed.models[0] if parsed.models else None
+        parsed.primary_model = (
+            parsed.identity_models[0] if parsed.identity_models else None
+        )
         output = Path(run_dir) / "output.md"
         try:
             final = output.read_text(encoding="utf-8")

@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+"""bottega: the command-line entry point. All logic lives in bin/lib/bottega."""
+
+import os
+import sys
+
+# Resolve symlinks so ~/.local/bin/bottega finds the installed library.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), "lib"))
+
+from bottega.cli import main  # noqa: E402
+
+if __name__ == "__main__":
+    sys.exit(main())

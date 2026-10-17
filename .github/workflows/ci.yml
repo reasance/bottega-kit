@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['bottega-kit--v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect tracked shell files
+        run: |
+          git ls-files '*.sh' 'bin/*' 'tests/fakes/*' | while read -r f; do
+            head -1 "$f" | grep -q '^#!.*\(bash\|sh\)' && printf '%s\n' "$f"
+          done >shfiles.txt
+          echo "checking $(wc -l <shfiles.txt) files"
+      # -S warning is the gate; `style` findings are informational only.
+      - name: shellcheck
+        run: tr '\n' '\0' <shfiles.txt | xargs -0 shellcheck -S warning
+
+  ruff:
+    name: ruff
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: ruff
+        run: |
+          pip install --quiet ruff==0.13.0
+          ruff check bin tests
+          ruff format --check bin tests
+
+  version:
+    name: version consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the four version surfaces
+        run: bash tests/version-consistency.sh
+      # On a tag push, also enforce the CLAUDE.md tag convention. actions/checkout
+      # leaves a lightweight ref even for an annotated tag, so the real tag object
+      # is fetched before the annotation rule is checked.
+      - name: Check release tag convention
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          git fetch --force --depth=1 origin \
+            "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
+          bash tests/version-consistency.sh --tag "${GITHUB_REF_NAME}"
+
+  tests:
+    name: regression suites (macOS)
+    # macOS is the platform bottega-kit targets first.
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify prerequisites
+        run: |
+          for tool in jq python3 git; do
+            command -v "$tool" >/dev/null || { echo "missing: $tool"; exit 1; }
+          done
+          python3 --version
+          git --version
+      # Parallel on one runner: the suites are independent. run-tests.sh prints
+      # the full log of any suite that fails.
+      - name: Regression suites
+        run: ./run-tests.sh
+      # A suite that mutates the checkout is a bug.
+      - name: Suites left the checkout clean
+        run: |
+          dirty="$(git status --porcelain)"
+          if [ -n "$dirty" ]; then
+            echo "test run dirtied the worktree:"; echo "$dirty"; exit 1
+          fi

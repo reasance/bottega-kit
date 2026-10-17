@@ -1,0 +1,31 @@
+{
+  "name": "bottega-kit",
+  "version": "0.0.0",
+  "description": "A planner, an implementer, a reviewer and an optional judge on the coding agents you already have, in a git worktree, with a receipt for every step.",
+  "keywords": [
+    "claude-code",
+    "codex",
+    "coding-agents",
+    "git-worktree",
+    "developer-tools"
+  ],
+  "author": {
+    "name": "Matteo Scurati",
+    "url": "https://github.com/matteoscurati"
+  },
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "bottega-kit": "./bin/npm-installer.mjs"
+  },
+  "files": [
+    "bin/npm-installer.mjs",
+    "README.md",
+    "LICENSE",
+    "NOTICE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -3,12 +3,12 @@
 import argparse
 import sys
 
-from .commands import doctor, init, new, rm, show, signal, stubs
+from .commands import approve, doctor, init, new, plan, rm, show, signal, stubs
 from .commands import list as listing
 from .util import EXIT_USAGE, BottegaError
 from .version import __version__
 
-COMMANDS = (init, doctor, new, show, listing, rm, signal)
+COMMANDS = (init, doctor, new, plan, approve, show, listing, rm, signal)
 
 
 class Parser(argparse.ArgumentParser):

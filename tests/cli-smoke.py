@@ -32,9 +32,12 @@ class Basics(unittest.TestCase):
         self.box.bottega("show", rc=64)
 
     def test_unimplemented_subcommands_exit_64(self):
-        for command in ("run", "resume", "pr"):
-            proc = self.box.bottega(command, "some-task", "--rounds", "2", rc=64)
-            self.assertIn("not implemented in this milestone", proc.stderr)
+        proc = self.box.bottega("pr", "some-task", rc=64)
+        self.assertIn("not implemented in this milestone", proc.stderr)
+        for command in ("run", "resume"):
+            proc = self.box.bottega(command, "no-such-task", rc=64)
+            self.assertIn("no task matches", proc.stderr)
+        self.box.bottega("resume", "x", "--rounds", "0", rc=64)
 
     def test_init_then_doctor(self):
         proc = self.box.bottega("init")

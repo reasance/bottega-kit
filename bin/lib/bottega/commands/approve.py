@@ -2,13 +2,15 @@
 
 Checks the plan, gives every to-do item a `[T<n>]` id, validates every role
 binding the run will use, and records the plan hash, the roles and the
-round cap. Approving again after an edit keeps the ids already given.
+round cap. Approving again after an edit keeps the ids already given. A
+stopped task may be approved again (after an edit to the plan); the next
+`run` then starts over at round 1.
 """
 
 from .. import config, harness, state, taskdoc
 from ..util import Refused, UsageError, atomic_write, now_iso
 
-FROM_PHASES = ("planned", "approved")
+FROM_PHASES = ("planned", "approved", "stopped")
 
 
 def add_parser(sub):
@@ -28,7 +30,7 @@ def add_parser(sub):
 def check_phase(st):
     if st["phase"] not in FROM_PHASES:
         raise Refused(
-            "task %s is %s; approve needs a plan (phase planned or approved)"
+            "task %s is %s; approve needs a plan (phase planned, approved or stopped)"
             % (st["task"], st["phase"])
         )
 
@@ -76,7 +78,9 @@ def run(args):
             "at": now_iso(),
         }
         st["rounds"] = rounds
+        st["round"] = 0
         st["next_role"] = "implementer"
+        st["stopped"] = None
         st["phase"] = "approved"
         state.save(task_dir, st)
 

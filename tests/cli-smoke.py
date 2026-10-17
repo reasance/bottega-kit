@@ -32,7 +32,7 @@ class Basics(unittest.TestCase):
         self.box.bottega("show", rc=64)
 
     def test_unimplemented_subcommands_exit_64(self):
-        for command in ("plan", "approve", "run", "resume", "pr"):
+        for command in ("run", "resume", "pr"):
             proc = self.box.bottega(command, "some-task", "--rounds", "2", rc=64)
             self.assertIn("not implemented in this milestone", proc.stderr)
 

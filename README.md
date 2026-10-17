@@ -9,8 +9,10 @@ loop is this project.
 
 ## Current release: 0.0.0
 
-Nothing is released yet. The repository holds milestone M0: configuration,
-tasks, worktrees and the `signal` command. No model is dispatched until M1.
+Nothing is released yet. The repository holds milestones M0 and M1:
+configuration, tasks, worktrees, the `signal` command, the `claude` and `codex`
+drivers, `plan` and `approve`. `run` and `pr` come next. The drivers have been
+tested against fake harnesses only.
 
 ## How it works
 
@@ -62,15 +64,43 @@ bottega doctor          # checks tools, config and harnesses
 
 `./uninstall.sh` removes the command and keeps your tasks and configuration.
 
-## Use (M0)
+## Use
 
 ```sh
 cd your-repo
 bottega new --title "Add a dry-run flag" --request "Add --dry-run to the export command."
+bottega plan <task>      # a unique prefix or suffix of the id is enough
+bottega approve <task> --rounds 2
 bottega list
-bottega show <task>      # a unique prefix or suffix of the id is enough
+bottega show <task>
 bottega rm <task> --yes  # removes the worktree and branch; keeps the task directory
 ```
+
+`bottega plan` runs the planner once and prints one line:
+
+```
+001 planner fable-judge claude-fable-5-1 → questions (41s)
+```
+
+If the planner has questions, they are written into `task.md` under
+`## Questions for you`. Answer under each question, in the file, and run
+`bottega plan` again. When the planner writes a plan instead, it replaces the
+plan sections of `task.md`; your original request stays as you wrote it. Read
+the plan, edit it if you like, then `bottega approve`. Approval gives every
+to-do item an id such as `[T3]` and records a hash of the plan, the roles and
+the round cap; editing the plan afterwards means approving again.
+
+Every dispatch leaves a receipt in the task directory, under
+`runs/NNN-<role>/`: the prompt, the final message, the raw events, `run.json`
+and, when it failed, `error.json`. A failed dispatch exits 3 and changes
+nothing in `task.md`.
+
+To change a prompt, copy it from the kit's `prompts/` directory to
+`~/.config/bottega-kit/prompts/<name>.md` and edit it. Variables are written
+`{{name}}`; an unknown name is refused before anything runs.
+
+A repository may hold a `bottega.json` with `{"test_cmd": "...", "base": "main"}`:
+`test_cmd` is given to the agents, `base` is the branch new tasks start from.
 
 Tasks live in `~/.local/share/bottega-kit/tasks/<project>/<task-id>/`, outside the
 repository, so they outlive the worktree.

@@ -133,9 +133,13 @@ def blockquote(text):
 
 
 def seed(template, title, request):
-    """A new task.md: the template with the title and the verbatim request."""
-    text = set_title(normalise_newlines(template), title)
-    return replace_section(text, REQUEST, blockquote(request))
+    """A new task.md: the template rendered with the title and the verbatim
+    request as a blockquote. The template's spaced `{{ … }}` markers stay."""
+    from .prompts import render
+
+    values = {"task_title": title, "original_request": blockquote(request)}
+    text = render(normalise_newlines(template), values, "templates/task.md")
+    return text.rstrip("\n") + "\n"
 
 
 class Item:
@@ -250,3 +254,133 @@ def plan_region(text):
 
 def plan_sha256(text):
     return hashlib.sha256(plan_region(text).encode("utf-8")).hexdigest()
+
+
+# The planner's final message and the approval gate (plan §3, §4.3).
+
+QUESTIONS = "Questions for you"
+OVERVIEW = "Overview"
+IMPLEMENTATION = "Implementation Plan"
+TESTING = "Testing Strategy"
+DOCS = "Project Docs Update"
+PLAN_SECTIONS = (OVERVIEW, IMPLEMENTATION, TESTING, TODO, DOCS)
+# Sections bottega-kit owns; a planner's copy of them is dropped.
+OWNED = (REQUEST, FINDINGS, VERDICT, QUESTIONS)
+
+_MANUAL_QA = re.compile(r"^###\s+Manual QA\b", re.IGNORECASE)
+_SUBHEADING = re.compile(r"^###\s")
+_NOT_NEEDED = re.compile(r"\bnot needed\b", re.IGNORECASE)
+_SCENARIO = re.compile(r"\bscenario\b", re.IGNORECASE)
+
+
+def blocks(text):
+    """[(title, body)] for every level-2 section, in order, duplicates kept."""
+    lines = _lines(text)
+    return [
+        (title, "\n".join(lines[start + 1 : end]).strip("\n"))
+        for title, start, end in sections(text)
+    ]
+
+
+def unwrap(message):
+    """The planner's message with one outer code fence removed, if it has one."""
+    text = normalise_newlines(message).strip("\n")
+    lines = text.split("\n")
+    if len(lines) >= 2 and _FENCE.match(lines[0]) and _FENCE.match(lines[-1]):
+        inner = lines[1:-1]
+        if not any(_FENCE.match(line) for line in inner):
+            return "\n".join(inner).strip("\n")
+    return text
+
+
+def questions(message):
+    """The body of the message's `## Questions for you` section, or None."""
+    body = get_section(unwrap(message), QUESTIONS)
+    return body if body is not None and body.strip() else None
+
+
+def plan_problems(message):
+    """Why the planner's message is not a usable plan; empty when it is."""
+    text = unwrap(message)
+    titles = [title for title, _, _ in sections(text)]
+    found = [
+        "missing section: ## %s" % title
+        for title in PLAN_SECTIONS
+        if title not in titles
+    ]
+    if TODO in titles and not any(not item.checked for item in todo_items(text)):
+        found.append("the To-Do List has no unchecked item")
+    return found
+
+
+def with_questions(doc, body):
+    """task.md with `## Questions for you` replaced, or inserted before the plan."""
+    before = OVERVIEW if has_section(doc, OVERVIEW) else FINDINGS
+    return replace_section(doc, QUESTIONS, body, before=before)
+
+
+def merge_plan(doc, message, title):
+    """task.md rewritten around the planner's sections.
+
+    Kept from the current document: the `# Task` heading, `## Original
+    Request` verbatim, `## Review Findings` and `## Verdict`. Everything else
+    comes from the message; a `## Questions for you` section is dropped.
+    """
+    lines = _lines(doc)
+    heading = next(
+        (line for _, line in _outside_fences(lines) if line.startswith("# ")),
+        "# Task " + title,
+    )
+    parts = [heading, "", "## " + REQUEST, ""]
+    request = get_section(doc, REQUEST)
+    if request:
+        parts += [request, ""]
+    for name, body in blocks(unwrap(message)):
+        if name in OWNED:
+            continue
+        parts += ["## " + name, ""]
+        if body.strip():
+            parts += [body, ""]
+    for name in (FINDINGS, VERDICT):
+        parts += ["## " + name, ""]
+        body = get_section(doc, name)
+        if body:
+            parts += [body, ""]
+    return "\n".join(parts).rstrip("\n") + "\n"
+
+
+def _manual_qa(testing):
+    lines = testing.split("\n")
+    for index, line in enumerate(lines):
+        if _MANUAL_QA.match(line):
+            rest = []
+            for following in lines[index + 1 :]:
+                if _SUBHEADING.match(following):
+                    break
+                rest.append(following)
+            return "\n".join(rest).strip()
+    return None
+
+
+def approval_problems(text):
+    """What stops `approve` (plan §4.3); empty when the plan can be approved."""
+    found = []
+    overview = get_section(text, OVERVIEW)
+    if not overview or not overview.strip():
+        found.append("## Overview is missing or empty")
+    testing = get_section(text, TESTING)
+    if testing is None:
+        found.append("## Testing Strategy is missing")
+    else:
+        manual = _manual_qa(testing)
+        scenario = manual is not None and bool(_SCENARIO.search(manual))
+        if not scenario and not _NOT_NEEDED.search(testing):
+            found.append(
+                "## Testing Strategy needs a ### Manual QA scenario, "
+                'or an explicit "Not needed" with the reason'
+            )
+    if not has_section(text, TODO):
+        found.append("## To-Do List is missing")
+    elif not any(not item.checked for item in todo_items(text)):
+        found.append("## To-Do List has no unchecked item")
+    return found

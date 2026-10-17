@@ -13,9 +13,13 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
 - `bin/lib/bottega/` — Python 3 standard library only: `xdg` (paths), `util`
   (errors, atomic writes, slugify, git), `config` (profiles, roles, effort
   sets, `${NAME}` expansion), `taskdoc` (task.md sections, `[T<n>]` ids, plan
-  hash), `state` (state.json, the lock, task lookup), `worktree` (create,
-  remove, rail hashing), `cli` (argparse), `commands/` (one module per
-  subcommand).
+  hash, planner-output merge, approval checks), `state` (state.json, the
+  lock, task lookup), `worktree` (create, remove, rail hashing), `prompts`
+  (the strict `{{var}}` engine and overrides), `harness/` (`HARNESS_MATRIX`,
+  the registry, `claude.py` and `codex.py` drivers and parsers), `receipts`
+  (run directories, `run.json`, `error.json`), `dispatch` (one role dispatch
+  end to end), `cli` (argparse), `commands/` (one module per subcommand).
+- `prompts/<role>.md` — the role prompts (planner today).
 - `templates/task.md` — the task document template.
 - `tests/<suite>.sh` runs `tests/<suite>.py` (unittest) in an isolated
   HOME/XDG/PATH set up by `tests/lib/sandbox.sh`. `tests/helpers.py` holds the
@@ -33,6 +37,9 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
   empty after `./run-tests.sh`.
 - **Exit codes:** 0 ok · 2 refused (invalid config, wrong phase, lock held,
   plan changed) · 3 stopped · 64 bad invocation. argparse errors exit 64.
+- **Every harness flag lives in `HARNESS_MATRIX`** (`harness/__init__.py`);
+  the suite `harness-matrix` pins each one against the work plan.
+- **Receipts never hold environment values**, only variable names.
 - **Every deviation from the work plan goes in `NOTES.md`, dated.**
 - User-facing text is English, plain and short.
 

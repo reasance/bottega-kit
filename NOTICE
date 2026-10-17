@@ -15,9 +15,8 @@ Files adapted from vdaubry/bottega (HEAD 7e5137f, 2026-10-05):
   reference/server/constants/prompts/implementation.md  -> prompts/implementer.md
   reference/server/constants/prompts/review.md          -> prompts/reviewer.md
 
-The prompts land in later milestones; this list names them now so the
-attribution is in place before they do. prompts/judge.md is original to
-bottega-kit.
+prompts/planner.md ships from milestone M1; the implementer and reviewer
+prompts land in M2. prompts/judge.md is original to bottega-kit.
 
 The vdaubry/bottega licence follows.
 

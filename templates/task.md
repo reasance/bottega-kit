@@ -1,8 +1,8 @@
-# Task {{ task title }}
+# Task {{task_title}}
 
 ## Original Request
 
-<!-- bottega new fills this section with the request, verbatim, as a blockquote. Keep it as it is. -->
+{{original_request}}
 
 ## Overview
 

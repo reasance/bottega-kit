@@ -9,11 +9,11 @@ from .commands import (
     init,
     new,
     plan,
+    pr,
     resume,
     rm,
     show,
     signal,
-    stubs,
 )
 from .commands import run as run_command
 from .commands import list as listing
@@ -28,6 +28,7 @@ COMMANDS = (
     approve,
     run_command,
     resume,
+    pr,
     show,
     listing,
     rm,
@@ -56,7 +57,6 @@ def build_parser():
     sub.required = True
     for module in COMMANDS:
         module.add_parser(sub)
-    stubs.add_parsers(sub)
     return parser
 
 

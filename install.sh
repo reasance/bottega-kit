@@ -7,6 +7,9 @@
 # Env overrides:
 #   BOTTEGA_DATA_HOME  default ${XDG_DATA_HOME:-~/.local/share}/bottega-kit
 #   BOTTEGA_BIN_HOME   default ~/.local/bin
+# Set by `npx bottega-kit`, which installs from a temporary clone it deletes:
+#   BOTTEGA_INSTALL_SOURCE  recorded as the source instead of this directory
+#   BOTTEGA_INSTALL_REF     the tag or branch that was cloned
 set -euo pipefail
 
 KIT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,7 +17,7 @@ DATA_HOME="${BOTTEGA_DATA_HOME:-${XDG_DATA_HOME:-$HOME/.local/share}/bottega-kit
 BIN_HOME="${BOTTEGA_BIN_HOME:-$HOME/.local/bin}"
 
 case "${1:-}" in
-  -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
   "") ;;
   *) echo "unknown argument: $1" >&2; exit 64 ;;
 esac
@@ -57,15 +60,17 @@ if git -C "$KIT" rev-parse --git-dir >/dev/null 2>&1; then
   commit="$(git -C "$KIT" rev-parse HEAD 2>/dev/null || true)"
   [ -z "$(git -C "$KIT" status --porcelain 2>/dev/null)" ] || dirty=true
 fi
-python3 - "$DATA_HOME/installed-version.json" "$version" "$commit" "$dirty" "$KIT" <<'PY'
+python3 - "$DATA_HOME/installed-version.json" "$version" "$commit" "$dirty" \
+  "${BOTTEGA_INSTALL_SOURCE:-$KIT}" "${BOTTEGA_INSTALL_REF:-}" <<'PY'
 import datetime, json, os, sys, tempfile
-path, version, commit, dirty, source = sys.argv[1:]
+path, version, commit, dirty, source, ref = sys.argv[1:]
 marker = {
     "schema_version": 1,
     "version": version,
     "commit": commit or None,
     "commit_dirty": dirty == "true",
     "source": source,
+    "ref": ref or None,
     "installed_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
 }
 fd, temp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".installed-version.")

@@ -4,58 +4,53 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
-### Added
+## [0.1.0] — 2026-10-17
 
-- Milestone M2: the loop. Tested against fake harnesses only.
-- `bottega run` runs the implementer and the reviewer in turns, up to the
-  approved round cap, then the judge if one is bound. It stops with a reason
-  (`blocked`, `cap-reached`, `judge-needs-work`, `dispatch-failed`, `timeout`,
-  `identity-mismatch`, `role-modified-worktree`, `interrupted`) and exit 3, or
-  ends done with exit 0. One line per dispatch on stdout.
-- `bottega resume [--rounds N]` continues a stopped task with a fresh cap.
-- The reviewer's findings replace `## Review Findings`, its `--uncheck` ids
-  are unticked, and the judge's verdict replaces `## Verdict`.
-- The implementer, reviewer and judge prompts, adapted from vdaubry/bottega.
-- `bottega show` prints the round, the next role, the last signal, the stop
-  reason and every run; `--json` adds each run's `run.json`.
-- A stopped task can be approved again after an edit to its plan.
-- The identity check compares only the model that did the work (Claude's
-  init and assistant events). Helper models listed in Claude's `modelUsage`
-  are recorded as `observed_models` and never stop a run.
-- Milestone M1: the harness layer, `plan` and `approve`. Tested against fake
-  harnesses only; the live probe on real `claude` and `codex` has not run.
-- `bottega plan` runs the planner once. Its final message becomes the plan in
-  `task.md`, or a `## Questions for you` section you answer inline before the
-  next `bottega plan`. One line per dispatch; exit 3 with a receipt when the
-  dispatch fails, the model is not the one requested, the output is not a
-  plan, or the planner changed the worktree.
-- `bottega approve [--rounds N]` checks the plan, gives each to-do item a
-  stable `[T<n>]` id, validates every role binding (profile, effort, harness
-  on PATH, environment variables) and records the plan hash, the roles and the
-  round cap. Approving again after an edit keeps the existing ids.
-- The `claude` and `codex` drivers, with every flag in one table; proxied
-  Claude profiles run with a fresh `CLAUDE_CONFIG_DIR` and without Anthropic
-  credentials; profile timeouts kill the harness's process group.
-- Receipts per run: `runs/NNN-<role>/` with the prompt, the final message,
-  raw events, `run.json` (environment variable names only, never values) and
-  `error.json` on failure.
-- A strict `{{var}}` prompt engine with overrides in
-  `~/.config/bottega-kit/prompts/`, and the planner prompt adapted from
-  vdaubry/bottega.
-- Milestone M0, the skeleton. No model is dispatched yet.
-- `bottega init` writes a starter configuration for the harnesses it finds on
-  PATH (`claude`, `codex`). `bottega doctor [--json]` checks python3, git, gh,
-  the configuration, each role's harness and the `${NAME}` variables profiles
-  reference.
-- `bottega new` creates a task: its directory, `task.md` seeded with the title
-  and the verbatim request, a worktree beside the repository and a
-  `bottega/<task-id>` branch. `show`, `list` and `rm` manage tasks.
-- `bottega signal`, the command agents run to report `ready`, `needs-work` or
-  `blocked`, with every validation it will need in the loop.
-- `pr` is registered and exits 64 until its milestone lands.
-- `install.sh`, `uninstall.sh`, `doctor.sh`, the parallel test runner, the
-  version-surface check, CI, and fake `claude`/`codex` executables for the
-  suites.
+The first release. A planner, an implementer, a reviewer and an optional judge
+run on Claude Code and Codex in a git worktree, with a receipt for every
+dispatch.
+
+**Tasks and configuration.** `bottega init` writes a starter configuration for
+the harnesses it finds on PATH, and `bottega doctor` checks python3, git, gh,
+the configuration, each role's harness and the environment variables profiles
+reference. `bottega new` creates a task: a directory outside the repository
+with `task.md` holding your request verbatim, a worktree beside the repository
+and a `bottega/<task-id>` branch. `show`, `list` and `rm` manage tasks.
+`bottega signal` is the command agents run to report `ready`, `needs-work` or
+`blocked`.
+
+**Planning and approval.** `bottega plan` runs the planner once; its final
+message becomes the plan, or questions you answer inside `task.md` before the
+next `plan`. `bottega approve` checks the plan, gives each to-do item a stable
+`[T<n>]` id, and freezes the plan's hash, the roles and the round cap. The
+`claude` and `codex` drivers keep every flag in one table. A proxied Claude
+profile runs without your Anthropic credentials. Prompts can be overridden
+per user.
+
+**The loop.** `bottega run` alternates the implementer and the reviewer up to
+the cap, then asks the judge if one is bound. It ends done (exit 0) or stopped
+(exit 3) with a reason, and never retries. The reviewer's findings and the
+judge's verdict replace their sections of `task.md`. A planner, reviewer or
+judge that changes tracked code stops the task, and so does a harness that
+reports another model. `bottega resume` continues a stopped task with a fresh
+cap.
+
+**Pull requests and packaging.** `bottega pr` commits what is left in the
+worktree, pushes the branch to `origin` and opens the pull request with `gh`.
+It works on a done or a stopped task, and a stopped task's pull request says
+why it stopped. An existing pull request is reported, not duplicated.
+`npx bottega-kit` installs the release that matches the npm package. The
+README and `docs/` describe the process, the configuration and the harness
+flags.
+
+### Known limits
+
+- No live run has been recorded. Every harness flag, permission rule and event
+  field was tested against fake CLIs only; the open questions are listed in
+  `NOTES.md` and `docs/compatibility.md`.
+- Two harnesses: `claude` and `codex`.
+- A text-patch harness for chat-completion endpoints, and Kimi, Grok and
+  Gemini drivers, are planned for later (`docs/later.md`).
 
 ## [0.0.0] — 2026-10-17
 

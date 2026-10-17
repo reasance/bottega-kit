@@ -7,32 +7,45 @@ one of those CLIs. This is not vdaubry/bottega: the process is
 [theirs](https://github.com/vdaubry/bottega); the local, file-based, multi-vendor
 loop is this project.
 
-## Current release: 0.0.0
+## Current release: 0.1.0
 
-Nothing is released yet. The repository holds milestones M0 to M2:
-configuration, tasks, worktrees, the `signal` command, the `claude` and `codex`
-drivers, `plan`, `approve`, `run` and `resume`. `pr` comes next. The drivers
-have been tested against fake harnesses only.
+The first release: `init`, `doctor`, `new`, `plan`, `approve`, `run`, `resume`,
+`pr` and the task commands, on the `claude` and `codex` harnesses. Every
+harness flag has been tested against fake CLIs only; no live run has been
+recorded yet. See [docs/compatibility.md](docs/compatibility.md).
 
-## How it works
+## What you need
 
+- git
+- gh, logged in, for `bottega pr`
+- python3 3.9 or newer
+- at least one of `claude` (Claude Code) and `codex` (Codex CLI), logged in
+- node 18 or newer, only for `npx bottega-kit`
+
+## Install
+
+```sh
+npx bottega-kit
 ```
-bottega new      task directory, worktree and branch; task.md holds your request
-bottega plan     the planner writes the plan into task.md, or asks you questions
-bottega approve  you approve the plan once; its hash, the roles and the cap are frozen
-bottega run      implementer and reviewer take turns, up to the round cap; then the judge
-bottega pr       commit if needed, push to origin, open the pull request
+
+This clones the release that matches the npm package, runs its `./install.sh`,
+then `./doctor.sh`, and deletes the clone. `doctor` fails on a new machine
+until you run `bottega init`. Or from a clone:
+
+```sh
+git clone https://github.com/matteoscurati/bottega-kit
+cd bottega-kit
+./install.sh
 ```
 
-Each role is bound to a profile: a harness (`claude` or `codex`), a model and an
-effort. Agents report back by running `bottega signal`; bottega-kit decides what
-happens next from that signal and from the files on disk, never from the
-agent's prose.
+Both copy the command to `~/.local/share/bottega-kit` and link
+`~/.local/bin/bottega`. `./uninstall.sh`, from a clone, removes them and keeps
+your tasks and configuration.
 
-## Configuration
+## Example: Fable plans and judges, Opus implements and reviews
 
-`~/.config/bottega-kit/config.json`. Fable plans and judges, Opus implements and
-reviews, all through Claude Code:
+`~/.config/bottega-kit/config.json`, which `bottega init` writes when it finds
+`claude`:
 
 ```json
 {
@@ -48,55 +61,24 @@ reviews, all through Claude Code:
 }
 ```
 
-A profile may also set `env` (values may reference your environment as
-`${NAME}`; bottega-kit stores no secrets), `aliases`, `timeout` and, on
-`claude`, `max_budget_usd`. The judge is optional.
-
-## Install
+The whole sequence, from a repository with an `origin` on GitHub:
 
 ```sh
-git clone <this repository> bottega-kit
-cd bottega-kit
-./install.sh            # copies to ~/.local/share/bottega-kit, links ~/.local/bin/bottega
-bottega init            # starter config from the CLIs found on PATH
-bottega doctor          # checks tools, config and harnesses
-```
-
-`./uninstall.sh` removes the command and keeps your tasks and configuration.
-
-## Use
-
-```sh
+bottega init
+bottega doctor
 cd your-repo
 bottega new --title "Add a dry-run flag" --request "Add --dry-run to the export command."
-bottega plan <task>      # a unique prefix or suffix of the id is enough
-bottega approve <task> --rounds 2
-bottega run <task>
-bottega resume <task> --rounds 1   # after a stop
-bottega list
-bottega show <task>
-bottega rm <task> --yes  # removes the worktree and branch; keeps the task directory
+bottega plan 20261017-0930-add-a-dry-run-flag     # a unique prefix or suffix is enough
+# read task.md; answer any questions in it and run plan again
+bottega approve dry-run-flag
+bottega run dry-run-flag
+bottega pr dry-run-flag
 ```
 
-`bottega plan` runs the planner once and prints one line:
+`plan` and `run` print one line per dispatch, and nothing else on stdout:
 
 ```
-001 planner fable-judge claude-fable-5-1 → questions (41s)
-```
-
-If the planner has questions, they are written into `task.md` under
-`## Questions for you`. Answer under each question, in the file, and run
-`bottega plan` again. When the planner writes a plan instead, it replaces the
-plan sections of `task.md`; your original request stays as you wrote it. Read
-the plan, edit it if you like, then `bottega approve`. Approval gives every
-to-do item an id such as `[T3]` and records a hash of the plan, the roles and
-the round cap; editing the plan afterwards means approving again.
-
-`bottega run` starts the implementer, then the reviewer, and repeats the pair
-until the reviewer is satisfied or the round cap is reached; then the judge, if
-one is bound, gives the final word. Each dispatch prints one line:
-
-```
+001 planner fable-judge claude-fable-5-1 → planned (2m41s)
 002 implementer opus-builder claude-opus-5 → done (6m02s)
 003 reviewer opus-reviewer claude-opus-5 → needs-work (2m14s)
 004 implementer opus-builder claude-opus-5 → done (3m40s)
@@ -104,52 +86,108 @@ one is bound, gives the final word. Each dispatch prints one line:
 006 judge fable-judge claude-fable-5-1 → ready (48s)
 ```
 
-The implementer edits the worktree and ticks the to-do items in `task.md`; it
-never commits. The reviewer's final message replaces `## Review Findings`, the
-items it names with `--uncheck` are unticked for the next implementer, and the
-judge's final message replaces `## Verdict`. A reviewer or judge that changes a
-tracked file or commits stops the task.
+`pr` prints the pull request's URL, or `pr exists: <url>`.
 
-A run ends in one of two ways:
+## Example: three vendors, no judge
 
-- **done** (exit 0): the reviewer signalled `ready`, and so did the judge if
-  there is one.
-- **stopped** (exit 3), with the reason on stderr and in `bottega show`:
-  `blocked` (the reviewer needs you), `cap-reached`, `judge-needs-work`,
-  `dispatch-failed`, `timeout`, `identity-mismatch` (the harness reported
-  another model), `role-modified-worktree`, or `interrupted` (Ctrl-C).
+The planner on Claude Code, the implementer on Codex, the reviewer on Claude
+Code pointed at Z.AI's Anthropic-compatible endpoint:
 
-`bottega resume <task> [--rounds N]` continues a stopped task with a cap of
-the current round plus N (default: the configuration's `rounds`). After
-`cap-reached` or `judge-needs-work` it starts a new round with the
-implementer; after any other stop it runs again the role that stopped. Nothing
-is retried for you. If you edit the plan, approve it again first: `run` and
-`resume` refuse a plan whose hash no longer matches the approval, and a
-profile that was removed or a variable that is no longer set.
+```json
+{
+  "schema_version": 1,
+  "profiles": {
+    "fable-judge":  {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
+    "sol-builder":  {"harness": "codex",  "model": "gpt-5.6-sol",     "effort": "high"},
+    "glm-reviewer": {"harness": "claude", "model": "glm-5.3-flash",   "effort": "max",
+                     "env": {"ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+                             "ANTHROPIC_AUTH_TOKEN": "${ZAI_API_KEY}",
+                             "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5.3-flash"},
+                     "aliases": ["opus"]}
+  },
+  "roles": {"planner": "fable-judge", "implementer": "sol-builder",
+            "reviewer": "glm-reviewer"},
+  "rounds": 3
+}
+```
 
-Exit codes: 0 done · 2 refused (wrong phase, plan changed, a binding no longer
-works, the task is locked by another bottega) · 3 stopped · 64 bad invocation.
+`${ZAI_API_KEY}` is read from your environment when the reviewer runs;
+bottega-kit stores no secret, and `doctor` and `approve` refuse while it is
+unset. Because `ANTHROPIC_BASE_URL` is set, the reviewer runs with a fresh
+Claude configuration directory and without your Anthropic credentials.
+`aliases` lists other names the endpoint may report for the model; any other
+name stops the run as `identity-mismatch`. To change one role for one task
+only, pass `--role implementer=sol-builder` to `new` or `plan`.
 
-`bottega show <task>` prints the phase, the round and the cap, the next role,
-the last signal, the stop reason and one line per run;
-`bottega show <task> --json` adds every run's `run.json`.
+## The roles
 
-Every dispatch leaves a receipt in the task directory, under
-`runs/NNN-<role>/`: the prompt, the final message, the raw events, `run.json`,
-`signal.json` when the agent signalled and, when it failed, `error.json`. A
-failed dispatch exits 3 and changes nothing in `task.md`.
+| role | what it does | what it may change | its product |
+|---|---|---|---|
+| planner | reads the repository and the request, writes the plan or asks questions | nothing | its final message becomes the plan in `task.md` |
+| implementer | works through the unchecked to-do items, adds tests, ticks items | the worktree and the boxes in `task.md`; never commits or pushes | a summary, kept in the receipt |
+| reviewer | checks every ticked item, runs the tests and the manual QA scenarios | nothing it keeps: a changed tracked file stops the task | `## Review Findings` and a signal: `ready`, `needs-work` or `blocked` |
+| judge | optional; reads the plan and the diff, says whether to merge | nothing | `## Verdict` and a signal: `ready` or `needs-work` |
 
-To change a prompt, copy it from the kit's `prompts/` directory to
-`~/.config/bottega-kit/prompts/<name>.md` and edit it. Variables are written
-`{{name}}`; an unknown name is refused before anything runs.
+Agents report back by running `bottega signal`. bottega-kit decides what
+happens next from that signal and the files on disk, never from the agent's
+prose. [docs/process.md](docs/process.md) has the loop step by step.
 
-A repository may hold a `bottega.json` with `{"test_cmd": "...", "base": "main"}`:
-`test_cmd` is given to the agents, `base` is the branch new tasks start from.
+## Exit codes
 
-Tasks live in `~/.local/share/bottega-kit/tasks/<project>/<task-id>/`, outside the
-repository, so they outlive the worktree.
+| code | meaning |
+|---|---|
+| 0 | done |
+| 2 | refused: wrong phase, plan changed since approval, invalid configuration, a binding that no longer works, task locked |
+| 3 | stopped: `blocked`, `cap-reached`, `judge-needs-work`, `dispatch-failed`, `timeout`, `identity-mismatch`, `role-modified-worktree`, `interrupted` |
+| 64 | bad invocation |
+
+A stopped task continues with `bottega resume <task> [--rounds N]`.
+
+## Where things live
+
+- Configuration: `~/.config/bottega-kit/config.json`, and prompt overrides in
+  `~/.config/bottega-kit/prompts/`.
+- Tasks: `~/.local/share/bottega-kit/tasks/<project>/<task-id>/`, holding
+  `task.md`, `state.json` and one receipt directory per dispatch under `runs/`.
+  They live outside the repository, so they outlive the worktree.
+- The worktree: `<repo>-worktrees/<task-id>/`, beside the repository, on the
+  branch `bottega/<task-id>`. `bottega rm` removes it and the branch.
+- A repository may hold `bottega.json` with `test_cmd` and `base`.
+
+[docs/configuration.md](docs/configuration.md) covers every setting.
+
+## What bottega-kit never does
+
+- Retry a failed dispatch, fall back to another model, or substitute a profile.
+- Bring a model of its own. Every dispatch runs a profile you bound, and the
+  harness must report the model you asked for.
+- Store a secret. Profiles name environment variables; receipts record names,
+  never values.
+- Merge, or push anywhere but `origin`.
+- Let the planner, the reviewer or the judge change your code: their runs are
+  checked against the worktree before and after.
+
+## Not vdaubry/bottega
+
+[vdaubry/bottega](https://github.com/vdaubry/bottega) is a web platform with a
+server, a database and a UI. bottega-kit took its process: the spec-first task
+document, the planner, implementer and reviewer prompts, the plan template,
+the "agents signal with a command" rule, the review cap with no unreviewed fix
+pass, and one worktree per task. It did not take the platform. The judge
+role, the profiles across vendors and the receipts are this project's. See
+`NOTICE` for the files adapted.
+
+## Documentation
+
+- [docs/process.md](docs/process.md): the loop, rounds, resume, signals,
+  receipts, rails.
+- [docs/configuration.md](docs/configuration.md): profiles, roles,
+  `bottega.json`, prompt overrides, environment variables.
+- [docs/compatibility.md](docs/compatibility.md): what each harness is run
+  with, and what has been verified.
+- [docs/later.md](docs/later.md): what is not built yet.
 
 ## Licence
 
-MIT. The process and parts of the templates come from
+MIT. The process and parts of the prompts and the template come from
 [vdaubry/bottega](https://github.com/vdaubry/bottega), also MIT; see `NOTICE`.

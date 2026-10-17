@@ -355,3 +355,90 @@ complete.
   project's test suite in the foreground for up to ten minutes.
 - Which model names Claude Code lists in `modelUsage` besides the content
   model.
+
+## 2026-10-17 — milestone M3
+
+- **No live run, again.** `pr`, the npm wrapper and the docs are tested
+  against fake `claude`, `codex` and `gh` and local repositories only.
+  `docs/compatibility.md` says so. Built on branch `m3-pr-docs-packaging`,
+  merged into `main` with `--no-ff`; nothing pushed, tagged or published.
+- **`pr` uses real git, a fake gh.** Plan §5 M3 said fake `git` and `gh`; the
+  team lead's brief said real git with a local bare origin, which tests more.
+  The fake gh lives in `tests/fake-gh/`, not `tests/fakes/`, so it is on PATH
+  only in the `pr` suite and `doctor`'s "gh missing" warning stays testable.
+  The suite configures origin as `https://github.com/acme/app.git` and
+  rewrites it to the bare repository with `url.<bare>.insteadOf`.
+- **gh is pinned to origin.** gh picks the base repository from the remotes
+  and prefers one named `upstream`, which would break "origin only". `pr`
+  therefore passes `--repo HOST/OWNER/REPO`, parsed from origin's configured
+  URL (`remote.origin.url`, before any `insteadOf`), in https, ssh and scp
+  forms. An origin that is not such a URL (a local path, say) is refused (2)
+  like a missing origin, before anything changes.
+- **Order and refusals in `pr`:** phase (done or stopped), the worktree
+  exists, origin, gh on PATH, then the commit, then "nothing to submit"
+  (2) when the branch has no commit ahead of `origin/<base>` (or local
+  `<base>`) and nothing was uncommitted — bottega's PR agent stops in the
+  same case — then the push, `gh pr view`, `gh pr create`. A failed commit,
+  push or `gh pr create` exits 2 with the tool's whole message; the exit-code
+  vocabulary has nothing closer. `state.pr` is written only on success.
+- **`gh pr view --json url,state`**, not `url` alone: a CLOSED pull request
+  for the branch is not reported as existing, and a new one is created. An
+  open or merged one prints `pr exists: <url>`.
+- **The PR body.** A stopped task's body *starts* with
+  `**Stopped: <reason> — <detail>**` and one sentence, so a reader cannot miss
+  it, rather than coming after the verdict. The template's HTML comments are
+  removed, so an empty Review Findings or Verdict reads "No review findings
+  were recorded." or is left out. The body is kept as `pr-body.md` in the task
+  directory, as a receipt. The phase does not change after `pr`;
+  `state.pr = {url, at, commit}` (the pushed HEAD), `new` writes `pr: null`,
+  and `show` prints a `pr` row. `pr` takes the task lock.
+- **`commands/stubs.py` is gone;** `cli-smoke` checks that `run`, `resume`
+  and `pr` refuse an unknown task (64) instead.
+- **npm wrapper:**
+  - It clones `--depth 1 --branch <ref>`, so `--ref` takes a tag or a branch,
+    not a commit.
+  - With the default ref, the cloned `version.py` must equal the package's
+    version, or it refuses (1). `--ref` is the user's choice and is not
+    checked.
+  - Unknown arguments are refused (64) instead of being forwarded as
+    delegation-kit does, because `install.sh` takes none.
+  - There is no `--uninstall` (in `docs/later.md`).
+  - Errors are thrown and caught at the top, so the temporary clone is
+    removed on every failure path. delegation-kit's `die()` inside `try`
+    skipped its cleanup. Ctrl-C can still leave the clone behind.
+  - A failing doctor makes the wrapper exit with doctor's code, as
+    delegation-kit does, with a hint. A new machine has no configuration,
+    so `npx bottega-kit` exits 2 there until `bottega init`. README says so.
+- **`install.sh` records the npm source.** `BOTTEGA_INSTALL_SOURCE` and
+  `BOTTEGA_INSTALL_REF`, set by the wrapper, become `source` and a new `ref`
+  key in `installed-version.json`. A checkout install still records its
+  directory and `ref: null`. The wrapper test checks that no installed file
+  or link mentions the temporary directory.
+- **The node test is a CI job** (`npm-wrapper`, ubuntu, node 20), not a
+  `run-tests.sh` suite, as in delegation-kit, so the suites do not need
+  node. CLAUDE.md lists it among the gates before a pull request.
+- **A new suite, `tests/version-tag.sh`,** runs `version-consistency.sh
+  --tag` on tags made in a temporary copy of the version surfaces: an
+  annotated tag with the right subject passes; another version, a bare
+  `v` tag, a missing tag, a lightweight tag and a wrong subject fail.
+- **CHANGELOG 0.1.0** is one paragraph per milestone plus "Known limits", as
+  the brief asked, replacing the line-per-feature Unreleased list. It is dated
+  2026-10-17, the day of the bump; if the owner tags on another day, the date
+  moves with the tag.
+- **`package.json`** points `repository`, `homepage` and `bugs` at
+  `https://github.com/matteoscurati/bottega-kit`, which does not exist yet.
+  `npm pack --dry-run` lists six files: the wrapper, `package.json`, README,
+  CHANGELOG, LICENSE, NOTICE.
+- **README** keeps the §2.16 paragraph word for word, adds node 18 to "What
+  you need" (only for `npx`), and its sample dispatch lines carry illustrative
+  durations, not measured ones.
+- **NOTICE** lost a sentence about which milestone ships which prompt.
+- **Commit attribution:** the M3 commits carry no attribution lines, as the
+  brief asked and as M0 to M2 did.
+
+### Live-probe unknowns added by M3
+
+- Whether gh accepts `--repo HOST/OWNER/REPO` for a GitHub Enterprise host,
+  and whether an ssh host alias in origin's URL needs handling.
+- What `gh pr view <branch> --json url,state` returns for a branch whose pull
+  request was merged, and whether it ever prompts.

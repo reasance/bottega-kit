@@ -19,13 +19,20 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
   the registry, `claude.py` and `codex.py` drivers and parsers), `receipts`
   (run directories, `run.json`, `error.json`), `dispatch` (one role dispatch
   end to end), `loop` (the transition table `run` and `resume` drive), `cli`
-  (argparse), `commands/` (one module per subcommand).
+  (argparse), `commands/` (one module per subcommand; `pr` drives git and gh,
+  no agent).
 - `prompts/<role>.md` — the planner, implementer, reviewer and judge prompts.
 - `templates/task.md` — the task document template.
 - `tests/<suite>.sh` runs `tests/<suite>.py` (unittest) in an isolated
   HOME/XDG/PATH set up by `tests/lib/sandbox.sh`. `tests/helpers.py` holds the
-  shared fixtures. `tests/fakes/{claude,codex}` stand in for the real CLIs.
-  `tests/version-consistency.sh` is a suite of its own.
+  shared fixtures. `tests/fakes/{claude,codex}` stand in for the real CLIs;
+  `tests/fake-gh/gh` stands in for gh and is put on PATH only by the `pr`
+  suite. `tests/version-consistency.sh` and `tests/version-tag.sh` are suites
+  of their own.
+- `bin/npm-installer.mjs` — the `npx bottega-kit` wrapper, plain Node 18, no
+  dependencies; `tests/npm-installer.test.mjs` tests it with `node --test`
+  (a CI step of its own, not a `run-tests.sh` suite).
+- `docs/` — `process.md`, `configuration.md`, `compatibility.md`, `later.md`.
 - Shell only for `install.sh`, `uninstall.sh`, `doctor.sh`, `run-tests.sh` and
   the `tests/*.sh` runners.
 
@@ -52,23 +59,50 @@ git ls-files '*.sh' 'bin/*' 'tests/fakes/*' | while read -r f; do
   head -1 "$f" | grep -q '^#!.*\(bash\|sh\)' && printf '%s\n' "$f"
 done | xargs shellcheck -S warning
 bash tests/version-consistency.sh
+node --test tests/npm-installer.test.mjs
 ./run-tests.sh
 ```
 
 ## Release tagging
 
+**Never tag, push a tag, create a Release or publish to npm unless the owner
+says so for that version.**
+
 **Tag format — `bottega-kit--v<MAJOR>.<MINOR>.<PATCH>`.** Package name, two
 hyphens, `v`, semver. A generic release skill defaults to a bare `v<VERSION>`;
 that is wrong here.
 
-- **Never tag unless the owner says so.**
-- **Always annotated:** `git tag -a -F <notes-file>`. Subject
-  `bottega-kit <VERSION>`, blank line, a short prose summary.
-- **Tag the merge commit on `main`**, after the PR merges.
-- **Push the commit before the tag.** A pushed tag is final.
-- Every tag gets a GitHub Release:
-  `gh release create "bottega-kit--v<VERSION>" --title "bottega-kit <VERSION>" --notes-file <notes>`,
-  with the CHANGELOG section as the notes.
+### Before tagging
+
+1. All four version surfaces carry the new version (below), and the
+   CHANGELOG section for it is final. `[Unreleased]` stays, empty.
+2. Every gate in "Before a pull request" passes, and CI is green on `main`.
+3. **Refresh `docs/compatibility.md` from a real run.** One live end-to-end
+   run (`new`, `plan`, `approve`, `run`, `pr`) on a throwaway repository,
+   authorized by the owner, one dispatch set at a time. Replace the "Verified
+   snapshot" with what was observed: date, machine, CLI versions, which
+   profiles ran, what failed. Settle the open unknowns it answers, in
+   `HARNESS_MATRIX` and in `NOTES.md`. Never carry numbers forward.
+
+### Tagging and the Release
+
+- **Tag the merge commit on `main`**, after the PR merges, never a commit on a
+  feature branch.
+- **Always annotated:** `git tag -a "bottega-kit--v<VERSION>" -F <notes>`.
+  Subject `bottega-kit <VERSION>`, blank line, a short prose summary. Write the
+  notes to a file; release prose has backticks and newlines.
+- Check it locally: `tests/version-consistency.sh --tag bottega-kit--v<VERSION>`.
+- **Push the commit before the tag.** A pushed tag is final: never delete and
+  recreate it; fix forward with a new patch version.
+- Every tag gets a GitHub Release, in the same pass, with the CHANGELOG
+  section for that version as its notes:
+  `gh release create "bottega-kit--v<VERSION>" --title "bottega-kit <VERSION>" --notes-file <notes>`.
+- Pushing the tag runs `.github/workflows/publish-npm.yml`, which checks the
+  tag against `package.json`, runs the version check with `--tag` and the npm
+  wrapper test, refuses a version already on npm, and publishes with the
+  `NPM_TOKEN` repository secret. The npm package is the wrapper only;
+  `npx bottega-kit` clones the tag `bottega-kit--v<its version>`, so the tag
+  must exist before anyone runs it.
 
 ### Version surfaces
 
@@ -86,10 +120,10 @@ tests/version-consistency.sh
 tests/version-consistency.sh --tag bottega-kit--v<VERSION>
 ```
 
-CI runs shellcheck, ruff, the version check and the suites on every pull
-request and on pushes to `main`; a tag push re-runs the version check with
-`--tag`. CI never runs a real model; the live gates in the work plan are run by
-hand, only when the owner authorizes them.
+CI runs shellcheck, ruff, the version check, the npm wrapper test and the
+suites on every pull request and on pushes to `main`; a tag push re-runs the
+version check with `--tag`. CI never runs a real model; the live run in
+"Before tagging" is done by hand, only when the owner authorizes it.
 
 ### Semver
 

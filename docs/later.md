@@ -1,8 +1,8 @@
 # Later
 
 Ideas that do not serve the loop in 0.1.0. Each one is a line here, not code,
-until the owner decides otherwise. Seeded from the work plan (§7 and M4) on
-2026-10-17.
+until the owner decides otherwise. Seeded from the work plan (§7 and M4) and
+refreshed for 0.1.0 on 2026-10-17 with what the milestones deferred.
 
 ## 0.2.0 candidates (M4; not started without the owner's word)
 
@@ -38,3 +38,10 @@ until the owner decides otherwise. Seeded from the work plan (§7 and M4) on
 - Checking the plan hash after every implementer dispatch, not only when
   `run` and `resume` start. Today an implementer that edits the plan text
   mid-run is caught at the next `resume`, not at once.
+- `npx bottega-kit --uninstall`. Today uninstalling needs a clone and its
+  `./uninstall.sh`.
+- `bottega pr` for an `origin` whose URL uses an ssh host alias
+  (`work:owner/repo`): gh is then given the alias as the host. Today the user
+  sets a plain `github.com` URL.
+- `bottega pr --draft`, labels, reviewers. Today `pr` opens a plain pull
+  request; `gh pr edit` does the rest.

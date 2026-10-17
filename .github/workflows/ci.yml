@@ -60,6 +60,19 @@ jobs:
             "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
           bash tests/version-consistency.sh --tag "${GITHUB_REF_NAME}"
 
+  npm-wrapper:
+    name: npm installer wrapper
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # Hermetic: local file:// clones, temporary homes, no network.
+      - name: npm installer wrapper tests
+        run: node --test tests/npm-installer.test.mjs
+
   tests:
     name: regression suites (macOS)
     # macOS is the platform bottega-kit targets first.

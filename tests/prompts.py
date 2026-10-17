@@ -237,7 +237,7 @@ class Overrides(unittest.TestCase):
             "task_title": "Override",
             "worktree": st["worktree"],
             "base_branch": "main",
-            "signal_cmd": "%s signal %s" % (ROOT / "bin" / "bottega", self.task),
+            "signal_cmd": "%s signal %s" % (ROOT / "bin" / "bottega", task_dir),
             "test_cmd": "make check",
             "round": "0",
             "rounds": "3",

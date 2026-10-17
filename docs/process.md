@@ -128,7 +128,7 @@ The reviewer and the judge end their turn by running one command, which their
 prompt gives with absolute paths:
 
 ```sh
-bottega signal <task> ready|needs-work|blocked "<reason>" [--uncheck T3 T7]
+bottega signal <task directory or id> ready|needs-work|blocked "<reason>" [--uncheck T3 T7]
 ```
 
 - The reviewer may signal all three; the judge `ready` or `needs-work`. The

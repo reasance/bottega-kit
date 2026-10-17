@@ -137,7 +137,7 @@ def values(st, task_dir, run_dir, role, rounds, test_cmd, bottega):
         "task_title": st["title"],
         "worktree": st["worktree"],
         "base_branch": st["base"],
-        "signal_cmd": "%s signal %s" % (bottega, st["task"]),
+        "signal_cmd": "%s signal %s" % (bottega, task_dir),
         "test_cmd": test_cmd or "",
         "round": str(st.get("round") or 0),
         "rounds": str(rounds),

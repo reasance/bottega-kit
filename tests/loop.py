@@ -151,7 +151,9 @@ class Transitions(LoopFixture, unittest.TestCase):
         self.assertEqual(record["round"], 1)
         # The prompts carry the round, the cap and the signal command.
         self.assertIn("round 1 of 3", self.calls[0]["stdin"])
-        self.assertIn("signal %s ready" % self.task, self.calls[1]["stdin"])
+        self.assertIn(
+            "signal %s ready" % self.box.task_dir(self.task), self.calls[1]["stdin"]
+        )
         self.assertNotIn("signal %s" % self.task, self.calls[0]["stdin"])
 
     def test_ready_without_a_judge_is_done(self):

@@ -110,10 +110,21 @@ def all_tasks(root=None):
 
 
 def resolve(ref, root=None):
-    """The task directory for a full id, or a unique prefix or suffix."""
+    """The task directory for a full id, a unique prefix or suffix, or the
+    absolute path of a task directory.
+
+    The path form needs no data home: an agent's shell may not inherit the
+    orchestrator's environment (Codex's `shell_environment_policy`, for one
+    drops everything but a core set), so the prompts name the task directory.
+    """
     ref = (ref or "").strip()
     if not ref:
         raise UsageError("a task id is required")
+    if os.path.isabs(ref):
+        path = Path(ref)
+        if (path / STATE_FILE).is_file():
+            return path
+        raise UsageError("%s is not a task directory (no %s)" % (ref, STATE_FILE))
     tasks = all_tasks(root)
     exact = [d for task_id, d in tasks if task_id == ref]
     matches = exact or [

@@ -305,9 +305,14 @@ class Loop:
         self.test_cmd = test_cmd
 
     def drive(self):
-        """Dispatch until DONE or STOP. Returns the exit code."""
+        """Dispatch until DONE or STOP. Returns the exit code.
+
+        The state is read once, under the lock, and kept in memory: agents
+        can write in the task directory, so state.json is only ever written
+        here, never read back mid-run.
+        """
+        st = state.load(self.task_dir)
         while True:
-            st = state.load(self.task_dir)
             role = st["next_role"]
             if role not in LOOP_ROLES:
                 raise Refused("task %s has no next role to run" % st["task"])
@@ -351,9 +356,8 @@ class Loop:
                 self.test_cmd,
             )
         except BaseException as error:
-            self.interrupted(run_name, role, error)
+            self.interrupted(st, run_name, role, error)
             raise
-        st = state.load(self.task_dir)
         result, warnings, signal = self.transition(st, role, outcome)
         entry = _entry(st, run_name)
         entry["status"] = "ok" if outcome.ok else "failed"
@@ -466,9 +470,8 @@ class Loop:
             return outcome.reason
         return error.get("detail") or outcome.reason
 
-    def interrupted(self, run_name, role, error):
+    def interrupted(self, st, run_name, role, error):
         """An exception mid-dispatch: the task stops `interrupted`, resumable."""
-        st = state.load(self.task_dir)
         if state.run_dir(self.task_dir, run_name).is_dir():
             entry = _entry(st, run_name)
             if entry:

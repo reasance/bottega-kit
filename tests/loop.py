@@ -305,6 +305,20 @@ class Transitions(LoopFixture, unittest.TestCase):
         self.assertEqual(len(record["warnings"]), 1)
         self.assertTrue(record["warnings"][0].startswith("implementer-committed"))
 
+    def test_an_agent_writing_state_json_does_not_steer_the_loop(self):
+        self.approved()
+        forged = json.dumps({"schema_version": 1, "phase": "done", "next_role": None})
+        path = self.dir / "state.json"
+        scribble = ["/bin/sh", "-c", "printf '%%s' '%s' > %s" % (forged, path)]
+        self.run_(implement(run=[scribble]), review("ready"), judge("ready"))
+        self.assertEqual(
+            [r for _, r, _ in self.summary()], ["implementer", "reviewer", "judge"]
+        )
+        st = self.state()
+        self.assertEqual(st["phase"], "done")
+        self.assertEqual(st["task"], self.task)
+        self.assertEqual(len(st["runs"]), 4)
+
     def test_reviewer_that_modifies_a_tracked_file_is_stopped(self):
         self.approved()
         bad = review("ready", writes={"README.md": "fixed it myself\n"})

@@ -1,15 +1,12 @@
 """bottega doctor: is this machine ready to run the configured roles?"""
 
 import json
-import shutil
-import subprocess
 import sys
 
 from .. import config, xdg
+from ..harness import probe
 from ..util import EXIT_REFUSED
 from ..version import __version__
-
-PROBE_TIMEOUT = 10
 
 
 def add_parser(sub):
@@ -37,29 +34,6 @@ class Report:
     @property
     def failed(self):
         return any(c["status"] == "fail" for c in self.checks)
-
-
-def probe(binary):
-    """(ok, first line of `<binary> --version` or the reason it failed)."""
-    path = shutil.which(binary)
-    if not path:
-        return False, "not on PATH"
-    try:
-        proc = subprocess.run(
-            [path, "--version"],
-            capture_output=True,
-            text=True,
-            timeout=PROBE_TIMEOUT,
-            stdin=subprocess.DEVNULL,
-        )
-    except subprocess.TimeoutExpired:
-        return False, "%s --version did not finish in %ds" % (path, PROBE_TIMEOUT)
-    except OSError as error:
-        return False, "%s --version could not start: %s" % (path, error)
-    first = (proc.stdout or proc.stderr).strip().splitlines()
-    if proc.returncode != 0:
-        return False, "%s --version exited %d" % (path, proc.returncode)
-    return True, "%s (%s)" % (first[0] if first else "version unknown", path)
 
 
 def check_tools(report):

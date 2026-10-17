@@ -60,7 +60,9 @@ def run(args):
         check_phase(st)
         doc_path = state.task_doc(task_dir)
         text = doc_path.read_text(encoding="utf-8")
-        problems = taskdoc.approval_problems(text)
+        problems = taskdoc.approval_problems(
+            text, require_unchecked=st["phase"] != "stopped"
+        )
         if problems:
             raise taskdoc.TaskDocError(
                 "cannot approve %s:\n  %s" % (doc_path, "\n  ".join(problems))

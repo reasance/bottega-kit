@@ -362,8 +362,11 @@ def _manual_qa(testing):
     return None
 
 
-def approval_problems(text):
-    """What stops `approve` (plan §4.3); empty when the plan can be approved."""
+def approval_problems(text, require_unchecked=True):
+    """What stops `approve` (plan §4.3); empty when the plan can be approved.
+
+    `require_unchecked=False` is for approving a stopped task again: the loop
+    may already have ticked every item."""
     found = []
     overview = get_section(text, OVERVIEW)
     if not overview or not overview.strip():
@@ -381,6 +384,6 @@ def approval_problems(text):
             )
     if not has_section(text, TODO):
         found.append("## To-Do List is missing")
-    elif not any(not item.checked for item in todo_items(text)):
+    elif require_unchecked and not any(not item.checked for item in todo_items(text)):
         found.append("## To-Do List has no unchecked item")
     return found

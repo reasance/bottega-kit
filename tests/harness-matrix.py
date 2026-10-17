@@ -117,8 +117,9 @@ class Fixture:
         }
         self.cfg = cfg
         self.box.write_config(cfg)
-        # The implementer, reviewer and judge prompts ship in M2; overrides
-        # stand in for them here (and exercise the override path).
+        # Short overrides stand in for the implementer, reviewer and judge
+        # prompts here (and exercise the override path); the loop suite
+        # dispatches the shipped ones.
         overrides = self.box.root / "config" / "bottega-kit" / "prompts"
         overrides.mkdir(parents=True)
         for role in ("implementer", "reviewer", "judge"):

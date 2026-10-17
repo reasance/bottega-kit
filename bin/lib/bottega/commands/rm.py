@@ -38,9 +38,10 @@ def run(args):
             print("nothing removed")
             return 0
         repo = Path(st["repo"])
-        done = (
-            worktree.remove(repo, st["worktree"], st["branch"]) if repo.is_dir() else []
-        )
+        if repo.is_dir():
+            done = worktree.remove(repo, st["worktree"], st["branch"])
+        else:
+            done = ["repository %s is gone; nothing to remove there" % repo]
         st = state.load(task_dir)
         st["phase"] = "removed"
         st["current_run"] = None

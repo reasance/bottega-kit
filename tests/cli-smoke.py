@@ -5,6 +5,7 @@ list, rm, and the subcommands later milestones implement."""
 import datetime
 import json
 import re
+import shutil
 import unittest
 
 from helpers import ROOT, Sandbox, main
@@ -244,6 +245,13 @@ class Tasks(unittest.TestCase):
         self.assertEqual(
             new_command.task_id_for("Same", project, now), "20261017-0905-same-2"
         )
+
+    def test_rm_after_the_repository_is_gone(self):
+        task = self.box.new_task(self.repo, "Gone", "x")
+        shutil.rmtree(self.repo)
+        out = self.box.bottega("rm", "--yes", task).stdout
+        self.assertIn("is gone; nothing to remove there", out)
+        self.assertEqual(self.box.state(task)["phase"], "removed")
 
     def test_ambiguous_prefix(self):
         a = self.box.new_task(self.repo, "Alpha", "x")

@@ -52,9 +52,11 @@ flags.
 
 ### Known limits
 
-- No live run has been recorded. Every harness flag, permission rule and event
-  field was tested against fake CLIs only; the open questions are listed in
-  `NOTES.md` and `docs/compatibility.md`.
+- Verified live with Claude Code 2.1.302 and Codex CLI 0.163.0 in every
+  agentic role, on one machine, on one day (`docs/compatibility.md`).
+  `bottega pr` is verified with a fake `gh` only; the Claude `Edit`/`Write`
+  tools and the Bash deny rules were not exercised; Codex reports no model, so
+  its identity stays `requested-only`.
 - Two harnesses: `claude` and `codex`.
 - A text-patch harness for chat-completion endpoints, and Kimi, Grok and
   Gemini drivers, are planned for later (`docs/later.md`).

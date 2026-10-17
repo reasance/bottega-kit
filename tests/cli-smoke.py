@@ -211,6 +211,13 @@ class Tasks(unittest.TestCase):
         (self.repo / "bottega.json").write_text('{"base": "develop"}')
         task = self.box.new_task(self.repo, "File base", "x")
         self.assertEqual(self.box.state(task)["base"], "develop")
+        # A value of the wrong type is refused (exit 2), not a traceback.
+        (self.repo / "bottega.json").write_text('{"base": 123}')
+        proc = self.box.bottega(
+            "new", "--repo", str(self.repo), "--title", "x", "--request", "y", rc=2
+        )
+        self.assertIn("base must be a string", proc.stderr)
+        self.assertNotIn("Traceback", proc.stderr)
 
     def test_failed_worktree_leaves_no_task(self):
         proc = self.box.bottega(

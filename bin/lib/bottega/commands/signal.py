@@ -11,13 +11,10 @@ import json
 import os
 
 from .. import state, taskdoc
+from ..loop import SIGNALLING
 from ..util import Refused, UsageError, atomic_write_json, now_iso
 
 STATUSES = ("ready", "needs-work", "blocked")
-ALLOWED = {
-    "reviewer": ("ready", "needs-work", "blocked"),
-    "judge": ("ready", "needs-work"),
-}
 
 
 def add_parser(sub):
@@ -57,7 +54,7 @@ def run(args):
     role = state.current_role(st)
     if role is None:
         raise Refused("current run %s is not in the runs list" % current)
-    allowed = ALLOWED.get(role, ())
+    allowed = SIGNALLING.get(role, ())
     if args.status not in allowed:
         if allowed:
             raise UsageError(

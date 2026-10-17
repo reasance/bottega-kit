@@ -178,6 +178,9 @@ gh pr create --repo <host/owner/repo> --base <base> --head <branch> --title <tit
 
 Still unverified after the live runs above:
 
+- Codex as planner (`--sandbox read-only`, no `--add-dir`, the final message
+  written by `-o` into the task directory) and as judge: both tasks ran those
+  roles on Claude Code;
 - the Claude `Edit` and `Write` tools under `acceptEdits` with
   `--permission-prompts none` (the implementer chose Bash instead);
 - the deny rules `Bash(git push *)`, `Bash(gh *)`, `Bash(git commit *)` (never

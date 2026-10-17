@@ -322,10 +322,6 @@ def get(name):
     return registry[name]()
 
 
-def names():
-    return tuple(sorted(HARNESS_MATRIX))
-
-
 def base_env(profile, environ=None):
     """Inherited environment plus the profile's expanded env (codex, and claude
     profiles that are not proxied). Returns (env, names set)."""

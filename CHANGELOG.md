@@ -52,8 +52,9 @@ flags.
 
 ### Known limits
 
-- Verified live with Claude Code 2.1.302 and Codex CLI 0.163.0 in every
-  agentic role, on one machine, on one day (`docs/compatibility.md`).
+- Verified live on one machine, on one day, with Claude Code 2.1.302 in every
+  role and Codex CLI 0.163.0 as implementer and reviewer
+  (`docs/compatibility.md`). Codex never ran as planner or judge;
   `bottega pr` is verified with a fake `gh` only; the Claude `Edit`/`Write`
   tools and the Bash deny rules were not exercised; Codex reports no model, so
   its identity stays `requested-only`.

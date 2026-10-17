@@ -339,10 +339,18 @@ class Transitions(LoopFixture, unittest.TestCase):
     def test_untracked_files_from_the_reviewer_are_a_warning(self):
         self.approved()
         proc = self.run_(
-            implement(), review("ready", writes={".cache/x": "1"}), judge("ready")
+            implement(writes={"src.py": "x\n"}),
+            review("ready", writes={".cache/x": "1"}),
+            judge("ready"),
         )
         self.assertEqual(self.state()["phase"], "done")
         self.assertIn("new untracked file(s) in the worktree: .cache/x", proc.stderr)
+        # The implementer's own new files are its job, not a warning; the
+        # receipt still records them.
+        self.assertNotIn("src.py", proc.stderr)
+        self.assertEqual(
+            self.run_json(2, "implementer")["rails"]["new_untracked"], ["src.py"]
+        )
 
     def test_identity_mismatch_stops(self):
         self.approved()
@@ -406,6 +414,21 @@ class Merging(LoopFixture, unittest.TestCase):
         self.assertIn("### Verdict\n- not mine", seen)
         self.assertIn("### indented", seen)
         self.assertNotIn("```", seen.split("## Review Findings")[1])
+
+    def test_an_unclosed_fence_cannot_hide_the_sections_after_it(self):
+        self.approved()
+        verdict = "**Merge:** yes\n\n1. a\n2. b\n3. c"
+        self.run_(
+            implement(),
+            review("ready", final="**Status:** READY\n\n### Unit Tests\n~~~~\nPASS"),
+            judge("ready", final=verdict),
+        )
+        doc = self.doc.read_text()
+        titles = [t for t, _, _ in taskdoc.sections(doc)]
+        self.assertEqual(titles[-2:], ["Review Findings", "Verdict"])
+        self.assertEqual(self.section("Verdict"), verdict)
+        # Closed with the fence that was opened, so renderers agree too.
+        self.assertTrue(self.section("Review Findings").endswith("~~~~\nPASS\n~~~~"))
 
 
 class Interrupt(LoopFixture, unittest.TestCase):

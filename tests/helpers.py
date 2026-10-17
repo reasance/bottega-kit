@@ -6,6 +6,7 @@ neither read the user's configuration nor reach a real harness.
 """
 
 import contextlib
+import itertools
 import json
 import os
 import shutil
@@ -197,3 +198,68 @@ CANONICAL = {
 
 def main():
     unittest.main(verbosity=1)
+
+
+# A planner's final message that passes `plan` and `approve`.
+PLAN_MESSAGE = """## Overview
+
+Add a --dry-run flag to the export command. Assumed: text output.
+
+## Implementation Plan
+
+### Phase 1: The flag
+
+**Files to modify / create:**
+- `export.py` — parse and honour --dry-run
+
+## Testing Strategy
+
+### Unit tests
+- `test_export.py` covers the flag
+
+### Manual QA
+- **Tool:** the real command
+- **Setup and safety:** a temporary directory
+- **Scenario:** run `export --dry-run`
+- **Expected evidence:** nothing is written
+
+## To-Do List
+
+### Implementation
+- [ ] Parse --dry-run
+- [ ] Skip writes when it is set
+
+### Testing
+- [ ] Unit tests for the flag
+- [ ] Manual QA: run export --dry-run
+
+## Project Docs Update
+
+Not needed for this change.
+"""
+
+QUESTIONS_MESSAGE = """## Questions for you
+
+1. Should the dry run print JSON or text? JSON is scriptable; text is shorter.
+"""
+
+
+class FakeCalls:
+    """A BOTTEGA_FAKE_SCENARIO for the sandbox, and the calls the fakes logged.
+    Each instance has its own log, so its call counter starts at 1."""
+
+    serial = itertools.count(1)
+
+    def __init__(self, box, calls=(), default=None, task=None):
+        self.log = box.root / ("calls-%d.jsonl" % next(FakeCalls.serial))
+        scenario = {"log": str(self.log), "calls": list(calls)}
+        if default is not None:
+            scenario["default"] = default
+        if task:
+            scenario["task"] = task
+        self.env = {"BOTTEGA_FAKE_SCENARIO": json.dumps(scenario)}
+
+    def entries(self):
+        if not self.log.exists():
+            return []
+        return [json.loads(line) for line in self.log.read_text().splitlines()]

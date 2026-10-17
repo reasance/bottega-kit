@@ -26,6 +26,8 @@ A step may hold, all optional:
                     BOTTEGA_FAKE_BOTTEGA)
     run             [[argv...], ...] extra commands, run in the working dir
     stderr          text written to stderr
+    raw             text written to stdout before any event (malformed
+                    lines, unknown event shapes)
     sleep           seconds to sleep before exiting
     exit            exit code (default 0)
 
@@ -183,6 +185,7 @@ def claude_main(argv):
     model = step.get("model", requested)
     final = None if step.get("no_final") else step.get("final", "fake final message")
     started = time.time()
+    sys.stdout.write(step.get("raw", ""))
     emit(
         {
             "type": "system",
@@ -250,6 +253,7 @@ def codex_main(argv):
     requested = option(argv, "-m", "--model") or "fake-model"
     model = step.get("model", requested)
     final = None if step.get("no_final") else step.get("final", "fake final message")
+    sys.stdout.write(step.get("raw", ""))
     emit(
         {
             "type": "thread.started",

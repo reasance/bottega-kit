@@ -101,6 +101,24 @@ def run_git(args, cwd, check=True):
     return proc.stdout.rstrip("\n")
 
 
+def format_duration(seconds):
+    """12s, 2m14s, 1h05m: the duration in a one-line dispatch report."""
+    seconds = max(0, int(round(seconds)))
+    if seconds < 60:
+        return "%ds" % seconds
+    if seconds < 3600:
+        return "%dm%02ds" % divmod(seconds, 60)
+    hours, rest = divmod(seconds, 3600)
+    return "%dh%02dm" % (hours, rest // 60)
+
+
+def bottega_executable():
+    """The absolute path of the running kit's `bottega` (agents call it to signal)."""
+    from . import KIT_ROOT
+
+    return str(KIT_ROOT / "bin" / "bottega")
+
+
 def pid_alive(pid):
     try:
         os.kill(pid, 0)

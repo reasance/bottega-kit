@@ -1,6 +1,6 @@
 {
   "name": "bottega-kit",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A planner, an implementer, a reviewer and an optional judge on the coding agents you already have, in a git worktree, with a receipt for every step.",
   "keywords": [
     "claude-code",
@@ -12,6 +12,14 @@
   "author": {
     "name": "Matteo Scurati",
     "url": "https://github.com/matteoscurati"
+  },
+  "homepage": "https://github.com/matteoscurati/bottega-kit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matteoscurati/bottega-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/matteoscurati/bottega-kit/issues"
   },
   "license": "MIT",
   "type": "module",

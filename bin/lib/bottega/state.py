@@ -52,6 +52,7 @@ def new_state(task, project, title, repo, worktree, branch, base, roles):
         "runs": [],
         "last_signal": None,
         "stopped": None,
+        "pr": None,
         "created": now_iso(),
     }
 

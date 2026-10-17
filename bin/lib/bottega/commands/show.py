@@ -111,6 +111,9 @@ def run(args):
         rows.append(
             ("stopped", "%s: %s" % (stop["reason"], stop.get("detail") or "")),
         )
+    pr = st.get("pr")
+    if pr:
+        rows.append(("pr", pr.get("url") or "?"))
     for label, value in rows:
         print("%-9s %s" % (label, value))
     lines = run_lines(st, records)

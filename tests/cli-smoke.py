@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The CLI end to end against the fakes: version, init, doctor, new, show,
-list, rm, and the subcommands later milestones implement."""
+list and rm."""
 
 import datetime
 import json
@@ -31,10 +31,8 @@ class Basics(unittest.TestCase):
         self.box.bottega("frobnicate", rc=64)
         self.box.bottega("show", rc=64)
 
-    def test_unimplemented_subcommands_exit_64(self):
-        proc = self.box.bottega("pr", "some-task", rc=64)
-        self.assertIn("not implemented in this milestone", proc.stderr)
-        for command in ("run", "resume"):
+    def test_task_commands_need_a_known_task(self):
+        for command in ("run", "resume", "pr"):
             proc = self.box.bottega(command, "no-such-task", rc=64)
             self.assertIn("no task matches", proc.stderr)
         self.box.bottega("resume", "x", "--rounds", "0", rc=64)

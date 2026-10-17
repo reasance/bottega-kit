@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""Fake `gh` for the pr suite. It never reaches GitHub.
+
+Driven by BOTTEGA_FAKE_GH, inline JSON:
+
+    {
+      "log":    "/abs/gh-calls.jsonl",   each call: argv, cwd, the body file
+      "view":   {"url": "...", "state": "OPEN"} or {"exit": 1, "stderr": "..."},
+      "create": {"url": "...", "exit": 0, "stderr": "..."}
+    }
+
+`gh pr view` prints {"url", "state"} as JSON when "view" has a url, else
+exits 1. `gh pr create` prints the URL. `gh --version` answers like gh.
+"""
+
+import json
+import os
+import sys
+
+
+def main(argv):
+    scenario = json.loads(os.environ.get("BOTTEGA_FAKE_GH") or "{}")
+    if argv[:1] == ["--version"]:
+        print("gh version 2.102.0 (fake)")
+        return 0
+    entry = {"argv": argv, "cwd": os.getcwd()}
+    if "--body-file" in argv:
+        path = argv[argv.index("--body-file") + 1]
+        with open(path, encoding="utf-8") as stream:
+            entry["body"] = stream.read()
+    if scenario.get("log"):
+        with open(scenario["log"], "a", encoding="utf-8") as stream:
+            stream.write(json.dumps(entry) + "\n")
+    if argv[:2] == ["pr", "view"]:
+        view = scenario.get("view") or {}
+        if view.get("url"):
+            print(json.dumps({"url": view["url"], "state": view.get("state", "OPEN")}))
+            return 0
+        sys.stderr.write(view.get("stderr", "no pull requests found for branch\n"))
+        return view.get("exit", 1)
+    if argv[:2] == ["pr", "create"]:
+        create = scenario.get("create") or {}
+        if create.get("stderr"):
+            sys.stderr.write(create["stderr"])
+        code = create.get("exit", 0)
+        if code == 0:
+            print(create.get("url", "https://github.com/acme/app/pull/1"))
+        return code
+    sys.stderr.write("fake gh: unsupported call: %s\n" % " ".join(argv))
+    return 2
+
+
+sys.exit(main(sys.argv[1:]))

@@ -12,6 +12,8 @@ from pathlib import Path
 from .util import Refused, UsageError, run_git
 
 BRANCH_PREFIX = "bottega/"
+# The keys bottega.json may hold; each must be a string when present.
+PROJECT_KEYS = ("test_cmd", "base")
 
 
 def repo_root(path):
@@ -36,6 +38,9 @@ def project_config(repo):
         raise Refused("%s is not valid JSON: %s" % (path, error)) from None
     if not isinstance(value, dict):
         raise Refused("%s must hold a JSON object" % path)
+    for key in PROJECT_KEYS:
+        if key in value and not isinstance(value[key], str):
+            raise Refused("%s: %s must be a string" % (path, key))
     return value
 
 

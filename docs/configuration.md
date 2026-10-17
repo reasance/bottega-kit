@@ -90,13 +90,13 @@ credentials.
 A role names a profile. One profile may serve several roles. The value `auto`
 is reserved and refused for now.
 
-**Per-task overrides.** `--role implementer=sol-builder`, on `bottega new` or
-`bottega plan`, changes one role for one task. The effective bindings, the
-configuration's roles with the task's overrides on top, are frozen when you
-approve: which profile each role uses no longer changes. The profiles
-themselves are read at each dispatch, so a new model or effort in a profile
-applies to the next dispatch, and removing a profile a task uses makes `run`
-and `resume` refuse.
+**Per-task overrides.** `--role implementer=sol-builder`, on `bottega new`,
+changes one role for one task. The effective bindings, the configuration's
+roles with the task's overrides on top, are frozen when you approve: which
+profile each role uses no longer changes. The profiles themselves are read
+again each time `plan`, `run` or `resume` starts, so a new model or effort in
+a profile applies from the next of those commands (not mid-run), and removing
+a profile a task uses makes `run` and `resume` refuse.
 
 ## bottega.json
 

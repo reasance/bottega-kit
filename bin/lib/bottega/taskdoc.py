@@ -114,16 +114,6 @@ def replace_section(text, title, body, before=None):
     return result
 
 
-def set_title(text, title):
-    """Set the level-1 `# Task <title>` heading (the first H1)."""
-    lines = _lines(text)
-    for index, line in _outside_fences(lines):
-        if line.startswith("# "):
-            lines[index] = "# Task " + title
-            return "\n".join(lines)
-    return "# Task " + title + "\n\n" + "\n".join(lines)
-
-
 def blockquote(text):
     """`text` as a Markdown blockquote, line by line, verbatim."""
     quoted = []

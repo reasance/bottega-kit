@@ -90,7 +90,8 @@ def spawn(invocation, run_dir, timeout):
                 stdin=subprocess.PIPE,
                 stdout=out,
                 stderr=err,
-                text=True,
+                # The prompt is UTF-8 whatever the locale says (prompt.md is).
+                encoding="utf-8",
                 start_new_session=True,
             )
         except OSError as error:

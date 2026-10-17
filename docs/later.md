@@ -45,3 +45,10 @@ refreshed for 0.1.0 on 2026-10-17 with what the milestones deferred.
   sets a plain `github.com` URL.
 - `bottega pr --draft`, labels, reviewers. Today `pr` opens a plain pull
   request; `gh pr edit` does the rest.
+- `bottega pr` commits every untracked file with `git add -A`, including caches a
+  reviewer's test run may leave in a project without ignore rules. The rails
+  already record each role's new untracked paths; `pr` could exclude the ones
+  read-only roles created.
+- `--role` overrides on `bottega plan` (the plan allowed them on `new` and
+  `plan`; today only `new` takes them).
+

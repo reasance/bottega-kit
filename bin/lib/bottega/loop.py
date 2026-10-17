@@ -65,7 +65,7 @@ NO_SIGNAL = "no-signal"
 IMPLEMENTER_COMMITTED = "implementer-committed"
 
 _HEADING = re.compile(r"^ {0,3}(#{1,2})\s+(.*)$")
-_FENCE = re.compile(r"^ {0,3}(```|~~~)")
+_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 
 
 def err(message):
@@ -125,10 +125,8 @@ def check_prompts(task_dir, st, roles, test_cmd):
 
 
 def test_command(st):
-    value = worktree.project_config(st["repo"]).get("test_cmd") or ""
-    if not isinstance(value, str):
-        raise Refused("bottega.json: test_cmd must be a string")
-    return value
+    """The project's test command from bottega.json, or empty."""
+    return worktree.project_config(st["repo"]).get("test_cmd") or ""
 
 
 # Merging a role's final message into task.md.
@@ -138,8 +136,9 @@ def section_body(message, title):
     """The final message as the body of section `title`.
 
     One outer code fence is removed; a leading `## <title>` heading the agent
-    wrote is dropped; any other level-1 or level-2 heading becomes level 3,
-    so the message can never add or end a section of task.md.
+    wrote is dropped; any other level-1 or level-2 heading becomes level 3;
+    a fence left open is closed. So the message can never add, end or hide
+    a section of task.md.
     """
     lines = taskdoc.unwrap(message).split("\n")
     while lines and not lines[0].strip():
@@ -148,15 +147,18 @@ def section_body(message, title):
         match = _HEADING.match(lines[0])
         if match and match.group(2).strip().rstrip("#").strip() == title:
             lines.pop(0)
-    out, fenced = [], False
+    out, fence = [], None
     for line in lines:
-        if _FENCE.match(line):
-            fenced = not fenced
-        elif not fenced:
+        match = _FENCE.match(line)
+        if match:
+            fence = None if fence else match.group(1)
+        elif fence is None:
             match = _HEADING.match(line)
             if match:
                 line = "### " + match.group(2)
         out.append(line)
+    if fence:
+        out.append(fence)
     return "\n".join(out).strip("\n")
 
 
@@ -390,8 +392,10 @@ class Loop:
         )
         for warning in warnings:
             err("bottega run: warning: %s" % warning)
+        # New files are the implementer's job; for the other roles they are
+        # the one change the rails tolerate, so they are worth a warning.
         new = (outcome.record.get("rails") or {}).get("new_untracked")
-        if new:
+        if new and role in dispatch.READ_ONLY_ROLES:
             err(
                 "bottega run: warning: new untracked file(s) in the worktree: "
                 + ", ".join(new)

@@ -473,5 +473,22 @@ repository. Full numbers in `docs/compatibility.md`.
   Write stay unverified; a harmless Codex hooks "error" item.
 - **Still open for part 2:** `bottega pr` on a real GitHub repository (needs
   the repository the owner has not created yet), the deny rules, the Opus and
-  Fable model names, a proxied profile.
+  Fable model names, a proxied profile, and Codex as planner and as judge
+  (both tasks ran those roles on Claude Code).
+
+## 2026-10-17 — code review after the live probe
+
+`/code-review max --fix` over the whole repository, applied by the review
+agent and verified by the lead: an unclosed code fence in a reviewer's or
+judge's message could hide every later section of `task.md` (fixed: the fence
+is closed and a test pins it); `bottega.json` `base` is now type-checked like
+`test_cmd`; the "new untracked files" warning is printed for read-only roles
+only (receipts keep it for every role); the prompt is sent to the harness as
+UTF-8 regardless of the locale; `bottega signal` reads the role→status table
+from `loop.SIGNALLING` instead of a copy; `taskdoc.set_title` and
+`harness.names` (no callers) are gone. Documentation corrected: Codex was
+verified as implementer and reviewer, not in every role; `--role` belongs to
+`bottega new`; profiles are read when `plan`, `run` or `resume` start, not at
+every dispatch. Two findings deferred to `docs/later.md`: `pr` committing
+untracked caches, and `--role` on `plan`.
 

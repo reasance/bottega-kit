@@ -6,7 +6,7 @@ dispatch leaves the phase where it was, keeps the receipt and exits 3.
 
 import sys
 
-from .. import config, dispatch, receipts, state, taskdoc, worktree
+from .. import config, dispatch, loop, receipts, state, taskdoc
 from ..util import EXIT_STOPPED, Refused, atomic_write, now_iso
 
 ROLE = "planner"
@@ -45,13 +45,6 @@ def planner_profile(cfg, st):
     return name, profile
 
 
-def test_cmd(st):
-    value = worktree.project_config(st["repo"]).get("test_cmd") or ""
-    if not isinstance(value, str):
-        raise Refused("bottega.json: test_cmd must be a string")
-    return value
-
-
 def _finish_entry(st, run_name, status, reason=None):
     for entry in st["runs"]:
         if state.run_name(entry["seq"], entry["role"]) == run_name:
@@ -68,7 +61,7 @@ def run(args):
     check_phase(st)
     cfg = config.load()
     name, profile = planner_profile(cfg, st)
-    command_test = test_cmd(st)
+    command_test = loop.test_command(st)
     with state.locked(task_dir):
         st = state.load(task_dir)
         check_phase(st)

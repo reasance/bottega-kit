@@ -10,10 +10,10 @@ loop is this project.
 ## Current release: 0.1.0
 
 The first release: `init`, `doctor`, `new`, `plan`, `approve`, `run`, `resume`,
-`pr` and the task commands, on the `claude` and `codex` harnesses. Every
-loop was verified live on 2026-10-17 with Claude Code 2.1.302 and Codex CLI
-0.163.0 in every agentic role; `bottega pr` is verified with a fake `gh` only.
-See [docs/compatibility.md](docs/compatibility.md).
+`pr` and the task commands, on the `claude` and `codex` harnesses. The loop
+was verified live on 2026-10-17 with Claude Code 2.1.302 in every role and
+Codex CLI 0.163.0 as implementer and reviewer; `bottega pr` is verified with
+a fake `gh` only. See [docs/compatibility.md](docs/compatibility.md).
 
 ## What you need
 
@@ -118,7 +118,7 @@ unset. Because `ANTHROPIC_BASE_URL` is set, the reviewer runs with a fresh
 Claude configuration directory and without your Anthropic credentials.
 `aliases` lists other names the endpoint may report for the model; any other
 name stops the run as `identity-mismatch`. To change one role for one task
-only, pass `--role implementer=sol-builder` to `new` or `plan`.
+only, pass `--role implementer=sol-builder` to `bottega new`.
 
 ## The roles
 

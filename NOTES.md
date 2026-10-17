@@ -123,3 +123,119 @@ complete.
 - **Commit attribution:** the M0 commits carry no attribution lines, per the
   builder's instructions. Plan §8 defers to the builder session's rule, which
   asked for one; the owner may want to settle which applies from M1 on.
+
+## 2026-10-17 — milestone M1
+
+- **The live probe was not run.** The M1 dispatch did not authorize it. Every
+  harness flag, permission-rule spelling and event field below is pinned from
+  the work plan and delegation-kit's drivers and tested against the fakes
+  only. The open unknowns are listed at the end of this section.
+- **`dispatch.py` was added** (not in the plan's layout): one role dispatch
+  end to end (render, run directory, rails, spawn, parse, identity, receipt).
+  `plan` uses it now and the M2 loop will. Failure order follows plan §3:
+  could not start / non-zero exit / error result / no final message
+  (`dispatch-failed`), `timeout`, `identity-mismatch`, then the rail
+  (`role-modified-worktree`).
+- **`HARNESS_MATRIX` holds placeholders** `{model}`, `{effort}`, `{task_dir}`,
+  `{run_dir}`, `{worktree}`, `{bottega}`; only those names are substituted, so
+  JSON arguments such as `{"mcpServers":{}}` pass through. Every Bash
+  permission rule is built from one `BASH_RULE` string (`Bash(%s *)`), so the
+  `Bash(x *)` / `Bash(x:*)` question is a one-line change.
+- **`probe` moved from `doctor` to `harness`.** `doctor` imports it; `approve`
+  uses `harness.binding_report`, which applies the same checks (binding,
+  profile schema, `--version` probe, `${NAME}` variables) per bound role.
+- **The absolute `bottega` path** for `signal_cmd` and the judge's permission
+  rule is `<kit>/bin/bottega` of the running kit (the install directory, or
+  the checkout), not `sys.argv[0]`, so the prompt and the rule always agree.
+- **Receipts:** the run directory also holds `stderr.log` (the harness's full
+  stderr); `error.json` keeps the last 40 lines as `stderr_tail`. `run.json`
+  adds, beyond plan §4.2: `observed_models` (every name the harness
+  reported), `env` (`{"set": [...], "removed": [...]}`, names only),
+  `timeout_s`, `duration_ms` and `num_turns` (plan §4.5 asks for them),
+  `events` and `unparsed_lines` (parser tolerance), and `reason`. `error.json`
+  adds `detail`, one plain sentence. For Claude, `usage` is
+  `{"usage": ..., "modelUsage": ...}` from the result event, raw; for Codex it
+  is the last `turn.completed` usage, raw. `signal` stays null until M2 folds
+  `signal.json`.
+- **State:** a failed run's entry in `state.runs` carries `reason`. A planner
+  failure does not set `state.stopped` (that field belongs to `run`); the
+  phase simply returns to what it was.
+- **Proxied Claude profiles** strip, besides the three credentials the plan
+  names, `ANTHROPIC_CUSTOM_HEADERS`, `ANTHROPIC_MODEL` and
+  `CLAUDE_CODE_USE_BEDROCK|VERTEX|FOUNDRY`, as delegation-kit's proxied driver
+  does: a header can carry a credential and the others route the run away
+  from the profile's endpoint. The profile's own `env` may set any of them
+  again. The temporary `CLAUDE_CONFIG_DIR` is deleted after the run.
+  `ZAI_API_KEY` and other non-Anthropic variables are left alone.
+- **After a harness exits, its process group is killed** (SIGKILL), so a dev
+  server or test runner it left behind does not outlive the dispatch. A
+  timeout sends SIGTERM to the group, waits 5 seconds, then SIGKILL.
+- **Claude parse:** the init event's model is `provider_reported_model`;
+  every name from init, assistant `.message.model` and the result's
+  `modelUsage` keys is checked against the request and the aliases. Codex
+  parse: `model` at the top of any event or under `response`, `session`,
+  `payload` or `msg`; `turn.failed` counts as an error result. The Codex final
+  message is the `-o` file only (no fallback to `agent_message` events).
+- **`templates/task.md` now uses the strict engine**: `{{task_title}}` and
+  `{{original_request}}` (plan §9); `taskdoc.seed` renders it. The spaced
+  `{{ … }}` guidance markers stay literal.
+- **`{{plan_template}}` is the planner's part of the template only**, from
+  `## Overview` up to `## Review Findings`, because that is exactly what the
+  planner's final message must contain. Title, request, findings and verdict
+  belong to bottega-kit.
+- **Planner prompt, deviations from bottega's `planification.md`:** besides
+  the changes plan §4.6 lists, the "Original Request quoted verbatim" rule
+  becomes "bottega-kit keeps it verbatim; do not repeat or change it", since
+  the planner no longer writes the file; the planner is told to record in the
+  Overview every decision the user's answers settled, because the questions
+  section is dropped once a plan exists; to-do items are plain checkboxes
+  without ids. "Playwright MCP" and "Rails runner" became tool-neutral
+  wording. `{{test_cmd}}` is always rendered, with "empty means: find the
+  project's documented test command".
+- **Merging the planner's message:** one outer code fence is removed if the
+  whole message is fenced. Any `# Task` heading, `## Original Request`,
+  `## Review Findings`, `## Verdict` or `## Questions for you` the planner
+  wrote is dropped; extra sections it adds are kept in its order. The
+  questions path is taken when the message has a non-empty
+  `## Questions for you` section, even if it also has plan sections.
+- **`plan` output:** exactly one line on stdout for a planned or failed run.
+  For questions, the line is followed by the questions and a one-line hint.
+  Failures name the reason and the receipt path on stderr; new untracked files
+  in the worktree are a warning on stderr.
+- **`approve`:** checks plan §4.3 exactly (Overview non-empty; Testing
+  Strategy with a `### Manual QA` subsection that mentions a scenario, or
+  "Not needed" anywhere in the section; at least one unchecked to-do item).
+  Implementation Plan and Project Docs Update are checked at `plan` time, not
+  again here. `approval.roles` maps each bound role to its profile name.
+  Without `--rounds`, a re-approval keeps the previous approval's cap, else
+  the configuration's. `--rounds 0` or a non-number is a bad invocation (64).
+- **Fakes:** a step may now set `raw`, text written to stdout before any
+  event, for the tolerant-parser tests. `tests/helpers.py` gained
+  `PLAN_MESSAGE`, `QUESTIONS_MESSAGE` and `FakeCalls` (one log and call
+  counter per instance).
+- **The harness suite dispatches the implementer, reviewer and judge roles**
+  with prompt overrides, because their shipped prompts are M2. This also
+  exercises the override path.
+
+### Live-probe unknowns still open (plan §4.5)
+
+- The tool names `claude --tools` accepts (`Read,Glob,Grep`,
+  `Read,Edit,Write,Glob,Grep,Bash`) and whether a comma list is one argument.
+- The permission-rule spelling: `Bash(git push *)` or `Bash(git push:*)`.
+- Whether `--permission-prompts none` with `acceptEdits` lets Edit/Write
+  proceed in the worktree and in the `--add-dir` task directory, and whether
+  `dontAsk` with `--allowedTools Bash` lets the reviewer run tests.
+- Whether the variadic `--allowedTools` / `--disallowedTools` lists parse
+  correctly as the last options with the prompt on stdin.
+- The `stream-json` field names on claude 2.1.302 (`system/init .model`,
+  assistant `.message.model`, result `.result/.is_error/.modelUsage/
+  .total_cost_usd/.usage/.duration_ms/.num_turns`), and whether `modelUsage`
+  lists helper models (a small model for background tasks) that the identity
+  check would then reject.
+- The exact model names Claude Code and Codex report for each profile (a
+  dated suffix would need an alias).
+- Codex 0.163.0 event names (`thread.started`, `turn.completed`,
+  `turn.failed`), where it reports the model, and whether `-o` is written
+  when the final message is empty.
+- Whether `-c mcp_servers={}` and `-c features.multi_agent=false` are
+  accepted as TOML overrides by `codex exec` 0.163.0.

@@ -12,9 +12,10 @@ before tagging. Numbers are never carried forward from an earlier release.
 
 **0.1.0, verified live on 2026-10-17 and 2026-10-19** on macOS (Darwin 25.5.0),
 python3 3.15.0, git 2.50.1, Codex CLI 0.163.0, gh 2.102.0, and Claude Code
-2.1.302 on the 17th, 2.1.303 on the 19th. Four tasks on a throwaway
-repository (a 20-line Python CLI with a unittest suite), run through the
-installed kit, one dispatch set at a time:
+2.1.302 on the 17th, 2.1.303 on the 19th. Seven tasks on two throwaway
+repositories (a 20-line Python CLI with a unittest suite; from the evening of
+the 19th, one whose suite sleeps 150 s), run through the installed kit, one
+dispatch set at a time:
 
 | day | task | roles | dispatches | result |
 |---|---|---|---|---|
@@ -23,7 +24,8 @@ installed kit, one dispatch set at a time:
 | 19 | add a `--shout` flag | **codex** in every role | 4 | done in round 1 of 2; then `bottega pr` on a private GitHub repository |
 | 19 | add a `--repeat` option | the starter configuration: `fable` as planner and judge, `opus-builder` and `opus-reviewer` | 4 | done in round 1 of 2 |
 | 19, evening | add a `--bye` flag: two new files, a full suite that takes 150 s, and a permission probe in the prompts | plan written by hand and served by the fake harness · implementer **claude** · reviewer **claude** | 2 | done in round 1 of 1 |
-| 19, evening | add a `--whisper` flag, same shape | plan written by hand · implementer **codex** · reviewer **codex** | 2 | stopped `blocked` in round 1 of 1: the reviewer gave up on the slow suite (below) |
+| 19, evening | add a `--whisper` flag, same shape | plan written by hand · implementer **codex** · reviewer **codex** | 3 (one `blocked` stop, one `resume`) | done in round 1 of 2: the first reviewer gave up on the slow suite (below); resumed after the prompt change, the second waited for it |
+| 19, late evening | add a `--shout` flag, same shape, with an override that asks for the `Write` tool | plan written by hand · implementer **claude** · the reviewer dispatch refused by the probe itself | 1 | the implementer finished; then stopped `dispatch-failed`, on purpose (below) |
 
 Profiles on the 17th: `claude-sonnet-5-5` at effort `medium` for the Claude
 roles (with `timeout` and `max_budget_usd`), `gpt-5.6-terra` at effort
@@ -35,8 +37,13 @@ roles (with `timeout` and `max_budget_usd`), `gpt-5.6-terra` at effort
 repository whose full suite sleeps 150 s in an end-to-end test, with prompt
 overrides that asked each role to try the forbidden commands one by one and
 report what happened; the plans were written by hand and fed through the
-kit's fake harness, so no planner model ran. None of this says which model
-to use.
+kit's fake harness, so no planner model ran. Late in the evening, two more
+dispatches: the whisper task was resumed with the changed reviewer prompt,
+and a Sonnet implementer ran once more under an override asking for `Write`
+for new files. For those two a wrapper on PATH passed exactly one dispatch
+per harness to the real CLI and exited 75 for any other, so the loop stopped
+as `dispatch-failed` instead of dispatching a reviewer nobody had authorized.
+None of this says which model to use.
 
 Per dispatch (duration, cost as Claude Code reported it; Codex usage is billed
 to the ChatGPT plan and reports no cost). 2026-10-17:
@@ -73,9 +80,11 @@ to the ChatGPT plan and reports no cost). 2026-10-17:
 | 3 | reviewer | claude | claude-sonnet-5-5 | 193 s | 0.082 | ready |
 | 2 | implementer | codex | not reported | 239 s | — | — |
 | 3 | reviewer | codex | not reported | 129 s | — | blocked |
+| 4 | reviewer | codex | not reported | 187 s | — | ready (resumed, new wording) |
+| 2 | implementer | claude | claude-sonnet-5-5 | 180 s | 0.081 | — |
 
-Twenty-five dispatches: 0.41 USD on the Claude side on the 17th, 2.31 USD on
-the 19th. Every implementation was correct, tested and documented; every
+Twenty-seven dispatches: 0.41 USD on the Claude side on the 17th, 2.39 USD
+on the 19th. Every implementation was correct, tested and documented; every
 reviewer ran the unit tests and every manual QA scenario; the second planner
 on the 17th asked a real question (the request mentioned a flag that was not
 on the branch) and the answer, typed into `task.md`, produced the plan on the
@@ -113,16 +122,19 @@ What the live runs settled:
   which is therefore verified under `--permission-prompts none`. In the
   evening of the 19th a plan that creates two new files was implemented by
   Sonnet with Bash heredocs, with `Write` listed in the `init` event's tools
-  and unused. `Write` is still unexercised; it is in the permission class
-  `acceptEdits` accepts, like `Edit`.
+  and unused. Later that evening, under an override that asked for `Write`
+  for new files, Sonnet created both new files with `Write` and edited the
+  rest with `Edit`, with no permission denial, and ticked the boxes with a
+  Bash `sed -i`. **`Write` is verified** under `acceptEdits` with
+  `--permission-prompts none`, like `Edit`.
 - **A suite that takes minutes, on Claude Code.** The Bash tool's default
   timeout is 2 minutes (`BASH_DEFAULT_TIMEOUT_MS`), 10 at most
   (`BASH_MAX_TIMEOUT_MS`); the kit sets neither. The Sonnet reviewer gave the
   150 s suite a 600 000 ms timeout on its own, as the prompt asks, and saw it
   pass; the Sonnet implementer gave its test command 400 000 ms unprompted.
   The implementer prompt now asks for the timeout too.
-- **A suite that takes minutes, on Codex: found, prompt changed, re-run
-  pending.** Codex runs commands as resumable sessions (`features.unified_exec`,
+- **A suite that takes minutes, on Codex: found, prompt changed, verified.**
+  Codex runs commands as resumable sessions (`features.unified_exec`,
   on for everyone): the shell tool hands control back after a short yield
   while the command keeps running, and the model is expected to wait on it.
   The Terra implementer waited and saw the 150 s suite pass (`Ran 6 tests in
@@ -131,7 +143,11 @@ What the live runs settled:
   denied in the sandbox), marked T6 FAILED and signalled `blocked`; the
   suite's `item.started` never got its `item.completed`. The reviewer and
   implementer prompts now say that a shell tool handing control back means
-  wait, not failed. That wording has not run on Codex yet.
+  wait, not failed. The task was then resumed with that wording: the Terra
+  reviewer ran `python3 -m unittest -v` once, in the foreground, with no
+  `ps` or `pgrep` in between, saw `Ran 6 tests in 150.033s`, exit 0, verified
+  every item and signalled `ready` (187 s; five commands in all). The prompt
+  change was enough; `HARNESS_MATRIX` is unchanged.
 - **What stops a Codex agent from committing or pushing.** Codex has no deny
   rules; the kit relies on `--sandbox workspace-write`, the prompts and the
   rails. In the same probe, `git commit --allow-empty -m probe` and
@@ -291,12 +307,6 @@ gh pr create --repo <host/owner/repo> --base <base> --head <branch> --title <tit
 
 Still unverified after the live runs above:
 
-- the Claude `Write` tool under `acceptEdits` with `--permission-prompts none`
-  (the implementer chose Bash on the 17th, `Edit` on the 19th, and Bash
-  heredocs for new files in the evening of the 19th);
-- a Codex reviewer on a suite that takes minutes, with the prompt wording
-  added after the evening of the 19th (the Codex implementer waited; the
-  reviewer, on the earlier wording, did not);
 - `bottega pr` with `--repo` on a GitHub Enterprise host (github.com is
   verified);
 - a proxied profile (Z.AI): whether it reports the proxied name or the alias.

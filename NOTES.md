@@ -633,3 +633,37 @@ Findings, all in `docs/compatibility.md`:
 
 `HARNESS_MATRIX` is unchanged. `CHANGELOG.md`'s 0.1.0 section stays dated
 2026-10-17 and untagged; its known-limits bullet is updated.
+
+## 2026-10-19 — live probe, part 4: the last two dispatches
+
+Authorized by the owner ("ok per bottega resume e l'implementer"): one
+`bottega resume` of the whisper task, so a Terra reviewer runs with the
+changed prompt wording, and one Sonnet implementer dispatch nudged to use
+`Write`. Exactly two real dispatches. To keep it at two, a wrapper for
+`claude` and one for `codex` sat first on PATH: `--version` passed through,
+the first dispatch per harness went to the real CLI, and any other exited 75
+with "probe guard: … refused", so the loop stopped as `dispatch-failed`
+instead of dispatching a reviewer nobody had authorized. The kit was
+reinstalled first, so the installed prompts carried the part 3 wording; the
+reviewer override from part 3 was removed, and the implementer override
+replaced by one that asks for `Write` for new files and `Edit` for the rest.
+
+Findings, in `docs/compatibility.md`:
+
+- **The Codex fix holds.** With the new reviewer wording, the Terra reviewer
+  ran `python3 -m unittest -v` once, in the foreground, with no `ps` or
+  `pgrep` in between, saw `Ran 6 tests in 150.033s`, verified all seven items
+  and signalled `ready`; the task finished in round 1 of 2. Same model, same
+  suite, same sandbox as the `blocked` run: only the prompt changed.
+- **`Write` works under `acceptEdits`.** Sonnet created `shout.py` and
+  `test_shout.py` with `Write`, edited the rest with `Edit`, no permission
+  denial, suite waited with a 600 000 ms timeout, 180 s, 0.081 USD. It ticked
+  the boxes with a Bash `sed -i`, which `--add-dir` allows.
+- The refused reviewer left a `003-reviewer` receipt with `error.json`
+  (`dispatch-failed`, exit 75, the guard's stderr) and the task `stopped`,
+  which is what the loop should do when a harness fails to start.
+
+No code change. `HARNESS_MATRIX` unchanged. Open unknowns are now the GitHub
+Enterprise host and the proxied (Z.AI) profile only. `CHANGELOG.md`'s 0.1.0
+section stays dated 2026-10-17 and untagged; its known-limits bullet is
+updated. Twenty-seven live dispatches in all; 2.39 USD on the 19th.

@@ -549,3 +549,43 @@ tagged yet.
 
 The CHANGELOG's 0.1.0 date stays 2026-10-17 until the tag is cut and moves
 to that day.
+
+## 2026-10-19 — live probe, part 2: every harness in every role
+
+Authorized by the owner ("andiamo di 1 2 e 3"), run from an isolated install
+in the session scratchpad on a fresh copy of the greeter repository, one
+dispatch set at a time:
+
+1. Codex (`gpt-5.6-terra`, medium) as planner, implementer, reviewer and
+   judge: `ready` in round 1 of 2, four dispatches, about three minutes.
+2. The starter configuration as `bottega init` writes it, on Claude Code
+   2.1.303: `fable` (`claude-fable-5-1`, max) as planner and judge,
+   `opus-builder` and `opus-reviewer` (`claude-opus-5-5`, high): `ready` in
+   round 1 of 2, four dispatches, 2.16 USD. Both names are reported exactly.
+3. `bottega pr` on a private GitHub repository created for the probe
+   (`matteoscurati/bottega-probe`): pull request opened, `pr exists:` on the
+   open and then on the merged pull request, repository deleted afterwards.
+   Z.AI (item 4) is deferred by the owner until the rest is settled.
+
+Before the live runs, an offline smoke (`smoke3.sh`, in the scratchpad) ran
+the fake Codex in every role and a fake proxied Claude profile in every
+role, including the alias path, the credential stripping and the exit-2
+refusal when `${ZAI_API_KEY}` is unset.
+
+Findings, all recorded in `docs/compatibility.md`:
+
+- **Fence bug, fixed.** A ``` block nested in a ```` block was read as
+  closing it, so comment lines inside became headings and `merge_plan`
+  dropped five lines of the Fable planner's README snippet. `taskdoc` and the
+  loop's section merge now track fences by CommonMark rules (same character,
+  at least the same length), with regression tests in `taskdoc` and `loop`.
+- **Judge permission denials.** Two `git -C …` commands, one of them joined
+  with `&&` and `git status`, fell outside the judge's allow list and were
+  denied; the judge recovered with plain `git diff` and `git log`. The judge
+  prompt now says which commands are allowed. Recording `permission_denials`
+  in `run.json` is a line in `docs/later.md`.
+- `Edit` under `acceptEdits` is now verified; `Write` is not.
+- The probe's `XDG_CONFIG_HOME` override hides gh's login; `GH_CONFIG_DIR`
+  fixes it. Not a kit matter.
+
+The CHANGELOG is still untouched: 0.1.0 is not tagged.

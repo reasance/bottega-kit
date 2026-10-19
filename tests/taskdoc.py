@@ -214,5 +214,42 @@ class PlanHash(unittest.TestCase):
         self.assertTrue(region.endswith("Not needed for this change.\n"))
 
 
+class Fences(unittest.TestCase):
+    # A ``` block nested in a ```` block, as a planner writes a README snippet
+    # with a shell example in it (seen live, 2026-10-19).
+    NESTED = (
+        "## Overview\n\nAdds --repeat.\n\n## Implementation Plan\n\n"
+        "````markdown\nUse `--repeat N`:\n\n```sh\npython3 greet.py --repeat 3 Ada\n"
+        "# Hello, Ada!\n# Hello, Ada!\n```\n````\n\n## Testing Strategy\n\n"
+        "### Manual QA\n- Scenario: run it\n\n## To-Do List\n\n- [ ] do it\n\n"
+        "## Project Docs Update\n\nNot needed for this change.\n"
+    )
+
+    def test_a_fence_nested_in_a_longer_fence_stays_inside_it(self):
+        titles = [t for t, _, _ in taskdoc.sections(self.NESTED)]
+        self.assertNotIn("Hello, Ada!", titles)
+        self.assertEqual(taskdoc.plan_problems(self.NESTED), [])
+        merged = taskdoc.merge_plan(PLAN, self.NESTED, "Add a flag")
+        plan = taskdoc.get_section(merged, "Implementation Plan")
+        self.assertEqual(plan.count("# Hello, Ada!"), 2)
+        self.assertTrue(plan.endswith("```\n````"))
+        self.assertEqual(
+            [t for t, _, _ in taskdoc.sections(merged)][-2:],
+            ["Review Findings", "Verdict"],
+        )
+
+    def test_unwrap_removes_an_outer_fence_around_nested_fences(self):
+        # NESTED has a four-backtick block, so the wrapper needs five.
+        wrapped = "`````markdown\n" + self.NESTED + "`````"
+        self.assertEqual(taskdoc.unwrap(wrapped), self.NESTED.strip("\n"))
+        # A fence that closes before the end is a code block, not a wrapper.
+        block = "```\ncode\n```\n\n## Overview\n\ntext\n\n```\nmore\n```"
+        self.assertEqual(taskdoc.unwrap(block), block)
+        # A shorter closing marker does not close a longer fence.
+        self.assertEqual(
+            taskdoc.unwrap("````\n## Overview\n```"), "````\n## Overview\n```"
+        )
+
+
 if __name__ == "__main__":
     main()

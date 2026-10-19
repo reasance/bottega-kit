@@ -65,7 +65,6 @@ NO_SIGNAL = "no-signal"
 IMPLEMENTER_COMMITTED = "implementer-committed"
 
 _HEADING = re.compile(r"^ {0,3}(#{1,2})\s+(.*)$")
-_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})")
 
 
 def err(message):
@@ -149,10 +148,8 @@ def section_body(message, title):
             lines.pop(0)
     out, fence = [], None
     for line in lines:
-        match = _FENCE.match(line)
-        if match:
-            fence = None if fence else match.group(1)
-        elif fence is None:
+        fence, is_fence = taskdoc.fence_step(fence, line)
+        if fence is None and not is_fence:
             match = _HEADING.match(line)
             if match:
                 line = "### " + match.group(2)

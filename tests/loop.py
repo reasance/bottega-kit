@@ -430,6 +430,21 @@ class Merging(LoopFixture, unittest.TestCase):
         # Closed with the fence that was opened, so renderers agree too.
         self.assertTrue(self.section("Review Findings").endswith("~~~~\nPASS\n~~~~"))
 
+    def test_a_fence_nested_in_a_longer_fence_stays_inside_it(self):
+        self.approved()
+        findings = (
+            "**Status:** READY\n\n### Unit Tests\n````markdown\n```sh\nmake test\n"
+            "# Hello, Ada!\n```\n## Not a heading\n````\nPASS"
+        )
+        self.run_(
+            implement(),
+            review("ready", final=findings),
+            judge("ready", final="**Merge:** yes\n\n1. a\n2. b\n3. c"),
+        )
+        self.assertEqual(self.section("Review Findings"), findings)
+        titles = [t for t, _, _ in taskdoc.sections(self.doc.read_text())]
+        self.assertNotIn("Not a heading", titles)
+
 
 class Interrupt(LoopFixture, unittest.TestCase):
     def test_ctrl_c_stops_as_interrupted_and_resume_reruns_the_role(self):

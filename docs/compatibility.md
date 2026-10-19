@@ -10,23 +10,29 @@ before tagging. Numbers are never carried forward from an earlier release.
 
 ## Verified snapshot
 
-**0.1.0, verified live on 2026-10-17** on macOS (Darwin 25.5.0), python3 3.15.0,
-git 2.50.1, Claude Code 2.1.302, Codex CLI 0.163.0, gh 2.102.0. Two tasks on a
-throwaway repository (a 20-line Python CLI with a unittest suite and a local
-bare `origin`), run through the installed kit, one dispatch set at a time:
+**0.1.0, verified live on 2026-10-17 and 2026-10-19** on macOS (Darwin 25.5.0),
+python3 3.15.0, git 2.50.1, Codex CLI 0.163.0, gh 2.102.0, and Claude Code
+2.1.302 on the 17th, 2.1.303 on the 19th. Four tasks on a throwaway
+repository (a 20-line Python CLI with a unittest suite), run through the
+installed kit, one dispatch set at a time:
 
-| task | roles | dispatches | result |
-|---|---|---|---|
-| add a `--shout` flag | planner claude · implementer **codex** · reviewer claude · judge claude | 4 | done in round 1 of 2 |
-| add a `--repeat` option | planner claude · implementer **claude** · reviewer **codex** · judge claude | 9 (one `questions` round, one `cap-reached` stop, one `resume --rounds 1`) | done in round 3 of 3 |
+| day | task | roles | dispatches | result |
+|---|---|---|---|---|
+| 17 | add a `--shout` flag | planner claude · implementer **codex** · reviewer claude · judge claude | 4 | done in round 1 of 2 |
+| 17 | add a `--repeat` option | planner claude · implementer **claude** · reviewer **codex** · judge claude | 9 (one `questions` round, one `cap-reached` stop, one `resume --rounds 1`) | done in round 3 of 3 |
+| 19 | add a `--shout` flag | **codex** in every role | 4 | done in round 1 of 2; then `bottega pr` on a private GitHub repository |
+| 19 | add a `--repeat` option | the starter configuration: `fable` as planner and judge, `opus-builder` and `opus-reviewer` | 4 | done in round 1 of 2 |
 
-Profiles: `claude-sonnet-5-5` at effort `medium` for the Claude roles (with
-`timeout` and `max_budget_usd`), `gpt-5.6-terra` at effort `medium` for the
-Codex roles. The models were chosen to keep the probe cheap; they say nothing
-about which model to use.
+Profiles on the 17th: `claude-sonnet-5-5` at effort `medium` for the Claude
+roles (with `timeout` and `max_budget_usd`), `gpt-5.6-terra` at effort
+`medium` for the Codex roles, chosen to keep the probe cheap. On the 19th:
+`gpt-5.6-terra` at `medium` for Codex, and the starter configuration as
+`bottega init` writes it (`claude-fable-5-1` at `max`, `claude-opus-5-5` at
+`high`) with `timeout` and `max_budget_usd` added. None of this says which
+model to use.
 
 Per dispatch (duration, cost as Claude Code reported it; Codex usage is billed
-to the ChatGPT plan and reports no cost):
+to the ChatGPT plan and reports no cost). 2026-10-17:
 
 | seq | role | harness | reported model | duration | cost USD | signal |
 |---|---|---|---|---|---|---|
@@ -44,11 +50,26 @@ to the ChatGPT plan and reports no cost):
 | 8 | reviewer | codex | not reported | 37 s | — | ready |
 | 9 | judge | claude | claude-sonnet-5-5 | 9 s | 0.039 | ready |
 
-Thirteen dispatches, 0.41 USD on the Claude side. Both implementations were
-correct, tested and documented; both reviewers ran the unit tests and every
-manual QA scenario; the second planner asked a real question (the request
-mentioned a flag that was not on the branch) and the answer, typed into
-`task.md`, produced the plan on the next `plan`.
+2026-10-19:
+
+| seq | role | harness | reported model | duration | cost USD | signal |
+|---|---|---|---|---|---|---|
+| 1 | planner | codex | not reported | 57 s | — | — |
+| 2 | implementer | codex | not reported | 47 s | — | — |
+| 3 | reviewer | codex | not reported | 42 s | — | ready |
+| 4 | judge | codex | not reported | 38 s | — | ready |
+| 1 | planner | claude | claude-fable-5-1 | 152 s | 0.895 | — |
+| 2 | implementer | claude | claude-opus-5-5 | 43 s | 0.274 | — |
+| 3 | reviewer | claude | claude-opus-5-5 | 37 s | 0.225 | ready |
+| 4 | judge | claude | claude-fable-5-1 | 50 s | 0.764 | ready |
+
+Twenty-one dispatches: 0.41 USD on the Claude side on the 17th, 2.16 USD on
+the 19th. Every implementation was correct, tested and documented; every
+reviewer ran the unit tests and every manual QA scenario; the second planner
+on the 17th asked a real question (the request mentioned a flag that was not
+on the branch) and the answer, typed into `task.md`, produced the plan on the
+next `plan`. On the 19th the Fable planner made its decisions without asking
+and listed them in the Overview "for review before approval".
 
 What the live runs settled:
 
@@ -60,19 +81,30 @@ What the live runs settled:
   `git diff HEAD` and the signal command. So the `Bash(x *)` spelling works
   for allow rules. The deny rules (`Bash(git push *)`, `Bash(gh *)`,
   `Bash(git commit *)`) use the same spelling and were never triggered.
-- `--permission-mode acceptEdits` with `--add-dir <task dir>` let the Claude
-  implementer change the worktree and tick the boxes in `task.md`. It chose
-  Bash (`python3 -`, `sed -i`) over the Edit and Write tools, so those two
-  tools were not exercised.
-- `stream-json` on 2.1.302: `system/init` carries `model`, `tools`,
-  `permissionMode`, `additional_directories`; `assistant` events carry
-  `message.model`; the `result` event carries `result`, `is_error`, `subtype`,
-  `usage`, `modelUsage`, `total_cost_usd`, `duration_ms`, `num_turns`,
-  `permission_denials`, `stop_reason`. Other event types seen:
-  `user` (tool results) and `rate_limit_event`. `modelUsage` listed only the
-  content model in every run.
-- Claude Code reports the model exactly as requested (`claude-sonnet-5-5`), so
-  no alias was needed.
+- The allow list is enforced as deny-by-default. On the 19th the Fable judge
+  first ran `git -C <worktree> status … && git -C … log … && git -C … diff …`
+  and then `git -C <worktree> diff HEAD`; both were denied (the `result`
+  event lists them under `permission_denials`), it went on with plain
+  `git log` and `git diff` and signalled `ready`. `-C`, `git status` and
+  commands joined with `&&` fall outside `Bash(git diff *)`; the judge
+  prompt now says so.
+- `--permission-mode acceptEdits` with `--add-dir <task dir>` lets the Claude
+  implementer change the worktree and tick the boxes in `task.md`. On the
+  17th it chose Bash (`python3 -`, `sed -i`); on the 19th it used `Edit`,
+  which is therefore verified under `--permission-prompts none`. `Write` is
+  still unexercised.
+- `stream-json` on 2.1.302 and 2.1.303: `system/init` carries `model`,
+  `tools`, `permissionMode`, `additional_directories`,
+  `claude_code_version`; `assistant` events carry `message.model`; the
+  `result` event carries `result`, `is_error`, `subtype`, `usage`,
+  `modelUsage`, `total_cost_usd`, `duration_ms`, `num_turns`,
+  `permission_denials`, `stop_reason`. Other event types seen: `user` (tool
+  results) and `rate_limit_event`. `modelUsage` listed only the content model
+  in every run.
+- Claude Code reports the model exactly as requested: `claude-sonnet-5-5` on
+  the 17th, `claude-fable-5-1` and `claude-opus-5-5` on the 19th, in the
+  session model, every turn and `modelUsage`. The starter configuration needs
+  no alias, and `--effort max` is accepted for Fable.
 - Codex 0.163.0 `--json` emits `thread.started`, `turn.started`,
   `item.started`, `item.completed` (items of type `agent_message`,
   `command_execution` with `command`, `exit_code`, `aggregated_output`,
@@ -83,11 +115,24 @@ What the live runs settled:
   `-o` file is written. `-c mcp_servers={}` and `-c features.multi_agent=false`
   are accepted. `--sandbox workspace-write --add-dir <task dir>` let the
   Codex implementer edit the worktree and `task.md`.
+- Codex in the two roles the 17th had not run: as planner,
+  `--sandbox read-only` with no `--add-dir` read the repository, and the
+  `-o` file landed in the task directory and merged as the plan; as judge it
+  read `git log` and `git diff` and signalled. Its reviewer and judge both
+  signalled with the absolute paths the prompt gives, exit 0.
 - An `item.completed` of type `error` with the message "clamping SessionEnd
   hook timeout to 3s …" comes from the Codex plugin's hooks and is harmless;
   stderr may also carry an MCP OAuth refresh error for a user-configured
   server. Neither affects the run.
-- **Found and fixed:** the Codex reviewer's `bottega signal <task-id> …`
+- `bottega pr` against GitHub: on a private repository reached over ssh,
+  `git push -u origin <branch>` and `gh pr create --repo github.com/<owner>/<repo>`
+  opened the pull request and printed its URL; the commit carried the
+  owner's git identity and the body from `pr-body.md`. A second `pr` printed
+  `pr exists: <url>` from `gh pr view <branch> --json url,state`
+  (`"state":"OPEN"`); after `gh pr merge` the same call returned
+  `"state":"MERGED"` and `pr` printed `pr exists:` again. The repository was
+  deleted after the probe.
+- **Found and fixed (17th):** the Codex reviewer's `bottega signal <task-id> …`
   exited 64 ("no task matches") twice, which the loop correctly read as *no
   signal → needs-work* until the cap. Cause: Codex runs agent commands under
   `shell_environment_policy.inherit = "core"` (the user's `config.toml`), so
@@ -95,6 +140,17 @@ What the live runs settled:
   cannot be found by id. Fix: `bottega signal` accepts the absolute task
   directory, and every prompt's signal command names it. The resumed round
   signalled `ready` with exit 0.
+- **Found and fixed (19th):** the Fable planner wrote a README snippet as a
+  ```` block with a ```sh example inside it. The kit read the inner ``` as
+  closing the outer fence, so the `# Hello, Ada!` comment lines in between
+  counted as headings and `merge_plan` dropped five lines of the plan (the
+  reviewer noticed the cut; the implementer completed the snippet from its
+  context). Fence tracking in `taskdoc` and in the loop's section merge now
+  follows CommonMark: a fence closes only with the same character and at
+  least the same length. One regression test each.
+- For whoever repeats the probe: it overrides `XDG_CONFIG_HOME`, and gh keeps
+  its login there, so `bottega pr` found gh logged out until `GH_CONFIG_DIR`
+  pointed at the real `~/.config/gh`. A normal install overrides nothing.
 
 ## The harness matrix
 
@@ -178,21 +234,17 @@ gh pr create --repo <host/owner/repo> --base <base> --head <branch> --title <tit
 
 Still unverified after the live runs above:
 
-- Codex as planner (`--sandbox read-only`, no `--add-dir`, the final message
-  written by `-o` into the task directory) and as judge: both tasks ran those
-  roles on Claude Code;
-- the Claude `Edit` and `Write` tools under `acceptEdits` with
-  `--permission-prompts none` (the implementer chose Bash instead);
+- the Claude `Write` tool under `acceptEdits` with `--permission-prompts none`
+  (the implementer chose Bash on the 17th and `Edit` on the 19th);
 - the deny rules `Bash(git push *)`, `Bash(gh *)`, `Bash(git commit *)` (never
   triggered);
-- `bottega pr` against a real GitHub repository (verified with a fake `gh`
-  only), including `--repo` on a GitHub Enterprise host and what
-  `gh pr view <branch> --json url,state` returns for a merged pull request;
+- `bottega pr` with `--repo` on a GitHub Enterprise host (github.com is
+  verified);
 - a reviewer whose test suite runs for minutes (the probe suites ran in
   seconds);
-- the model names Claude Code reports for the starter configuration's
-  `claude-opus-5-5` and `claude-fable-5-1` (the probe ran `claude-sonnet-5-5`),
-  and whether a proxied profile (Z.AI) reports the proxied name or the alias.
+- a proxied profile (Z.AI): whether it reports the proxied name or the alias.
+  The offline smoke covers the credential stripping and the alias path with
+  a fake harness only.
 
 ## Reproduce the offline gates
 

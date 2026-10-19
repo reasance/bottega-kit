@@ -51,4 +51,4 @@ refreshed for 0.1.0 on 2026-10-17 with what the milestones deferred.
   read-only roles created.
 - `--role` overrides on `bottega plan` (the plan allowed them on `new` and
   `plan`; today only `new` takes them).
-
+- Record Claude Code's `permission_denials` (from the `result` event) in `run.json` and count them in `bottega show`; today they are only in `events.jsonl`.

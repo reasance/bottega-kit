@@ -43,7 +43,7 @@ class Approve(ApproveFixture, unittest.TestCase):
             "  planner     fable-judge (claude, claude-fable-5-1, effort max)", lines
         )
         self.assertIn(
-            "  implementer opus-builder (claude, claude-opus-5, effort high)", lines
+            "  implementer opus-builder (claude, claude-opus-5-5, effort high)", lines
         )
         self.assertIn("rounds    2", lines)
         doc = self.doc.read_text()

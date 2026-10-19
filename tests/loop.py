@@ -122,7 +122,7 @@ class Transitions(LoopFixture, unittest.TestCase):
                 (4, "judge", "ready"),
             ],
         )
-        self.assertEqual(self.lines[0].group(3, 4), ("opus-builder", "claude-opus-5"))
+        self.assertEqual(self.lines[0].group(3, 4), ("opus-builder", "claude-opus-5-5"))
         self.assertEqual(self.lines[2].group(3, 4), ("fable-judge", "claude-fable-5-1"))
         self.assertEqual(proc.stdout.count("\n"), 3)  # nothing else on stdout
         self.assertIn("done", proc.stderr)

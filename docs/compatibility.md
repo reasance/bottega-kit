@@ -191,7 +191,7 @@ Still unverified after the live runs above:
 - a reviewer whose test suite runs for minutes (the probe suites ran in
   seconds);
 - the model names Claude Code reports for the starter configuration's
-  `claude-opus-5` and `claude-fable-5-1` (the probe ran `claude-sonnet-5-5`),
+  `claude-opus-5-5` and `claude-fable-5-1` (the probe ran `claude-sonnet-5-5`),
   and whether a proxied profile (Z.AI) reports the proxied name or the alias.
 
 ## Reproduce the offline gates

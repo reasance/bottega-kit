@@ -234,8 +234,12 @@ def parse_role_override(text):
 # implements and reviews, all through Claude Code.
 CLAUDE_PROFILES = {
     "fable-judge": {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
-    "opus-builder": {"harness": "claude", "model": "claude-opus-5", "effort": "high"},
-    "opus-reviewer": {"harness": "claude", "model": "claude-opus-5", "effort": "high"},
+    "opus-builder": {"harness": "claude", "model": "claude-opus-5-5", "effort": "high"},
+    "opus-reviewer": {
+        "harness": "claude",
+        "model": "claude-opus-5-5",
+        "effort": "high",
+    },
 }
 CLAUDE_ROLES = {
     "planner": "fable-judge",

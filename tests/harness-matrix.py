@@ -105,7 +105,7 @@ class Fixture:
         cfg = json.loads(json.dumps(CANONICAL))
         cfg["profiles"]["budgeted"] = {
             "harness": "claude",
-            "model": "claude-opus-5",
+            "model": "claude-opus-5-5",
             "effort": "low",
             "max_budget_usd": 2.5,
         }
@@ -275,7 +275,7 @@ class Receipts(Fixture, unittest.TestCase):
         ):
             self.assertIn(key, record)
         self.assertEqual(record["status"], "ok")
-        self.assertEqual(record["provider_reported_model"], "claude-opus-5")
+        self.assertEqual(record["provider_reported_model"], "claude-opus-5-5")
         self.assertEqual(record["model_identity_source"], "provider-reported")
         self.assertEqual(record["cost_usd"], 0.0123)
         self.assertEqual(record["num_turns"], 1)
@@ -381,11 +381,11 @@ class Failures(Fixture, unittest.TestCase):
         outcome, _ = self.dispatch("planner", "opus-builder", default=step)
         self.assertTrue(outcome.ok, outcome.record)
         record = outcome.record
-        self.assertEqual(record["identity_models"], ["claude-opus-5"])
+        self.assertEqual(record["identity_models"], ["claude-opus-5-5"])
         self.assertEqual(
-            sorted(record["observed_models"]), ["claude-haiku-5-5", "claude-opus-5"]
+            sorted(record["observed_models"]), ["claude-haiku-5-5", "claude-opus-5-5"]
         )
-        self.assertEqual(record["provider_reported_model"], "claude-opus-5")
+        self.assertEqual(record["provider_reported_model"], "claude-opus-5-5")
         # A modelUsage key alone, even with no helper, is never compared.
         outcome, _ = self.dispatch(
             "planner", "opus-builder", default={"usage_model": "claude-other"}
@@ -402,20 +402,20 @@ class Failures(Fixture, unittest.TestCase):
         stream = "\n".join(
             json.dumps(event)
             for event in (
-                {"type": "system", "subtype": "init", "model": "claude-opus-5"},
-                {"type": "assistant", "message": {"model": "claude-opus-5"}},
+                {"type": "system", "subtype": "init", "model": "claude-opus-5-5"},
+                {"type": "assistant", "message": {"model": "claude-opus-5-5"}},
                 {
                     "type": "result",
                     "result": "done",
-                    "modelUsage": {"claude-opus-5": {}, "claude-haiku-5-5": {}},
+                    "modelUsage": {"claude-opus-5-5": {}, "claude-haiku-5-5": {}},
                 },
             )
         )
         parsed = harness.get("claude").parse(self.box.root, stream, "", 0)
-        self.assertEqual(parsed.identity_models, ["claude-opus-5"])
-        self.assertEqual(parsed.models, ["claude-opus-5", "claude-haiku-5-5"])
+        self.assertEqual(parsed.identity_models, ["claude-opus-5-5"])
+        self.assertEqual(parsed.models, ["claude-opus-5-5", "claude-haiku-5-5"])
         self.assertEqual(
-            harness.identity("claude-opus-5", parsed.identity_models, None),
+            harness.identity("claude-opus-5-5", parsed.identity_models, None),
             ("provider-reported", []),
         )
 

@@ -165,12 +165,12 @@ CANONICAL = {
         },
         "opus-builder": {
             "harness": "claude",
-            "model": "claude-opus-5",
+            "model": "claude-opus-5-5",
             "effort": "high",
         },
         "opus-reviewer": {
             "harness": "claude",
-            "model": "claude-opus-5",
+            "model": "claude-opus-5-5",
             "effort": "high",
         },
         "sol-builder": {"harness": "codex", "model": "gpt-5.6-sol", "effort": "high"},

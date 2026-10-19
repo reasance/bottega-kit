@@ -558,7 +558,7 @@ class Cli(Fixture, unittest.TestCase):
     """Through `bottega plan`: identity mismatch and timeout exit 3."""
 
     def plan(self, step, rc=3, **cfg_changes):
-        self.cfg["profiles"]["fable-judge"].update(cfg_changes)
+        self.cfg["profiles"]["fable"].update(cfg_changes)
         self.box.write_config(self.cfg)
         fake = FakeCalls(self.box, default=step)
         return self.box.bottega("plan", self.task, rc=rc, env=fake.env)
@@ -567,7 +567,7 @@ class Cli(Fixture, unittest.TestCase):
         proc = self.plan({"model": "claude-impostor"})
         self.assertRegex(
             proc.stdout,
-            r"^001 planner fable-judge claude-fable-5-1 \u2192 failed "
+            r"^001 planner fable claude-fable-5-1 \u2192 failed "
             r"identity-mismatch \(\d+s\)\n$",
         )
         error = json.loads((self.dir / "runs/001-planner/error.json").read_text())

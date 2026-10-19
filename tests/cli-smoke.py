@@ -41,7 +41,7 @@ class Basics(unittest.TestCase):
         proc = self.box.bottega("init")
         self.assertIn("harnesses found on PATH: claude, codex", proc.stdout)
         written = json.loads(self.box.config_file.read_text())
-        self.assertEqual(written["roles"]["planner"], "fable-judge")
+        self.assertEqual(written["roles"]["planner"], "fable")
         self.assertEqual(written["profiles"]["sol-builder"]["harness"], "codex")
         self.box.bottega("init", rc=2)
         self.box.config_file.write_text("{}")

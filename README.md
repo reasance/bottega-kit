@@ -7,6 +7,23 @@ one of those CLIs. This is not vdaubry/bottega: the process is
 [theirs](https://github.com/vdaubry/bottega); the local, file-based, multi-vendor
 loop is this project.
 
+A task is one plan, which you approve, and then rounds of implementer and
+reviewer until the reviewer is satisfied or the round cap is reached:
+
+```
+bottega new      task directory, worktree and branch; task.md holds your request
+bottega plan     one planner dispatch; may end with questions; repeat until there is a plan
+bottega approve  ids for the to-do items; plan hash, roles and cap recorded
+bottega run      implementer and reviewer, round after round, up to the cap; then the judge
+bottega pr       commit if needed, push to origin, open the pull request
+bottega resume   after a stop, with a fresh cap
+```
+
+A round is one implementer pass and one reviewer pass; the cap is 3 unless
+you change it. Each role runs under a profile from your configuration: a
+harness, which is the CLI that runs the role (`claude` or `codex`), a model
+and an effort. One profile may serve several roles.
+
 ## Current release: 0.1.0
 
 The first release: `init`, `doctor`, `new`, `plan`, `approve`, `run`, `resume`,
@@ -52,12 +69,12 @@ your tasks and configuration.
 {
   "schema_version": 1,
   "profiles": {
-    "fable-judge":   {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
+    "fable":         {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
     "opus-builder":  {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"},
     "opus-reviewer": {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"}
   },
-  "roles": {"planner": "fable-judge", "implementer": "opus-builder",
-            "reviewer": "opus-reviewer", "judge": "fable-judge"},
+  "roles": {"planner": "fable", "implementer": "opus-builder",
+            "reviewer": "opus-reviewer", "judge": "fable"},
   "rounds": 3
 }
 ```
@@ -68,6 +85,7 @@ The whole sequence, from a repository with an `origin` on GitHub:
 bottega init
 bottega doctor
 cd your-repo
+echo '{"test_cmd": "make test"}' > bottega.json   # optional: the test command the agents run
 bottega new --title "Add a dry-run flag" --request "Add --dry-run to the export command."
 bottega plan 20261017-0930-add-a-dry-run-flag     # a unique prefix or suffix is enough
 # read task.md; answer any questions in it and run plan again
@@ -80,12 +98,12 @@ bottega pr dry-run-flag
 planner's questions when it has any; everything else goes to stderr:
 
 ```
-001 planner fable-judge claude-fable-5-1 → planned (2m41s)
+001 planner fable claude-fable-5-1 → planned (2m41s)
 002 implementer opus-builder claude-opus-5-5 → done (6m02s)
 003 reviewer opus-reviewer claude-opus-5-5 → needs-work (2m14s)
 004 implementer opus-builder claude-opus-5-5 → done (3m40s)
 005 reviewer opus-reviewer claude-opus-5-5 → ready (1m55s)
-006 judge fable-judge claude-fable-5-1 → ready (48s)
+006 judge fable claude-fable-5-1 → ready (48s)
 ```
 
 `pr` prints the pull request's URL, or `pr exists: <url>`.
@@ -99,7 +117,7 @@ Code pointed at Z.AI's Anthropic-compatible endpoint:
 {
   "schema_version": 1,
   "profiles": {
-    "fable-judge":  {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
+    "fable":        {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
     "sol-builder":  {"harness": "codex",  "model": "gpt-5.6-sol",     "effort": "high"},
     "glm-reviewer": {"harness": "claude", "model": "glm-5.3-flash",   "effort": "max",
                      "env": {"ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
@@ -107,7 +125,7 @@ Code pointed at Z.AI's Anthropic-compatible endpoint:
                              "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5.3-flash"},
                      "aliases": ["opus"]}
   },
-  "roles": {"planner": "fable-judge", "implementer": "sol-builder",
+  "roles": {"planner": "fable", "implementer": "sol-builder",
             "reviewer": "glm-reviewer"},
   "rounds": 3
 }

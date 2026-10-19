@@ -233,7 +233,7 @@ def parse_role_override(text):
 # The README's canonical example (plan §4.4): Fable plans and judges, Opus
 # implements and reviews, all through Claude Code.
 CLAUDE_PROFILES = {
-    "fable-judge": {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
+    "fable": {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
     "opus-builder": {"harness": "claude", "model": "claude-opus-5-5", "effort": "high"},
     "opus-reviewer": {
         "harness": "claude",
@@ -242,10 +242,10 @@ CLAUDE_PROFILES = {
     },
 }
 CLAUDE_ROLES = {
-    "planner": "fable-judge",
+    "planner": "fable",
     "implementer": "opus-builder",
     "reviewer": "opus-reviewer",
-    "judge": "fable-judge",
+    "judge": "fable",
 }
 CODEX_PROFILES = {
     "sol-builder": {"harness": "codex", "model": "gpt-5.6-sol", "effort": "high"},

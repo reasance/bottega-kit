@@ -61,7 +61,7 @@ If ANY checked item fails verification, the final status is NEEDS_WORK, regardle
 ### 3. Run unit tests
 
 1. **First run targeted tests** for the files that changed. Use `{{test_cmd}}` when it is set, else the project's documented test command.
-2. **Then run the full test suite in the foreground** with a generous timeout (up to 10 minutes). Do NOT background the suite and do NOT use a monitor or watcher to wait for it: a backgrounded run is killed when your turn ends and never reports back, so the suite silently dies.
+2. **Then run the full test suite in the foreground** and wait for it to finish. Give the command a generous timeout through your shell tool (up to 10 minutes). If your shell tool hands control back while the command is still running, wait for that same command to finish before you go on: a command that has not returned has neither passed nor failed, and a suite that takes minutes is normal, not a blocker. Do NOT background the suite and do NOT use a monitor or watcher to wait for it: a backgrounded run is killed when your turn ends and never reports back, so the suite silently dies.
 3. **Do not launch a second suite while one is running**: parallel test runs compete for resources. Only re-run after the previous foreground run has returned.
 
 Report any failures or issues found.

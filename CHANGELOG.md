@@ -56,11 +56,11 @@ flags.
   2.1.303 and Codex CLI 0.163.0, each in every role, and `bottega pr` on a
   private github.com repository (`docs/compatibility.md`). The Claude Bash
   deny rules were seen to deny every forbidden command; a 150 s test suite
-  passed under a Claude reviewer. A Codex reviewer gave up on that suite when
-  its shell tool handed control back early; the prompts now say to wait, and
-  that wording has not run on Codex yet. The Claude `Write` tool, a GitHub
-  Enterprise host and a proxied profile were not exercised; Codex reports no
-  model, so its identity stays `requested-only`.
+  passed under a Claude reviewer and, after a prompt change, under a Codex
+  reviewer that had first given up on it; the Claude `Write` tool created
+  files under `acceptEdits`. A GitHub Enterprise host and a proxied profile
+  were not exercised; Codex reports no model, so its identity stays
+  `requested-only`.
 - Two harnesses: `claude` and `codex`.
 - A text-patch harness for chat-completion endpoints, and Kimi, Grok and
   Gemini drivers, are planned for later (`docs/later.md`).

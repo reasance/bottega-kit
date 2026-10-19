@@ -76,7 +76,8 @@ bottega run dry-run-flag
 bottega pr dry-run-flag
 ```
 
-`plan` and `run` print one line per dispatch, and nothing else on stdout:
+`plan` and `run` print one line per dispatch on stdout, and `plan` adds the
+planner's questions when it has any; everything else goes to stderr:
 
 ```
 001 planner fable-judge claude-fable-5-1 → planned (2m41s)

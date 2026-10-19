@@ -21,7 +21,9 @@ def add_parser(sub):
     parser = sub.add_parser(
         "signal", help="for agents: report ready, needs-work or blocked"
     )
-    parser.add_argument("task", help="task id, or a unique prefix or suffix")
+    parser.add_argument(
+        "task", help="task id, a unique prefix or suffix, or the task directory"
+    )
     parser.add_argument("status", help="|".join(STATUSES))
     parser.add_argument("reason", nargs="?", default="", help="one line of why")
     parser.add_argument(

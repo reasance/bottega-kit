@@ -58,8 +58,9 @@ checked.
 
 **Environment references.** `"ANTHROPIC_AUTH_TOKEN": "${ZAI_API_KEY}"` is
 expanded from your environment when the harness starts. A referenced variable
-that is not set fails `doctor`, `approve`, `run` and `resume` (exit 2); it is
-never sent empty. Receipts record the variable names, never the values.
+that is not set fails `doctor`, `plan`, `approve`, `run` and `resume`
+(exit 2); it is never sent empty. Receipts record the variable names, never
+the values.
 
 **Proxied Claude profiles.** A `claude` profile whose `env` sets
 `ANTHROPIC_BASE_URL` talks to another endpoint. For it, bottega-kit:
@@ -144,7 +145,7 @@ unknown variable is refused before anything runs; text such as
 | variable | used by | what |
 |---|---|---|
 | `XDG_CONFIG_HOME` | `bottega` | the configuration and prompt overrides live under `<it>/bottega-kit` |
-| `XDG_DATA_HOME` | `bottega`, `install.sh` | the default data directory is `<it>/bottega-kit` |
+| `XDG_DATA_HOME` | `bottega`, `install.sh`, `uninstall.sh`, `doctor.sh` | the default data directory is `<it>/bottega-kit` |
 | `BOTTEGA_DATA_HOME` | `bottega`, `install.sh`, `uninstall.sh`, `doctor.sh` | the data directory itself: the installed kit and `tasks/` |
 | `BOTTEGA_BIN_HOME` | `install.sh`, `uninstall.sh` | where the `bottega` link goes; `~/.local/bin` by default |
 | `BOTTEGA_INSTALL_SOURCE`, `BOTTEGA_INSTALL_REF` | `install.sh` | set by `npx bottega-kit`, recorded in `installed-version.json` |

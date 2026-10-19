@@ -8,7 +8,9 @@ from ..util import format_duration
 
 def add_parser(sub):
     parser = sub.add_parser("show", help="show a task")
-    parser.add_argument("task", help="task id, or a unique prefix or suffix")
+    parser.add_argument(
+        "task", help="task id, a unique prefix or suffix, or the task directory"
+    )
     parser.add_argument("--json", action="store_true", help="print JSON")
     parser.set_defaults(handler=run)
 

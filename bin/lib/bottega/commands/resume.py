@@ -16,7 +16,9 @@ FROM_PHASES = ("stopped", "approved", "running")
 
 def add_parser(sub):
     parser = sub.add_parser("resume", help="continue a stopped task with a fresh cap")
-    parser.add_argument("task", help="task id, or a unique prefix or suffix")
+    parser.add_argument(
+        "task", help="task id, a unique prefix or suffix, or the task directory"
+    )
     parser.add_argument(
         "--rounds",
         type=int,

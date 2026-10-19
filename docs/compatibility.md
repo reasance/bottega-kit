@@ -190,14 +190,17 @@ Still unverified after the live runs above:
   `gh pr view <branch> --json url,state` returns for a merged pull request;
 - a reviewer whose test suite runs for minutes (the probe suites ran in
   seconds);
-- the model names Claude Code reports for `claude-opus-5-5` and
-  `claude-fable-5-1`, and whether a proxied profile (Z.AI) reports the proxied
-  name or the alias.
+- the model names Claude Code reports for the starter configuration's
+  `claude-opus-5` and `claude-fable-5-1` (the probe ran `claude-sonnet-5-5`),
+  and whether a proxied profile (Z.AI) reports the proxied name or the alias.
 
 ## Reproduce the offline gates
 
 ```sh
 ruff check bin tests && ruff format --check bin tests
+git ls-files '*.sh' 'bin/*' 'tests/fakes/*' | while read -r f; do
+  head -1 "$f" | grep -q '^#!.*\(bash\|sh\)' && printf '%s\n' "$f"
+done | xargs shellcheck -S warning
 bash tests/version-consistency.sh
 node --test tests/npm-installer.test.mjs
 ./run-tests.sh

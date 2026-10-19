@@ -13,7 +13,9 @@ def add_parser(sub):
     parser = sub.add_parser(
         "run", help="implementer and reviewer rounds up to the cap, then the judge"
     )
-    parser.add_argument("task", help="task id, or a unique prefix or suffix")
+    parser.add_argument(
+        "task", help="task id, a unique prefix or suffix, or the task directory"
+    )
     parser.set_defaults(handler=run)
 
 

@@ -64,6 +64,10 @@ counted as unticked. Ticking items and rewriting the findings do not change
 it; editing the plan does. `run` and `resume` refuse (exit 2) a plan that no
 longer matches: approve it again.
 
+A stopped task can be approved again after you edit the plan. The ids
+already given are kept, the rule about an unchecked item is waived (the loop
+may have ticked them all), and the next `run` starts over at round 1.
+
 ## The loop
 
 `bottega run` starts round 1 with the implementer. After every dispatch,
@@ -190,8 +194,8 @@ it:
    `bottega task <task-id>`, using your git identity;
 2. refuses if the branch has no commit ahead of the base;
 3. pushes the branch with `git push -u origin <branch>`;
-4. prints `pr exists: <url>` if `gh` finds an open pull request for the
-   branch, or opens one with `gh pr create` and prints its URL.
+4. prints `pr exists: <url>` if `gh` finds an open or merged pull request
+   for the branch, or opens one with `gh pr create` and prints its URL.
 
 The body has the plan's Overview, the last review's findings as "What was
 verified", the rounds used out of the cap, the judge's verdict when there is

@@ -31,7 +31,9 @@ def add_parser(sub):
     parser = sub.add_parser(
         "pr", help="commit if needed, push the branch to origin, open the pull request"
     )
-    parser.add_argument("task", help="task id, or a unique prefix or suffix")
+    parser.add_argument(
+        "task", help="task id, a unique prefix or suffix, or the task directory"
+    )
     parser.set_defaults(handler=run)
 
 

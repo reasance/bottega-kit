@@ -492,3 +492,45 @@ verified as implementer and reviewer, not in every role; `--role` belongs to
 every dispatch. Two findings deferred to `docs/later.md`: `pr` committing
 untracked caches, and `--role` on `plan`.
 
+
+## 2026-10-19 — smoke tests and documentation review
+
+Two fake-driven end-to-end smokes through the installed kit (`install.sh`
+into a scratch data home, `init`, `doctor`, `new`, `plan`, `approve`, `run`,
+`pr`, `pr` again, `show`, `list`, `rm`, `uninstall.sh`), after the code
+review fixes:
+
+- the happy path: Claude in every role, `ready` in round 1, the judge
+  `ready`, a pull request created then reported as existing;
+- the unhappy path: Codex as implementer (`--role implementer=sol-builder`),
+  `approve --rounds 1`, a reviewer `needs-work --uncheck T3` whose message
+  leaves a code fence open (the fence is closed, `## Verdict` survives),
+  `cap-reached` (exit 3), `pr` on the stopped task (the body starts with the
+  stop), `resume --rounds 1` signalling by the absolute task directory, done
+  in round 2 of 2, `pr exists`. Receipts hold no environment values.
+
+Both passed. The suites also pass under Apple's python3 3.9.6, so the
+"python3 3.9 or newer" claim holds after the review fixes (`dispatch.py`'s
+parenthesised `with` is accepted by 3.9's parser).
+
+Documentation corrected against the code, nothing else changed:
+
+- README said `plan` and `run` print nothing but the dispatch line on stdout;
+  `plan` also prints the planner's questions.
+- `docs/process.md` now says a stopped task can be approved again (ids kept,
+  the unchecked-item rule waived, the next `run` starts at round 1), and that
+  `pr exists:` covers a merged pull request as well as an open one.
+- `docs/configuration.md`: an unset `${NAME}` also fails `plan`;
+  `XDG_DATA_HOME` is read by the shell scripts too.
+- `docs/compatibility.md`: the open unknown about model names now names what
+  the starter configuration writes (`claude-opus-5`, `claude-fable-5-1`), not
+  `claude-opus-5-5`; the offline-gates block gained the shellcheck line.
+- The `task` argument's help in every command says it also takes the task
+  directory, which `state.resolve` has accepted since the live probe.
+
+Not changed, for the owner: the starter configuration and the README bind
+Opus to `claude-opus-5`, the previous Opus generation; the current one is
+`claude-opus-5-5`. Switching is a one-line change in `config.py`,
+`tests/helpers.py` and the README, and the live probe's part 2 should verify
+whichever name is kept. The CHANGELOG's 0.1.0 date stays 2026-10-17 until the
+tag is cut and moves to that day.

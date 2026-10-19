@@ -158,7 +158,7 @@ class Sandbox:
 CANONICAL = {
     "schema_version": 1,
     "profiles": {
-        "fable-judge": {
+        "fable": {
             "harness": "claude",
             "model": "claude-fable-5-1",
             "effort": "max",
@@ -187,10 +187,10 @@ CANONICAL = {
         },
     },
     "roles": {
-        "planner": "fable-judge",
+        "planner": "fable",
         "implementer": "opus-builder",
         "reviewer": "opus-reviewer",
-        "judge": "fable-judge",
+        "judge": "fable",
     },
     "rounds": 3,
 }

@@ -50,7 +50,7 @@ class Questions(PlanFixture, unittest.TestCase):
         match = self.first_line(proc)
         self.assertEqual(
             match.group(1, 2, 3, 4),
-            ("001", "fable-judge", "claude-fable-5-1", "questions"),
+            ("001", "fable", "claude-fable-5-1", "questions"),
         )
         self.assertIn("1. Should the dry run print JSON or text?", proc.stdout)
         st = self.box.state(self.task)

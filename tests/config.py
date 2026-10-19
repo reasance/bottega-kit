@@ -200,7 +200,7 @@ class RoleOverride(unittest.TestCase):
     def test_bindings_merge_overrides(self):
         merged = config.role_bindings(CANONICAL, {"implementer": "sol-builder"})
         self.assertEqual(merged["implementer"], "sol-builder")
-        self.assertEqual(merged["planner"], "fable-judge")
+        self.assertEqual(merged["planner"], "fable")
 
 
 class FileAndDoctor(unittest.TestCase):

@@ -46,10 +46,10 @@ const SHIPPED = [
 const CONFIG = {
   schema_version: 1,
   profiles: {
-    "fable-judge": { harness: "claude", model: "claude-fable-5-1", effort: "max" },
+    fable: { harness: "claude", model: "claude-fable-5-1", effort: "max" },
     "opus-builder": { harness: "claude", model: "claude-opus-5-5", effort: "high" },
   },
-  roles: { planner: "fable-judge", implementer: "opus-builder", reviewer: "opus-builder" },
+  roles: { planner: "fable", implementer: "opus-builder", reviewer: "opus-builder" },
   rounds: 3,
 };
 

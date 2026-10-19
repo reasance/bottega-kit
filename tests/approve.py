@@ -40,7 +40,7 @@ class Approve(ApproveFixture, unittest.TestCase):
         lines = proc.stdout.splitlines()
         self.assertEqual(lines[0], "approved %s" % self.task)
         self.assertIn(
-            "  planner     fable-judge (claude, claude-fable-5-1, effort max)", lines
+            "  planner     fable (claude, claude-fable-5-1, effort max)", lines
         )
         self.assertIn(
             "  implementer opus-builder (claude, claude-opus-5-5, effort high)", lines
@@ -56,10 +56,10 @@ class Approve(ApproveFixture, unittest.TestCase):
         self.assertEqual(
             approval["roles"],
             {
-                "planner": "fable-judge",
+                "planner": "fable",
                 "implementer": "opus-builder",
                 "reviewer": "opus-reviewer",
-                "judge": "fable-judge",
+                "judge": "fable",
             },
         )
         self.assertEqual(approval["rounds"], 2)

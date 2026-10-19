@@ -34,6 +34,11 @@ changed), `## Overview`, `## Implementation Plan`, `## Testing Strategy`,
 `## Verdict`, which bottega-kit writes from the reviewer's and the judge's
 final messages.
 
+[`templates/task.md`](../templates/task.md) is the template `bottega new`
+fills in: your title and request, then guidance under each heading for the
+planner. After `approve`, every to-do item carries its id:
+`- [ ] [T3] Add the flag`.
+
 ## Planning
 
 `bottega plan` sends the whole document to the planner. The planner reads the

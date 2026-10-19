@@ -536,5 +536,16 @@ test, the README and `docs/`. The name is still unverified live, like
 `claude-fable-5-1`: the probe ran `claude-sonnet-5-5`, and part 2 of the
 release gate should run the starter's names once.
 
+**The planning-and-judging profile is `fable`, not `fable-judge`.** The
+plan (§4.4) named it `fable-judge`, but it is bound to the planner as well,
+and the name read oddly in the README's first example. On the owner's word
+(the readability review, then "applica") the starter profile is `fable` in
+`config.py`, the suites, the npm wrapper test, the README and `docs/`. The
+same pass put the command sequence, the definition of a round and the
+definition of profile and harness in the README before its first example,
+added a `bottega.json` line to the example sequence, and linked the task
+template from `docs/process.md`. The CHANGELOG is untouched: 0.1.0 is not
+tagged yet.
+
 The CHANGELOG's 0.1.0 date stays 2026-10-17 until the tag is cut and moves
 to that day.

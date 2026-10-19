@@ -123,7 +123,7 @@ class Transitions(LoopFixture, unittest.TestCase):
             ],
         )
         self.assertEqual(self.lines[0].group(3, 4), ("opus-builder", "claude-opus-5-5"))
-        self.assertEqual(self.lines[2].group(3, 4), ("fable-judge", "claude-fable-5-1"))
+        self.assertEqual(self.lines[2].group(3, 4), ("fable", "claude-fable-5-1"))
         self.assertEqual(proc.stdout.count("\n"), 3)  # nothing else on stdout
         self.assertIn("done", proc.stderr)
         st = self.state()
@@ -378,7 +378,7 @@ class Transitions(LoopFixture, unittest.TestCase):
             [
                 ("codex", "sol-builder"),
                 ("claude", "opus-reviewer"),
-                ("claude", "fable-judge"),
+                ("claude", "fable"),
             ],
         )
         self.assertIn("workspace-write", self.calls[0]["argv"])
@@ -559,14 +559,14 @@ class Refusals(LoopFixture, unittest.TestCase):
 
     def test_planner_profile_removed_is_not_the_loops_business(self):
         self.approved()
-        self.cfg["profiles"]["planner-only"] = dict(self.cfg["profiles"]["fable-judge"])
+        self.cfg["profiles"]["planner-only"] = dict(self.cfg["profiles"]["fable"])
         self.cfg["roles"]["planner"] = "planner-only"
         self.box.write_config(self.cfg)
         st = self.state()
         st["approval"]["roles"]["planner"] = "planner-only"
         (self.dir / "state.json").write_text(json.dumps(st))
         del self.cfg["profiles"]["planner-only"]
-        self.cfg["roles"]["planner"] = "fable-judge"
+        self.cfg["roles"]["planner"] = "fable"
         self.box.write_config(self.cfg)
         self.run_(implement(), review("ready"), judge("ready"))
 

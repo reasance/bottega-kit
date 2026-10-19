@@ -20,9 +20,12 @@ from .. import config
 
 ROLES = config.ROLES
 
-# Claude Code permission rules for Bash. Whether a rule is spelled
-# `Bash(git push *)` or `Bash(git push:*)` is a live-probe unknown (plan
-# §4.5); change BASH_RULE and every rule below follows.
+# Claude Code permission rules for Bash. Verified live on 2026-10-19 with
+# Claude Code 2.1.303: as a deny rule, `Bash(git push *)` denies `git push`
+# with arguments, bare `git push`, and a command joined with `&&` that
+# contains it; as an allow rule, `Bash(git diff *)` allows `git diff …` and
+# nothing else (not `git -C … diff`). Change BASH_RULE and every rule below
+# follows.
 BASH_RULE = "Bash(%s *)"
 
 

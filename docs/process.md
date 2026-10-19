@@ -160,7 +160,10 @@ records HEAD and a hash of the worktree's tracked changes. If either moved,
 the task stops with `role-modified-worktree`. New untracked files, such as
 test caches, are recorded and reported as a warning. The implementer is the
 only role that edits the worktree; it should not commit, and a commit is a
-warning in its receipt.
+warning in its receipt. On Claude Code, `git push` and `gh` are denied to
+the implementer and the reviewer, and `git commit` to the reviewer; on Codex
+the sandbox makes a commit in the worktree fail and blocks the network. See
+[compatibility.md](compatibility.md) for what each of those was seen to do.
 
 Each harness is also started with the narrowest permissions it offers for the
 role: see [compatibility.md](compatibility.md).

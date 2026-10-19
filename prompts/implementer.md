@@ -20,7 +20,7 @@ You are the implementation agent for task {{task_id}} ("{{task_title}}"), round 
    - If its status is `IN_PROGRESS`, it only lists the items that remain.
 3. Implement every unchecked (`- [ ]`) item in the To-Do List, both the Implementation and the Testing sections, working through the plan's phases in order.
 4. Mark each item complete as you finish it: change its `- [ ]` to `- [x]` in `{{task_doc}}`, keeping its `[T<n>]` id. Only tick a **Testing** item after you have actually run that test or QA step and seen it pass. Never tick a box for an unexecuted or failing step.
-5. Add or update tests for the code you change. The plan's Testing Strategy is mandatory, not optional.
+5. Add or update tests for the code you change. The plan's Testing Strategy is mandatory, not optional. Run tests in the foreground with a generous timeout through your shell tool (up to 10 minutes) and wait for them; if your shell tool hands control back while a command is still running, wait for that same command to finish before you go on.
 6. Do NOT ask any questions. Proceed directly with the implementation, and state the assumptions you made in your final message.
 
 When you finish, check whether ALL To-Do items, Implementation and Testing, are marked complete `[x]`. If some are not, say which and why in your final message.

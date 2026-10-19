@@ -589,3 +589,47 @@ Findings, all recorded in `docs/compatibility.md`:
   fixes it. Not a kit matter.
 
 The CHANGELOG is still untouched: 0.1.0 is not tagged.
+
+## 2026-10-19 — live probe, part 3: the open points
+
+Authorized by the owner ("ok, lavoriamo ai punti aperti allora", after the
+proposal "chiudere i primi tre punti in una sonda breve, circa quattro
+dispatch su Sonnet e terra, sotto 1 USD"). Four live dispatches on a throwaway
+repository whose full suite sleeps 150 s in an end-to-end test: a Sonnet
+implementer and reviewer on "add a --bye flag" (two new files), a Terra
+implementer and reviewer on "add a --whisper flag". The plans were written
+by hand and served by the kit's fake `claude` on `plan`, so no planner model
+ran; prompt overrides in the probe's own config dir asked each role to try
+the forbidden commands and report. Claude cost 0.15 USD. Z.AI stays deferred;
+`ZAI_API_KEY` is not exported in this session anyway.
+
+Findings, all in `docs/compatibility.md`:
+
+- The Bash deny rules work as spelled: eleven forbidden commands, eleven
+  denials, including bare `git push`, `gh --version` and `echo probe && git
+  push origin HEAD`. The BASH_RULE comment in `harness/__init__.py` now says
+  so instead of calling the spelling an unknown.
+- Claude handles a slow suite: the reviewer set a 600 000 ms Bash timeout as
+  the prompt asks, the implementer 400 000 ms without being asked.
+- **Found:** the Codex reviewer gave up on the slow suite. Codex's resumable
+  command execution hands control back after a short yield while the command
+  runs on; the reviewer read that as the sandbox killing the suite, could not
+  check with `ps`/`pgrep` (denied in the sandbox), marked the suite item
+  FAILED and signalled `blocked`. The Codex implementer, on the same suite,
+  waited and saw it pass. Change: the reviewer prompt's step 3.2 and the
+  implementer prompt's item 5 now say to give the command a long timeout and,
+  if the shell tool hands control back while the command runs, to wait for
+  that command; not yet re-run on Codex (one `resume` would do it; needs the
+  owner's word).
+- Codex has no deny rules: a commit in the worktree fails because Codex keeps
+  the git directory read-only; `gh` runs; a push to the probe's local bare
+  origin under `/tmp` went through from both roles, because `workspace-write`
+  makes `/tmp` writable. For a network remote the sandbox's network block is
+  what stops a push, unless `config.toml` lifts it. Documented in
+  compatibility.md and process.md; a per-profile `-c` passthrough is a
+  later.md line, not built.
+- `Write` is still unexercised: Sonnet created the new files with Bash
+  heredocs although `Write` was offered. Same permission class as `Edit`.
+
+`HARNESS_MATRIX` is unchanged. `CHANGELOG.md`'s 0.1.0 section stays dated
+2026-10-17 and untagged; its known-limits bullet is updated.

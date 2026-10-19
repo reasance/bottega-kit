@@ -22,14 +22,21 @@ installed kit, one dispatch set at a time:
 | 17 | add a `--repeat` option | planner claude · implementer **claude** · reviewer **codex** · judge claude | 9 (one `questions` round, one `cap-reached` stop, one `resume --rounds 1`) | done in round 3 of 3 |
 | 19 | add a `--shout` flag | **codex** in every role | 4 | done in round 1 of 2; then `bottega pr` on a private GitHub repository |
 | 19 | add a `--repeat` option | the starter configuration: `fable` as planner and judge, `opus-builder` and `opus-reviewer` | 4 | done in round 1 of 2 |
+| 19, evening | add a `--bye` flag: two new files, a full suite that takes 150 s, and a permission probe in the prompts | plan written by hand and served by the fake harness · implementer **claude** · reviewer **claude** | 2 | done in round 1 of 1 |
+| 19, evening | add a `--whisper` flag, same shape | plan written by hand · implementer **codex** · reviewer **codex** | 2 | stopped `blocked` in round 1 of 1: the reviewer gave up on the slow suite (below) |
 
 Profiles on the 17th: `claude-sonnet-5-5` at effort `medium` for the Claude
 roles (with `timeout` and `max_budget_usd`), `gpt-5.6-terra` at effort
 `medium` for the Codex roles, chosen to keep the probe cheap. On the 19th:
 `gpt-5.6-terra` at `medium` for Codex, and the starter configuration as
 `bottega init` writes it (`claude-fable-5-1` at `max`, `claude-opus-5-5` at
-`high`) with `timeout` and `max_budget_usd` added. None of this says which
-model to use.
+`high`) with `timeout` and `max_budget_usd` added. In the evening of the
+19th: `claude-sonnet-5-5` at `medium` and `gpt-5.6-terra` at `medium`, on a
+repository whose full suite sleeps 150 s in an end-to-end test, with prompt
+overrides that asked each role to try the forbidden commands one by one and
+report what happened; the plans were written by hand and fed through the
+kit's fake harness, so no planner model ran. None of this says which model
+to use.
 
 Per dispatch (duration, cost as Claude Code reported it; Codex usage is billed
 to the ChatGPT plan and reports no cost). 2026-10-17:
@@ -62,8 +69,12 @@ to the ChatGPT plan and reports no cost). 2026-10-17:
 | 2 | implementer | claude | claude-opus-5-5 | 43 s | 0.274 | — |
 | 3 | reviewer | claude | claude-opus-5-5 | 37 s | 0.225 | ready |
 | 4 | judge | claude | claude-fable-5-1 | 50 s | 0.764 | ready |
+| 2 | implementer | claude | claude-sonnet-5-5 | 187 s | 0.068 | — |
+| 3 | reviewer | claude | claude-sonnet-5-5 | 193 s | 0.082 | ready |
+| 2 | implementer | codex | not reported | 239 s | — | — |
+| 3 | reviewer | codex | not reported | 129 s | — | blocked |
 
-Twenty-one dispatches: 0.41 USD on the Claude side on the 17th, 2.16 USD on
+Twenty-five dispatches: 0.41 USD on the Claude side on the 17th, 2.31 USD on
 the 19th. Every implementation was correct, tested and documented; every
 reviewer ran the unit tests and every manual QA scenario; the second planner
 on the 17th asked a real question (the request mentioned a flag that was not
@@ -79,8 +90,16 @@ What the live runs settled:
   `git diff`, the test suite, the CLI under test and `bottega signal`, with no
   permission denial; the judge's four `Bash(… *)` allow rules let it run
   `git diff HEAD` and the signal command. So the `Bash(x *)` spelling works
-  for allow rules. The deny rules (`Bash(git push *)`, `Bash(gh *)`,
-  `Bash(git commit *)`) use the same spelling and were never triggered.
+  for allow rules.
+- **The deny rules work, in the same spelling.** In the evening of the 19th
+  a Sonnet implementer was asked to run `git push origin HEAD`, `git push`,
+  `gh pr list`, `gh --version` and `echo probe && git push origin HEAD`, and
+  a Sonnet reviewer those plus `git commit --allow-empty -m probe` and
+  `git commit`. All eleven were denied before running ("Permission to use
+  Bash with command git push has been denied"), each listed under
+  `permission_denials` in the `result` event, and both agents carried on and
+  finished their role. So `Bash(git push *)` covers the bare command, the
+  command with arguments, and a compound command that contains it.
 - The allow list is enforced as deny-by-default. On the 19th the Fable judge
   first ran `git -C <worktree> status … && git -C … log … && git -C … diff …`
   and then `git -C <worktree> diff HEAD`; both were denied (the `result`
@@ -91,8 +110,42 @@ What the live runs settled:
 - `--permission-mode acceptEdits` with `--add-dir <task dir>` lets the Claude
   implementer change the worktree and tick the boxes in `task.md`. On the
   17th it chose Bash (`python3 -`, `sed -i`); on the 19th it used `Edit`,
-  which is therefore verified under `--permission-prompts none`. `Write` is
-  still unexercised.
+  which is therefore verified under `--permission-prompts none`. In the
+  evening of the 19th a plan that creates two new files was implemented by
+  Sonnet with Bash heredocs, with `Write` listed in the `init` event's tools
+  and unused. `Write` is still unexercised; it is in the permission class
+  `acceptEdits` accepts, like `Edit`.
+- **A suite that takes minutes, on Claude Code.** The Bash tool's default
+  timeout is 2 minutes (`BASH_DEFAULT_TIMEOUT_MS`), 10 at most
+  (`BASH_MAX_TIMEOUT_MS`); the kit sets neither. The Sonnet reviewer gave the
+  150 s suite a 600 000 ms timeout on its own, as the prompt asks, and saw it
+  pass; the Sonnet implementer gave its test command 400 000 ms unprompted.
+  The implementer prompt now asks for the timeout too.
+- **A suite that takes minutes, on Codex: found, prompt changed, re-run
+  pending.** Codex runs commands as resumable sessions (`features.unified_exec`,
+  on for everyone): the shell tool hands control back after a short yield
+  while the command keeps running, and the model is expected to wait on it.
+  The Terra implementer waited and saw the 150 s suite pass (`Ran 6 tests in
+  150.028s`, exit 0). The Terra reviewer did not: it took the early return
+  for the sandbox killing the suite, could not check (`ps` and `pgrep` are
+  denied in the sandbox), marked T6 FAILED and signalled `blocked`; the
+  suite's `item.started` never got its `item.completed`. The reviewer and
+  implementer prompts now say that a shell tool handing control back means
+  wait, not failed. That wording has not run on Codex yet.
+- **What stops a Codex agent from committing or pushing.** Codex has no deny
+  rules; the kit relies on `--sandbox workspace-write`, the prompts and the
+  rails. In the same probe, `git commit --allow-empty -m probe` and
+  `git commit` failed with "Unable to create '…/.git/worktrees/<task>/index.lock':
+  Operation not permitted" (Codex keeps the git directory read-only, the
+  worktree's included); `gh --version` and `gh pr list` ran (the latter failed
+  because the origin was not on GitHub); and `git push origin HEAD` from
+  **both** the implementer and the reviewer succeeded, because the probe's
+  origin was a bare repository under `/tmp`, which `workspace-write` makes
+  writable. A push to a network remote is stopped by the sandbox's network
+  block, which `[sandbox_workspace_write] network_access = true` in
+  `~/.codex/config.toml` lifts; with that set, only the prompt stands between
+  a Codex implementer and `origin`. The rails do not see a push (HEAD does
+  not move).
 - `stream-json` on 2.1.302 and 2.1.303: `system/init` carries `model`,
   `tools`, `permissionMode`, `additional_directories`,
   `claude_code_version`; `assistant` events carry `message.model`; the
@@ -193,7 +246,9 @@ from the `system/init` event's `.model` and each assistant event's
 
 The Claude reviewer has Bash so it can run tests. That it does not change
 code is enforced by the rails (HEAD and the tracked diff checked around the
-run), not by a sandbox.
+run), not by a sandbox. The deny rules were verified on 2026-10-19 (above):
+they deny the bare command, the command with arguments, and a command joined
+with `&&` that contains it.
 
 ### codex
 
@@ -218,7 +273,9 @@ comes from the top-level `model` or `response.model` of any event, or the
 model of a session or turn event; usage from the last `turn.completed`.
 
 The Codex reviewer and judge can write in the worktree, because tests write
-caches. The rails stop the task if tracked code changes.
+caches. The rails stop the task if tracked code changes. Codex has no deny
+rules: a commit fails because Codex keeps the git directory read-only, a push
+fails only while the sandbox blocks the network, and `gh` runs (see above).
 
 ### gh, for bottega pr
 
@@ -235,13 +292,13 @@ gh pr create --repo <host/owner/repo> --base <base> --head <branch> --title <tit
 Still unverified after the live runs above:
 
 - the Claude `Write` tool under `acceptEdits` with `--permission-prompts none`
-  (the implementer chose Bash on the 17th and `Edit` on the 19th);
-- the deny rules `Bash(git push *)`, `Bash(gh *)`, `Bash(git commit *)` (never
-  triggered);
+  (the implementer chose Bash on the 17th, `Edit` on the 19th, and Bash
+  heredocs for new files in the evening of the 19th);
+- a Codex reviewer on a suite that takes minutes, with the prompt wording
+  added after the evening of the 19th (the Codex implementer waited; the
+  reviewer, on the earlier wording, did not);
 - `bottega pr` with `--repo` on a GitHub Enterprise host (github.com is
   verified);
-- a reviewer whose test suite runs for minutes (the probe suites ran in
-  seconds);
 - a proxied profile (Z.AI): whether it reports the proxied name or the alias.
   The offline smoke covers the credential stripping and the alias path with
   a fake harness only.

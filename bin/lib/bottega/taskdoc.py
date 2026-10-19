@@ -15,7 +15,7 @@ TODO = "To-Do List"
 FINDINGS = "Review Findings"
 VERDICT = "Verdict"
 
-_FENCE = re.compile(r"^ {0,3}(```|~~~)")
+_FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 _HEADING = re.compile(r"^(#{1,2}) +(.+?)\s*#*\s*$")
 _ITEM = re.compile(r"^(\s*[-*] \[)([ xX])(\] )(?:\[(T\d+)\] )?(.*)$")
 _CHECKED = re.compile(r"^(\s*[-*] )\[[xX]\]")
@@ -34,14 +34,37 @@ def _lines(text):
     return normalise_newlines(text).split("\n")
 
 
+def fence_step(open_fence, line):
+    """(the fence open after `line`, whether `line` is a fence line).
+
+    CommonMark rules: a fence opened with N backticks or tildes closes only
+    with a line of the same character, at least N long, with nothing after
+    it. So a ``` block nested in a ```` block stays inside it, and a heading
+    or a checkbox in there is text.
+    """
+    match = _FENCE.match(line)
+    if not match:
+        return open_fence, False
+    marker, rest = match.group(1), match.group(2)
+    if open_fence is None:
+        if marker[0] == "`" and "`" in rest:
+            return None, False
+        return marker, True
+    if (
+        marker[0] == open_fence[0]
+        and len(marker) >= len(open_fence)
+        and not rest.strip()
+    ):
+        return None, True
+    return open_fence, False
+
+
 def _outside_fences(lines):
     """Yield (index, line) for the lines that are not inside a code fence."""
-    fenced = False
+    open_fence = None
     for index, line in enumerate(lines):
-        if _FENCE.match(line):
-            fenced = not fenced
-            continue
-        if not fenced:
+        open_fence, is_fence = fence_step(open_fence, line)
+        if open_fence is None and not is_fence:
             yield index, line
 
 
@@ -276,10 +299,16 @@ def unwrap(message):
     """The planner's message with one outer code fence removed, if it has one."""
     text = normalise_newlines(message).strip("\n")
     lines = text.split("\n")
-    if len(lines) >= 2 and _FENCE.match(lines[0]) and _FENCE.match(lines[-1]):
-        inner = lines[1:-1]
-        if not any(_FENCE.match(line) for line in inner):
-            return "\n".join(inner).strip("\n")
+    open_fence, is_fence = fence_step(None, lines[0])
+    if is_fence and len(lines) >= 2:
+        closed_at = None
+        for index in range(1, len(lines)):
+            open_fence, is_fence = fence_step(open_fence, lines[index])
+            if open_fence is None:
+                closed_at = index
+                break
+        if closed_at == len(lines) - 1:
+            return "\n".join(lines[1:-1]).strip("\n")
     return text
 
 

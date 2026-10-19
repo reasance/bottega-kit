@@ -52,12 +52,12 @@ flags.
 
 ### Known limits
 
-- Verified live on one machine, on one day, with Claude Code 2.1.302 in every
-  role and Codex CLI 0.163.0 as implementer and reviewer
-  (`docs/compatibility.md`). Codex never ran as planner or judge;
-  `bottega pr` is verified with a fake `gh` only; the Claude `Edit`/`Write`
-  tools and the Bash deny rules were not exercised; Codex reports no model, so
-  its identity stays `requested-only`.
+- Verified live on one machine, on two days, with Claude Code 2.1.302 and
+  2.1.303 and Codex CLI 0.163.0, each in every role, and `bottega pr` on a
+  private github.com repository (`docs/compatibility.md`). The Claude `Write`
+  tool, the Bash deny rules, a GitHub Enterprise host and a proxied profile
+  were not exercised; Codex reports no model, so its identity stays
+  `requested-only`.
 - Two harnesses: `claude` and `codex`.
 - A text-patch harness for chat-completion endpoints, and Kimi, Grok and
   Gemini drivers, are planned for later (`docs/later.md`).

@@ -96,7 +96,7 @@ Ctrl-C, or the process dying mid-dispatch, stops the task as `interrupted`.
 `run` prints one line per dispatch:
 
 ```
-003 reviewer opus-reviewer claude-opus-5 → needs-work (2m14s)
+003 reviewer opus-reviewer claude-opus-5-5 → needs-work (2m14s)
 ```
 
 and exits 0 when the task is done, 3 when it stopped. The reason, the receipt

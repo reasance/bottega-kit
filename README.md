@@ -53,8 +53,8 @@ your tasks and configuration.
   "schema_version": 1,
   "profiles": {
     "fable-judge":   {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
-    "opus-builder":  {"harness": "claude", "model": "claude-opus-5",   "effort": "high"},
-    "opus-reviewer": {"harness": "claude", "model": "claude-opus-5",   "effort": "high"}
+    "opus-builder":  {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"},
+    "opus-reviewer": {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"}
   },
   "roles": {"planner": "fable-judge", "implementer": "opus-builder",
             "reviewer": "opus-reviewer", "judge": "fable-judge"},
@@ -81,10 +81,10 @@ planner's questions when it has any; everything else goes to stderr:
 
 ```
 001 planner fable-judge claude-fable-5-1 → planned (2m41s)
-002 implementer opus-builder claude-opus-5 → done (6m02s)
-003 reviewer opus-reviewer claude-opus-5 → needs-work (2m14s)
-004 implementer opus-builder claude-opus-5 → done (3m40s)
-005 reviewer opus-reviewer claude-opus-5 → ready (1m55s)
+002 implementer opus-builder claude-opus-5-5 → done (6m02s)
+003 reviewer opus-reviewer claude-opus-5-5 → needs-work (2m14s)
+004 implementer opus-builder claude-opus-5-5 → done (3m40s)
+005 reviewer opus-reviewer claude-opus-5-5 → ready (1m55s)
 006 judge fable-judge claude-fable-5-1 → ready (48s)
 ```
 

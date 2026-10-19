@@ -257,7 +257,7 @@ class FakeHarnesses(TaskFixture, unittest.TestCase):
         }
         proc = self.fake(
             "claude",
-            ["-p", "--model", "claude-opus-5", "--add-dir", str(self.dir)],
+            ["-p", "--model", "claude-opus-5-5", "--add-dir", str(self.dir)],
             {"calls": [step]},
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
@@ -266,9 +266,9 @@ class FakeHarnesses(TaskFixture, unittest.TestCase):
             [(e["type"], e.get("subtype")) for e in events],
             [("system", "init"), ("assistant", None), ("result", "success")],
         )
-        self.assertEqual(events[0]["model"], "claude-opus-5")
+        self.assertEqual(events[0]["model"], "claude-opus-5-5")
         self.assertEqual(events[2]["result"], "NEEDS_WORK: T2 is not done")
-        self.assertIn("claude-opus-5", events[2]["modelUsage"])
+        self.assertIn("claude-opus-5-5", events[2]["modelUsage"])
         worktree = self.box.state(self.task)["worktree"]
         self.assertEqual((Path(worktree) / "notes/review.txt").read_text(), "seen")
         self.assertIn("- [x] [T1] parse it", (self.dir / "task.md").read_text())
@@ -287,7 +287,7 @@ class FakeHarnesses(TaskFixture, unittest.TestCase):
                 {"no_final": True},
             ]
         }
-        proc = self.fake("claude", ["-p", "--model", "claude-opus-5"], scenario)
+        proc = self.fake("claude", ["-p", "--model", "claude-opus-5-5"], scenario)
         self.assertEqual(proc.returncode, 1)
         events = [json.loads(line) for line in proc.stdout.splitlines()]
         self.assertEqual(events[0]["model"], "glm-5.3-flash")

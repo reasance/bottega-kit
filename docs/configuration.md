@@ -15,8 +15,8 @@ existing file without `--force`. `bottega doctor` validates it.
   "schema_version": 1,
   "profiles": {
     "fable-judge":   {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
-    "opus-builder":  {"harness": "claude", "model": "claude-opus-5",   "effort": "high"},
-    "opus-reviewer": {"harness": "claude", "model": "claude-opus-5",   "effort": "high"},
+    "opus-builder":  {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"},
+    "opus-reviewer": {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"},
     "sol-builder":   {"harness": "codex",  "model": "gpt-5.6-sol",     "effort": "high"}
   },
   "roles": {"planner": "fable-judge", "implementer": "opus-builder",

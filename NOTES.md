@@ -523,14 +523,18 @@ Documentation corrected against the code, nothing else changed:
 - `docs/configuration.md`: an unset `${NAME}` also fails `plan`;
   `XDG_DATA_HOME` is read by the shell scripts too.
 - `docs/compatibility.md`: the open unknown about model names now names what
-  the starter configuration writes (`claude-opus-5`, `claude-fable-5-1`), not
-  `claude-opus-5-5`; the offline-gates block gained the shellcheck line.
+  the starter configuration writes, not a name it does not; the
+  offline-gates block gained the shellcheck line.
 - The `task` argument's help in every command says it also takes the task
   directory, which `state.resolve` has accepted since the live probe.
 
-Not changed, for the owner: the starter configuration and the README bind
-Opus to `claude-opus-5`, the previous Opus generation; the current one is
-`claude-opus-5-5`. Switching is a one-line change in `config.py`,
-`tests/helpers.py` and the README, and the live probe's part 2 should verify
-whichever name is kept. The CHANGELOG's 0.1.0 date stays 2026-10-17 until the
-tag is cut and moves to that day.
+**Opus is `claude-opus-5-5` from today.** The plan (§4.4) and the starter
+configuration bound `opus-builder` and `opus-reviewer` to `claude-opus-5`,
+the previous Opus generation. On the owner's word ("modifica opus in 5.5")
+the name is `claude-opus-5-5` in `config.py`, the suites, the npm wrapper
+test, the README and `docs/`. The name is still unverified live, like
+`claude-fable-5-1`: the probe ran `claude-sonnet-5-5`, and part 2 of the
+release gate should run the starter's names once.
+
+The CHANGELOG's 0.1.0 date stays 2026-10-17 until the tag is cut and moves
+to that day.

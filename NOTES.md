@@ -693,3 +693,50 @@ restated in the README: no secret in the configuration, the prompts, the
 tasks or the receipts. Nine tests in the `config` suite, one through
 `bottega plan`. CHANGELOG 0.1.0 "Tasks and configuration" updated; still
 untagged, nothing pushed.
+
+## 2026-10-20 — live probe, part 5: the proxied profile on Z.AI
+
+Authorized by the owner ("lavoriamo alla sonda z.a: autorizzo"), as proposed:
+two dispatches, a Sonnet implementer and a reviewer on the README's proxied
+profile (`claude`, `glm-5.3-flash` at `max`, `ANTHROPIC_BASE_URL` on Z.AI,
+`ANTHROPIC_AUTH_TOKEN` from `${ZAI_API_KEY}`, `aliases: ["opus"]`), on a new
+task in the slow-suite repository, the plan written by hand and served by
+the fake planner. The key came from the probe's `secrets.env`, a symlink to
+delegation-kit's key file, so no copy of the value was made; `ZAI_API_KEY`
+was set in no shell. The shipped prompts ran, no override. The wrapper on
+PATH passed one `acceptEdits` dispatch and one `dontAsk` dispatch with
+`ANTHROPIC_BASE_URL` set, and refused anything else. Kit at 363a424,
+Claude Code 2.1.304 (updated since the 19th).
+
+Findings, in `docs/compatibility.md`:
+
+- **Identity:** Claude Code reported `glm-5.3-flash`, the requested name, in
+  `init`, every turn and `modelUsage`: `provider-reported`, no alias needed.
+  stderr: one `[claude-code:unrecognized_model]` line, harmless. `--effort
+  max` accepted. `apiKeySource: none` with the fresh `CLAUDE_CONFIG_DIR`,
+  which was deleted after the run.
+- **The receipt:** env names set `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_BASE_URL`,
+  `ANTHROPIC_DEFAULT_OPUS_MODEL`, `CLAUDE_CONFIG_DIR`; removed none, because
+  this machine sets no Anthropic variable, so the live run did not exercise
+  the stripping (the suite does). The key's value appears in no receipt and
+  no log, checked by grep.
+- **The review:** GLM Flash read the document and the diff, ran the targeted
+  tests, the 150 s suite in the foreground with a 600 000 ms timeout, the
+  manual QA, and signalled `ready` with well-formed findings; 12 tool calls,
+  0 denials, 214 s. Sonnet implemented in 179 s, 0.059 USD, with Bash
+  heredocs again (no override asked for `Write` this time).
+- **Cost:** Claude Code priced the unknown model at its default table
+  (5 / 25 USD per million, 0.5 for cache reads): 0.209 USD reported, about
+  0.014 USD at Z.AI's list price. `cost_usd` records the estimate as
+  reported, and `max_budget_usd` is enforced on it. Documented in
+  `configuration.md` and `compatibility.md`; no code change, since the kit
+  never prices anything itself.
+- **2.1.304 events:** `system/task_started`, `system/task_notification`,
+  `tool_progress` heartbeats, `system/thinking_tokens` (1 074 in the GLM
+  run) and `system/ui_invalidate` are new; the parser ignored them,
+  `unparsed_lines` 0.
+
+No code change. `HARNESS_MATRIX` unchanged. The only open unknown left is
+the GitHub Enterprise host; the live stripping of a set Anthropic variable
+is noted as not exercised. Twenty-nine live dispatches in all. Still
+untagged, nothing pushed.

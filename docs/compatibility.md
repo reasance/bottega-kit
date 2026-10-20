@@ -325,6 +325,6 @@ node --test tests/npm-installer.test.mjs
 ./run-tests.sh
 ```
 
-The release gate (`CLAUDE.md`, "Before tagging") is one live end-to-end run, `new`, `plan`,
-`approve`, `run`, `pr`, on a throwaway repository, run only when the owner
-authorizes it. Its results replace the snapshot above.
+The release gate (`CLAUDE.md`, "Before tagging") is one live end-to-end run,
+`new`, `plan`, `approve`, `run`, `pr`, on a throwaway repository, run only
+when the owner authorizes it. Its results replace the snapshot above.

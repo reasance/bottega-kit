@@ -28,9 +28,9 @@ and an effort. One profile may serve several roles.
 
 The first release: `init`, `doctor`, `new`, `plan`, `approve`, `run`, `resume`,
 `pr` and the task commands, on the `claude` and `codex` harnesses. The loop
-was verified live on 2026-10-17 and 2026-10-19 with Claude Code 2.1.303 and
-Codex CLI 0.163.0, each in every role, and `bottega pr` opened a pull request
-on GitHub. See [docs/compatibility.md](docs/compatibility.md).
+was verified live on 2026-10-17 and 2026-10-19 with Claude Code 2.1.302 and
+2.1.303 and Codex CLI 0.163.0, each in every role, and `bottega pr` opened a
+pull request on GitHub. See [docs/compatibility.md](docs/compatibility.md).
 
 ## What you need
 

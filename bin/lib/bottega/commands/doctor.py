@@ -1,6 +1,7 @@
 """bottega doctor: is this machine ready to run the configured roles?"""
 
 import json
+import os
 import sys
 
 from .. import config, xdg
@@ -47,6 +48,32 @@ def check_tools(report):
         report.warn("gh", detail + "; bottega pr needs it")
 
 
+def check_secrets(report):
+    """The key file, if any: readable by you alone and well formed. Returns
+    its values, or {} after reporting the failure."""
+    path = xdg.secrets_file()
+    try:
+        secrets = config.read_secrets(path)
+    except config.ConfigError as error:
+        report.fail("secrets", str(error))
+        return {}
+    if not path.exists():
+        report.ok("secrets", "no file at %s (optional)" % path)
+    else:
+        report.ok("secrets", "%s (%s)" % (path, ", ".join(sorted(secrets)) or "empty"))
+    return secrets
+
+
+def env_sources(profile):
+    """Where each referenced name comes from, names only. Called only when
+    none is missing, so a name the environment lacks is in the key file."""
+    return ", ".join(
+        "%s from %s"
+        % (name, "the environment" if name in os.environ else xdg.secrets_file().name)
+        for name in config.env_references(profile)
+    )
+
+
 def check_config(report):
     path = xdg.config_file()
     try:
@@ -86,9 +113,14 @@ def check_config(report):
             report.ok(check, "%s; %s" % (summary, detail))
         else:
             report.fail(check, "%s; %s: %s" % (summary, binary, detail))
+    secrets = check_secrets(report)
+    merged = config.environment(secrets=secrets)
     for name in sorted(cfg["profiles"]):
-        missing = config.missing_env(cfg["profiles"][name])
+        profile = cfg["profiles"][name]
+        missing = config.missing_env(profile, merged)
         if not missing:
+            if name in bound and config.env_references(profile):
+                report.ok("env", "profile %s: %s" % (name, env_sources(profile)))
             continue
         message = "profile %s needs unset variable(s): %s" % (
             name,

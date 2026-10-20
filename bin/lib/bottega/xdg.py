@@ -26,6 +26,11 @@ def prompts_override_dir():
     return config_dir() / "prompts"
 
 
+def secrets_file():
+    """The optional key file: one NAME=value line each, mode 600."""
+    return config_dir() / "secrets.env"
+
+
 def data_dir():
     """BOTTEGA_DATA_HOME wins, so the runtime and install.sh agree on one root."""
     explicit = os.environ.get("BOTTEGA_DATA_HOME", "")

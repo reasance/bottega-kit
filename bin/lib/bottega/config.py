@@ -1,13 +1,17 @@
 """The personal configuration: profiles, role bindings, the round cap.
 
 Schema (plan §4.4). A profile is harness + model + effort, plus optional env,
-aliases, timeout and max_budget_usd. bottega-kit stores no secrets: env values
-may reference the environment as ${NAME}, expanded at dispatch time.
+aliases, timeout and max_budget_usd. No secret goes in the configuration: env
+values may reference ${NAME}, expanded at dispatch time from the environment
+or, for a name the environment does not set, from the key file
+(`secrets.env` beside config.json; NOTES.md, 2026-10-20).
 """
 
 import json
 import os
 import re
+import stat
+from pathlib import Path
 
 from . import xdg
 from .util import Refused, UsageError, atomic_write_json
@@ -189,18 +193,71 @@ def env_references(profile):
     return sorted(names)
 
 
-def missing_env(profile, environ=None):
+def read_secrets(path=None):
+    """The key file as {NAME: value}, or {} when there is none.
+
+    One `NAME=value` line each; blank lines and `#` comments are skipped, an
+    `export ` prefix, quotes around the value and CRLF are tolerated. The
+    file is parsed, never executed. A file that group or others can read is
+    refused, not read: a credential anyone on the machine can open is not a
+    secret, and saying so beats using it.
+    """
+    path = xdg.secrets_file() if path is None else Path(path)
+    if not path.exists():
+        return {}
+    try:
+        mode = stat.S_IMODE(path.stat().st_mode)
+        if mode & 0o077:
+            raise ConfigError(
+                "%s is mode %03o, readable by others; run: chmod 600 %s"
+                % (path, mode, path)
+            )
+        text = path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise ConfigError("cannot read %s: %s" % (path, error)) from None
+    values = {}
+    for number, raw in enumerate(text.splitlines(), 1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith(("export ", "export\t")):
+            line = line[7:].lstrip()
+        name, sep, value = line.partition("=")
+        name = name.rstrip()
+        if not sep or not ENV_NAME.match(name):
+            raise ConfigError("%s line %d: expected NAME=value" % (path, number))
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        values[name] = value
+    return values
+
+
+def environment(environ=None, secrets=None):
+    """What ${NAME} expands from: the process environment, plus the key file
+    for the names it does not set. For expansion only: a harness inherits the
+    process environment and the expanded profile env, never the whole file."""
     environ = os.environ if environ is None else environ
+    merged = dict(read_secrets() if secrets is None else secrets)
+    merged.update(environ)
+    return merged
+
+
+def missing_env(profile, environ=None):
+    """The referenced names `environ` does not set; `environ` defaults to
+    the environment plus the key file."""
+    environ = environment() if environ is None else environ
     return [name for name in env_references(profile) if name not in environ]
 
 
 def expand_env(profile, environ=None):
-    """The profile's env with every ${NAME} replaced from `environ`.
+    """The profile's env with every ${NAME} replaced from `environ` (the
+    environment plus the key file when None).
 
     A referenced variable that is not set is a ConfigError, never an empty
     string: a blank credential would be sent as-is.
     """
-    environ = os.environ if environ is None else environ
+    environ = environment() if environ is None else environ
     missing = missing_env(profile, environ)
     if missing:
         raise ConfigError("environment variable(s) not set: %s" % ", ".join(missing))

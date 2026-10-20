@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
-"""config.json: schema, validation, effort sets, ${NAME} expansion, starter."""
+"""config.json: schema, validation, effort sets, ${NAME} expansion, the key
+file, starter."""
 
 import copy
 import json
+import os
 import unittest
+from unittest import mock
 
 from helpers import CANONICAL, Sandbox, main
 
 from bottega import config
+from bottega.harness import base_env
+from bottega.harness import claude as claude_harness
 from bottega.util import UsageError
+
+GLM = CANONICAL["profiles"]["glm-reviewer"]
 
 
 def with_changes(mutate):
@@ -166,6 +173,89 @@ class EnvExpansion(unittest.TestCase):
         self.assertEqual(env["ANTHROPIC_AUTH_TOKEN"], "")
 
 
+class Secrets(unittest.TestCase):
+    """The key file beside config.json: parsed, never executed; the
+    environment wins; refused when others can read it."""
+
+    def setUp(self):
+        self.box = Sandbox(self)
+
+    def test_parses_the_shapes_a_dotenv_invites(self):
+        self.box.write_secrets(
+            "# keys\n\nZAI_API_KEY=plain\r\n"
+            'export QUOTED="with space"\n'
+            "  SINGLE = 'x'  \nEMPTY=\n"
+        )
+        with self.box.active():
+            self.assertEqual(
+                config.read_secrets(),
+                {
+                    "ZAI_API_KEY": "plain",
+                    "QUOTED": "with space",
+                    "SINGLE": "x",
+                    "EMPTY": "",
+                },
+            )
+
+    def test_no_file_means_the_environment_alone(self):
+        with self.box.active():
+            self.assertEqual(config.read_secrets(), {})
+            self.assertEqual(config.missing_env(GLM), ["ZAI_API_KEY"])
+            with mock.patch.dict(os.environ, {"ZAI_API_KEY": "from-env"}):
+                self.assertEqual(config.missing_env(GLM), [])
+
+    def test_the_file_fills_in_and_the_environment_wins(self):
+        self.box.write_secrets("ZAI_API_KEY=from-file\n")
+        with self.box.active():
+            self.assertEqual(config.missing_env(GLM), [])
+            self.assertEqual(
+                config.expand_env(GLM)["ANTHROPIC_AUTH_TOKEN"], "from-file"
+            )
+            with mock.patch.dict(os.environ, {"ZAI_API_KEY": "from-env"}):
+                self.assertEqual(
+                    config.expand_env(GLM)["ANTHROPIC_AUTH_TOKEN"], "from-env"
+                )
+
+    def test_an_explicit_environ_is_used_as_is(self):
+        self.box.write_secrets("ZAI_API_KEY=from-file\n")
+        with self.box.active():
+            self.assertEqual(config.missing_env(GLM, {}), ["ZAI_API_KEY"])
+
+    def test_refuses_a_file_others_can_read(self):
+        for mode in (0o644, 0o640, 0o604):
+            self.box.write_secrets("ZAI_API_KEY=x\n", mode=mode)
+            with self.box.active():
+                with self.assertRaises(config.ConfigError) as caught:
+                    config.read_secrets()
+            self.assertIn("chmod 600", str(caught.exception))
+            self.assertIn("%03o" % mode, str(caught.exception))
+            self.assertEqual(caught.exception.code, 2)
+        self.box.write_secrets("ZAI_API_KEY=x\n", mode=0o400)
+        with self.box.active():
+            self.assertEqual(config.read_secrets(), {"ZAI_API_KEY": "x"})
+
+    def test_refuses_a_malformed_line_naming_it(self):
+        for text in ("ZAI_API_KEY=x\nnot a line\n", "ok=1\n2BAD=x\n"):
+            self.box.write_secrets(text)
+            with self.box.active():
+                with self.assertRaises(config.ConfigError) as caught:
+                    config.read_secrets()
+            self.assertIn("line 2", str(caught.exception))
+            self.assertIn("NAME=value", str(caught.exception))
+
+    def test_only_the_expanded_profile_env_reaches_a_harness(self):
+        self.box.write_secrets("ZAI_API_KEY=x\nOTHER_KEY=y\n")
+        with self.box.active():
+            env, names = base_env(GLM)
+            proxied, proxied_names, _ = claude_harness.proxied_env(GLM, "/cfg")
+        for value in (env, proxied):
+            self.assertEqual(value["ANTHROPIC_AUTH_TOKEN"], "x")
+            self.assertNotIn("ZAI_API_KEY", value)
+            self.assertNotIn("OTHER_KEY", value)
+        self.assertEqual(names, sorted(GLM["env"]))
+        self.assertIn("ANTHROPIC_AUTH_TOKEN", proxied_names)
+
+
 class Starter(unittest.TestCase):
     def test_claude_gets_the_canonical_roles(self):
         value = config.starter(["claude"])
@@ -238,6 +328,36 @@ class FileAndDoctor(unittest.TestCase):
         self.assertIn("ZAI_API_KEY", failure["detail"])
         report = self.doctor(0, env={"ZAI_API_KEY": "x"})
         self.assertTrue(report["ok"])
+
+    def test_doctor_reads_the_key_file_and_refuses_a_readable_one(self):
+        self.box.write_config(
+            with_changes(lambda c: c["roles"].update(reviewer="glm-reviewer"))
+        )
+        self.box.write_secrets("ZAI_API_KEY=topsecretvalue\n")
+        proc = self.box.bottega("doctor", "--json")
+        self.assertNotIn("topsecretvalue", proc.stdout + proc.stderr)
+        checks = {c["check"]: c for c in json.loads(proc.stdout)["checks"]}
+        self.assertEqual(checks["secrets"]["status"], "ok")
+        self.assertIn("ZAI_API_KEY", checks["secrets"]["detail"])
+        self.assertEqual(checks["env"]["status"], "ok")
+        self.assertIn("ZAI_API_KEY from secrets.env", checks["env"]["detail"])
+        report = self.doctor(0, env={"ZAI_API_KEY": "from-env"})
+        checks = {c["check"]: c for c in report["checks"]}
+        self.assertIn("ZAI_API_KEY from the environment", checks["env"]["detail"])
+        self.box.secrets_file.chmod(0o644)
+        failures = {c["check"]: c for c in self.failures(self.doctor(2))}
+        self.assertIn("chmod 600", failures["secrets"]["detail"])
+        self.assertIn("ZAI_API_KEY", failures["env"]["detail"])
+
+    def test_plan_refuses_a_readable_key_file(self):
+        self.box.write_config(
+            with_changes(lambda c: c["roles"].update(planner="glm-reviewer"))
+        )
+        repo = self.box.make_repo()
+        task = self.box.new_task(repo)
+        self.box.write_secrets("ZAI_API_KEY=x\n", mode=0o644)
+        proc = self.box.bottega("plan", task, rc=2)
+        self.assertIn("chmod 600", proc.stderr)
 
     def test_doctor_only_warns_for_an_unbound_profile(self):
         self.box.write_config(CANONICAL)

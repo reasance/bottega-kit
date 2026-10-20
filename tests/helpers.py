@@ -81,6 +81,15 @@ class Sandbox:
         self.config_file.parent.mkdir(parents=True, exist_ok=True)
         self.config_file.write_text(json.dumps(value, indent=2))
 
+    @property
+    def secrets_file(self):
+        return self.root / "config" / "bottega-kit" / "secrets.env"
+
+    def write_secrets(self, text, mode=0o600):
+        self.secrets_file.parent.mkdir(parents=True, exist_ok=True)
+        self.secrets_file.write_text(text)
+        self.secrets_file.chmod(mode)
+
     @contextlib.contextmanager
     def active(self):
         """Run in-process code with this sandbox's environment."""

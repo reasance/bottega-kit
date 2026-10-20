@@ -1,8 +1,10 @@
 # Configuration
 
-bottega-kit reads one personal file, an optional file per repository, optional
-prompt overrides, and a few environment variables. It stores no secret
-anywhere.
+bottega-kit reads one personal file, an optional key file beside it, an
+optional file per repository, optional prompt overrides, and a few environment
+variables. No secret goes in the configuration, the prompts, the tasks or the
+receipts; the key file holds what you put in it, and is read only while you
+alone can read it.
 
 ## The configuration file
 
@@ -57,8 +59,9 @@ each turn's model; helper models it lists in its usage are recorded and not
 checked.
 
 **Environment references.** `"ANTHROPIC_AUTH_TOKEN": "${ZAI_API_KEY}"` is
-expanded from your environment when the harness starts. A referenced variable
-that is not set fails `doctor`, `plan`, `approve`, `run` and `resume`
+expanded when the harness starts, from your environment or, for a name your
+environment does not set, from the key file below. A referenced variable that
+is set in neither fails `doctor`, `plan`, `approve`, `run` and `resume`
 (exit 2); it is never sent empty. Receipts record the variable names, never
 the values.
 
@@ -78,6 +81,29 @@ profile's own `env` may set any of them again.
 Harnesses authenticate on their own: Claude Code through its login or
 keychain, Codex through `~/.codex`. bottega-kit never handles their
 credentials.
+
+## The key file
+
+`${XDG_CONFIG_HOME:-~/.config}/bottega-kit/secrets.env`, beside `config.json`,
+holds the values profiles reference when you would rather not export them in
+every shell:
+
+```
+ZAI_API_KEY=...
+```
+
+One `NAME=value` line per variable; blank lines and `#` comments are skipped,
+and an `export ` prefix, quotes around the value and CRLF are tolerated. The
+file is parsed, never executed. Create it with `touch` and `chmod 600`: a
+file that group or others can read is refused, not read, and `doctor`,
+`plan`, `approve`, `run` and `resume` say which `chmod` to run and exit 2
+until you do.
+
+The environment wins: a variable set in your environment is used even when
+the file holds another value. Only the expanded profile `env` reaches a
+harness, never the rest of the file, and receipts record names only. There
+is no per-project `.env`: bottega-kit never reads one from a repository or a
+worktree, where a key would be one `git add` away from a commit.
 
 ## Roles
 
@@ -158,7 +184,9 @@ matching the npm package.
 ## doctor
 
 `bottega doctor [--json]` checks python3, git and gh (a missing gh is a
-warning), the configuration, and for each bound role: the profile, its effort,
-its harness answering `--version`, and its `${NAME}` variables. Any failure
-exits 2. `./doctor.sh`, in a clone, also compares the installed version with
+warning), the configuration, the key file's mode and shape (it prints the
+variable names it holds, never a value), and for each bound role: the
+profile, its effort, its harness answering `--version`, and its `${NAME}`
+variables, saying whether each comes from the environment or from the key
+file. Any failure exits 2. `./doctor.sh`, in a clone, also compares the installed version with
 the clone's.

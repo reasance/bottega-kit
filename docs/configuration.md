@@ -76,7 +76,10 @@ the values.
   `CLAUDE_CODE_USE_BEDROCK`, `CLAUDE_CODE_USE_VERTEX`, `CLAUDE_CODE_USE_FOUNDRY`.
 
 So your Anthropic credentials never reach the third-party endpoint. The
-profile's own `env` may set any of them again.
+profile's own `env` may set any of them again. Claude Code does not know the
+endpoint's prices: the receipt's `cost_usd` and the `max_budget_usd` limit
+use its own default table, which overstated a GLM run on Z.AI about
+fifteenfold on 2026-10-20 (see [compatibility.md](compatibility.md)).
 
 Harnesses authenticate on their own: Claude Code through its login or
 keychain, Codex through `~/.codex`. bottega-kit never handles their

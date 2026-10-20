@@ -28,9 +28,10 @@ and an effort. One profile may serve several roles.
 
 The first release: `init`, `doctor`, `new`, `plan`, `approve`, `run`, `resume`,
 `pr` and the task commands, on the `claude` and `codex` harnesses. The loop
-was verified live on 2026-10-17 and 2026-10-19 with Claude Code 2.1.302 and
-2.1.303 and Codex CLI 0.163.0, each in every role, and `bottega pr` opened a
-pull request on GitHub. See [docs/compatibility.md](docs/compatibility.md).
+was verified live on 2026-10-17, 2026-10-19 and 2026-10-20 with Claude Code
+2.1.302 to 2.1.304 and Codex CLI 0.163.0, each in every role, a reviewer on
+Z.AI's endpoint through Claude Code, and `bottega pr` opening a pull request
+on GitHub. See [docs/compatibility.md](docs/compatibility.md).
 
 ## What you need
 
@@ -137,8 +138,9 @@ from `~/.config/bottega-kit/secrets.env` (one `NAME=value` line each, mode
 in neither. Because `ANTHROPIC_BASE_URL` is set, the reviewer runs with a fresh
 Claude configuration directory and without your Anthropic credentials.
 `aliases` lists other names the endpoint may report for the model; any other
-name stops the run as `identity-mismatch`. To change one role for one task
-only, pass `--role implementer=sol-builder` to `bottega new`.
+name stops the run as `identity-mismatch` (on 2026-10-20 Z.AI reported
+`glm-5.3-flash`, the requested name, so the alias went unused). To change one
+role for one task only, pass `--role implementer=sol-builder` to `bottega new`.
 
 ## The roles
 

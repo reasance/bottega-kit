@@ -49,7 +49,10 @@ block inside a longer fence lost five lines in the merge: a fence now closes
 only with the same character and at least the same length, as in CommonMark.
 The runs also changed the prompts: the implementer and the reviewer are told
 to give a test suite a long timeout, and that a shell tool handing control
-back while the command runs means wait, not failed.
+back while the command runs means wait, not failed. On 2026-10-20 the
+README's proxied profile ran as reviewer: Claude Code 2.1.304 on Z.AI's
+endpoint reported the requested `glm-5.3-flash`, with the key read from
+`secrets.env`.
 
 **Pull requests and packaging.** `bottega pr` commits what is left in the
 worktree, pushes the branch to `origin` and opens the pull request with `gh`.
@@ -61,15 +64,16 @@ flags.
 
 ### Known limits
 
-- Verified live on one machine, on two days, with Claude Code 2.1.302 and
-  2.1.303 and Codex CLI 0.163.0, each in every role, and `bottega pr` on a
+- Verified live on one machine, on three days, with Claude Code 2.1.302 to
+  2.1.304 and Codex CLI 0.163.0, each in every role, and `bottega pr` on a
   private github.com repository (`docs/compatibility.md`). The Claude Bash
   deny rules were seen to deny every forbidden command; a 150 s test suite
   passed under a Claude reviewer and, after a prompt change, under a Codex
   reviewer that had first given up on it; the Claude `Write` tool created
-  files under `acceptEdits`. A GitHub Enterprise host and a proxied profile
-  were not exercised; Codex reports no model, so its identity stays
-  `requested-only`.
+  files under `acceptEdits`; a proxied profile on Z.AI ran once, as
+  reviewer, and Claude Code priced it at its own default rate. A GitHub
+  Enterprise host was not exercised; Codex reports no model, so its identity
+  stays `requested-only`.
 - Two harnesses: `claude` and `codex`.
 - A text-patch harness for chat-completion endpoints, and Kimi, Grok and
   Gemini drivers, are planned for later (`docs/later.md`).

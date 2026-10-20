@@ -10,12 +10,12 @@ before tagging. Numbers are never carried forward from an earlier release.
 
 ## Verified snapshot
 
-**0.1.0, verified live on 2026-10-17 and 2026-10-19** on macOS (Darwin 25.5.0),
-python3 3.15.0, git 2.50.1, Codex CLI 0.163.0, gh 2.102.0, and Claude Code
-2.1.302 on the 17th, 2.1.303 on the 19th. Seven tasks on two throwaway
-repositories (a 20-line Python CLI with a unittest suite; from the evening of
-the 19th, one whose suite sleeps 150 s), run through the installed kit, one
-dispatch set at a time:
+**0.1.0, verified live on 2026-10-17, 2026-10-19 and 2026-10-20** on macOS
+(Darwin 25.5.0), python3 3.15.0, git 2.50.1, Codex CLI 0.163.0, gh 2.102.0,
+and Claude Code 2.1.302 on the 17th, 2.1.303 on the 19th, 2.1.304 on the
+20th. Eight tasks on two throwaway repositories (a 20-line Python CLI with a
+unittest suite; from the evening of the 19th, one whose suite sleeps 150 s),
+run through the installed kit, one dispatch set at a time:
 
 | day | task | roles | dispatches | result |
 |---|---|---|---|---|
@@ -26,6 +26,7 @@ dispatch set at a time:
 | 19, evening | add a `--bye` flag: two new files, a full suite that takes 150 s, and a permission probe in the prompts | plan written by hand and served by the fake harness · implementer **claude** · reviewer **claude** | 2 | done in round 1 of 1 |
 | 19, evening | add a `--whisper` flag, same shape | plan written by hand · implementer **codex** · reviewer **codex** | 3 (one `blocked` stop, one `resume`) | done in round 1 of 2: the first reviewer gave up on the slow suite (below); resumed after the prompt change, the second waited for it |
 | 19, late evening | add a `--shout` flag, same shape, with an override that asks for the `Write` tool | plan written by hand · implementer **claude** · the reviewer dispatch refused by the probe itself | 1 | the implementer finished; then stopped `dispatch-failed`, on purpose (below) |
+| 20 | add a `--polite` flag, same shape | plan written by hand · implementer **claude** · reviewer **claude on Z.AI**: the README's proxied profile, `glm-5.3-flash`, key from `secrets.env` | 2 | done in round 1 of 1 |
 
 Profiles on the 17th: `claude-sonnet-5-5` at effort `medium` for the Claude
 roles (with `timeout` and `max_budget_usd`), `gpt-5.6-terra` at effort
@@ -43,7 +44,12 @@ and a Sonnet implementer ran once more under an override asking for `Write`
 for new files. For those two a wrapper on PATH passed exactly one dispatch
 per harness to the real CLI and exited 75 for any other, so the loop stopped
 as `dispatch-failed` instead of dispatching a reviewer nobody had authorized.
-None of this says which model to use.
+On the 20th: `claude-sonnet-5-5` at `medium` as implementer, and as reviewer
+the README's proxied profile, `glm-5.3-flash` at `max` on
+`https://api.z.ai/api/anthropic` with `aliases: ["opus"]`, `${ZAI_API_KEY}`
+read from the key file; the shipped prompts, no override; the same kind of
+wrapper passed one implementer and one proxied reviewer dispatch and refused
+anything else. None of this says which model to use.
 
 Per dispatch (duration, cost as Claude Code reported it; Codex usage is billed
 to the ChatGPT plan and reports no cost). 2026-10-17:
@@ -83,8 +89,16 @@ to the ChatGPT plan and reports no cost). 2026-10-17:
 | 4 | reviewer | codex | not reported | 187 s | — | ready (resumed, new wording) |
 | 2 | implementer | claude | claude-sonnet-5-5 | 180 s | 0.081 | — |
 
-Twenty-seven dispatches: 0.41 USD on the Claude side on the 17th, 2.39 USD
-on the 19th. Every implementation was correct, tested and documented; every
+2026-10-20:
+
+| seq | role | harness | reported model | duration | cost USD | signal |
+|---|---|---|---|---|---|---|
+| 2 | implementer | claude | claude-sonnet-5-5 | 179 s | 0.059 | — |
+| 3 | reviewer | claude, on Z.AI | glm-5.3-flash | 214 s | 0.209 as Claude Code priced it; about 0.014 at Z.AI's list price (below) | ready |
+
+Twenty-nine dispatches: 0.41 USD on the Claude side on the 17th, 2.39 USD
+on the 19th, 0.06 USD on the 20th plus the one dispatch billed by Z.AI.
+Every implementation was correct, tested and documented; every
 reviewer ran the unit tests and every manual QA scenario; the second planner
 on the 17th asked a real question (the request mentioned a flag that was not
 on the branch) and the answer, typed into `task.md`, produced the plan on the
@@ -162,14 +176,41 @@ What the live runs settled:
   `~/.codex/config.toml` lifts; with that set, only the prompt stands between
   a Codex implementer and `origin`. The rails do not see a push (HEAD does
   not move).
-- `stream-json` on 2.1.302 and 2.1.303: `system/init` carries `model`,
-  `tools`, `permissionMode`, `additional_directories`,
+- **A proxied profile (Z.AI), verified.** On the 20th the README's
+  `glm-reviewer` shape ran as reviewer: Claude Code 2.1.304 with
+  `--model glm-5.3-flash --effort max`, `ANTHROPIC_BASE_URL` on Z.AI's
+  Anthropic-compatible endpoint, `ANTHROPIC_AUTH_TOKEN` from `${ZAI_API_KEY}`
+  in the key file, a fresh `CLAUDE_CONFIG_DIR` (`apiKeySource: none` in the
+  `init` event). It reported `glm-5.3-flash`, the requested name, in the
+  session model, every turn and `modelUsage`, so the receipt says
+  `provider-reported` and `aliases: ["opus"]` went unused. stderr had one
+  line, `[claude-code:unrecognized_model] {"model":"glm-5.3-flash",…}`, and
+  nothing else. The receipt's `env` names: set `ANTHROPIC_AUTH_TOKEN`,
+  `ANTHROPIC_BASE_URL`, `ANTHROPIC_DEFAULT_OPUS_MODEL`, `CLAUDE_CONFIG_DIR`;
+  removed none, because this machine sets no Anthropic variable (the offline
+  suite covers the stripping). The key's value is in no receipt and no log
+  (checked with grep). The GLM reviewer read the task document and the
+  changed files, ran the targeted tests, then the 150 s suite in the
+  foreground with a 600 000 ms timeout, then the manual QA, and signalled
+  `ready`: 12 tool calls, 0 denials, 214 s. The temporary configuration
+  directory was deleted after the run. **Claude Code does not know the
+  endpoint's prices:** it priced the run at its default table, 5 / 25 USD per
+  million tokens in and out and 0.5 for cache reads, 0.209 USD for 85 k input
+  and 2.6 k output tokens, which is about 0.014 USD at Z.AI's list price. The
+  receipt's `cost_usd` is that estimate, and `max_budget_usd` is enforced on
+  it: for a proxied profile, set it about fifteen times what you mean, or
+  leave it out.
+- `stream-json` on 2.1.302, 2.1.303 and 2.1.304: `system/init` carries
+  `model`, `tools`, `permissionMode`, `additional_directories`,
   `claude_code_version`; `assistant` events carry `message.model`; the
   `result` event carries `result`, `is_error`, `subtype`, `usage`,
   `modelUsage`, `total_cost_usd`, `duration_ms`, `num_turns`,
   `permission_denials`, `stop_reason`. Other event types seen: `user` (tool
-  results) and `rate_limit_event`. `modelUsage` listed only the content model
-  in every run.
+  results), `rate_limit_event` and, from 2.1.304, `system/task_started` and
+  `system/task_notification` around a Bash command, `tool_progress`
+  heartbeats every 30 s while it runs, `system/thinking_tokens` (1 074 of
+  them in the GLM run) and `system/ui_invalidate`; the parser ignores all of
+  these. `modelUsage` listed only the content model in every run.
 - Claude Code reports the model exactly as requested: `claude-sonnet-5-5` on
   the 17th, `claude-fable-5-1` and `claude-opus-5-5` on the 19th, in the
   session model, every turn and `modelUsage`. The starter configuration needs
@@ -309,9 +350,11 @@ Still unverified after the live runs above:
 
 - `bottega pr` with `--repo` on a GitHub Enterprise host (github.com is
   verified);
-- a proxied profile (Z.AI): whether it reports the proxied name or the alias.
-  The offline smoke covers the credential stripping and the alias path with
-  a fake harness only.
+- the credential stripping of a proxied profile against a set
+  `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`: on the 20th nothing was
+  set, so there was nothing to remove. The offline suite covers it with a
+  fake harness; the alias path stays offline too, since Z.AI reported the
+  requested name.
 
 ## Reproduce the offline gates
 

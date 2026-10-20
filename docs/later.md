@@ -51,7 +51,9 @@ refreshed for 0.1.0 on 2026-10-17 with what the milestones deferred.
   read-only roles created.
 - `--role` overrides on `bottega plan` (the plan allowed them on `new` and
   `plan`; today only `new` takes them).
-- Record Claude Code's `permission_denials` (from the `result` event) in `run.json` and count them in `bottega show`; today they are only in `events.jsonl`.
+- Record Claude Code's `permission_denials` (from the `result` event) in
+  `run.json` and count them in `bottega show`; today they are only in
+  `events.jsonl`.
 - A per-profile Codex `-c key=value` passthrough (for example to pin
   `sandbox_workspace_write.network_access=false` for an implementer when your
   `config.toml` turns it on). Today the kit pins only the keys in

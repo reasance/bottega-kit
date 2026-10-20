@@ -51,7 +51,8 @@ repository without changing it and ends with one of two things:
   the rest.
 
 A planner output without the required sections stops `plan` (exit 3) with
-its receipt kept, and `task.md` unchanged. You may edit the plan by hand before approving it.
+its receipt kept, and `task.md` unchanged. You may edit the plan by hand
+before approving it.
 
 ## Approval
 

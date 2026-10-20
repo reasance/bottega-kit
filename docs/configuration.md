@@ -188,5 +188,5 @@ warning), the configuration, the key file's mode and shape (it prints the
 variable names it holds, never a value), and for each bound role: the
 profile, its effort, its harness answering `--version`, and its `${NAME}`
 variables, saying whether each comes from the environment or from the key
-file. Any failure exits 2. `./doctor.sh`, in a clone, also compares the installed version with
-the clone's.
+file. Any failure exits 2. `./doctor.sh`, in a clone, also compares the
+installed version with the clone's.

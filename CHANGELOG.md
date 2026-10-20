@@ -38,12 +38,18 @@ judge that changes tracked code stops the task, and so does a harness that
 reports another model. `bottega resume` continues a stopped task with a fresh
 cap.
 
-**Verified live.** On 2026-10-17 two tasks ran end to end on a throwaway
-repository with Claude Code 2.1.302 and Codex CLI 0.163.0, each harness as
-implementer and as reviewer (`docs/compatibility.md`). The run found one bug:
-a Codex reviewer could not find the task by id, because Codex does not pass
-the orchestrator's environment to the agent's shell. `bottega signal` now also
-accepts the absolute task directory, and every prompt names it.
+**Verified live.** On 2026-10-17 and 2026-10-19 seven tasks ran on two
+throwaway repositories with Claude Code 2.1.302 and 2.1.303 and Codex CLI
+0.163.0, each harness in every role, and `bottega pr` opened a pull request
+on GitHub (`docs/compatibility.md`). The runs found two bugs. A Codex reviewer
+could not find the task by id, because Codex does not pass the orchestrator's
+environment to the agent's shell: `bottega signal` now also accepts the
+absolute task directory, and every prompt names it. A plan with a fenced
+block inside a longer fence lost five lines in the merge: a fence now closes
+only with the same character and at least the same length, as in CommonMark.
+The runs also changed the prompts: the implementer and the reviewer are told
+to give a test suite a long timeout, and that a shell tool handing control
+back while the command runs means wait, not failed.
 
 **Pull requests and packaging.** `bottega pr` commits what is left in the
 worktree, pushes the branch to `origin` and opens the pull request with `gh`.

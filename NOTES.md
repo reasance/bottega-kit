@@ -740,3 +740,33 @@ No code change. `HARNESS_MATRIX` unchanged. The only open unknown left is
 the GitHub Enterprise host; the live stripping of a set Anthropic variable
 is noted as not exercised. Twenty-nine live dispatches in all. Still
 untagged, nothing pushed.
+
+## 2026-10-20 — the showcase site
+
+The owner asked for a showcase site like delegation-kit.sh, running on
+Cloudflare with analytics there, and asked me to keep it current. It is a
+repository of its own, `../bottega-kit.sh`: Astro 5, Tailwind 4, static,
+the sibling site's shape and scripts adapted. Its `scripts/sync-kit.mjs`
+regenerates every page about the kit from this checkout: the README as
+"Getting started", `docs/*.md`, the template and the four prompts verbatim,
+the CHANGELOG, and the kit's own tables (version, efforts, roles, exit
+codes, the starter configuration, the harness argv per role) through a
+python3 import of `config`, `util` and `harness`, never a command of the kit.
+It refuses a checkout that is dirty or not on its release tag unless told
+`--allow-unreleased`; the first sync used that flag, since 0.1.0 is untagged.
+`--check` runs before every build and skips itself when the checkout is
+absent or unreleased, so a refactor in progress here cannot leak there.
+
+Deployed by hand with wrangler, as the owner's OAuth login, to Cloudflare
+Workers with static assets: `https://bottega-kit-sh.8004dev.workers.dev`.
+No domain exists for the kit on the account; registering one is the owner's
+call, and the site's origin then changes in three named places. Cloudflare
+Web Analytics is on through a site created in the dashboard for that
+hostname; its token sits in the site repository's ignored `.env` and goes in
+the CI variable `PUBLIC_CF_BEACON_TOKEN` once the repository is on GitHub.
+The site links `github.com/matteoscurati/bottega-kit` and `npx bottega-kit`
+as the README does; both work only once the owner publishes. Nothing was
+pushed: the site repository has no remote, like this one.
+
+No code change here. `CLAUDE.md` gains a section naming the site and the
+"sync the showcase site" step in "Release tagging".

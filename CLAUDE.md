@@ -37,6 +37,16 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
 - Shell only for `install.sh`, `uninstall.sh`, `doctor.sh`, `run-tests.sh` and
   the `tests/*.sh` runners.
 
+## The showcase site
+
+`../bottega-kit.sh` is a repository of its own (Astro, static, on Cloudflare
+Workers) generated from this checkout by its `scripts/sync-kit.mjs`: the
+README, `docs/*.md`, `templates/task.md`, `prompts/*.md`, the CHANGELOG, and
+the tables in `config.py`, `util.py` and `harness/__init__.py` through a
+python3 import. Its home page is the one hand-written description of the
+kit. A change to any of those files reaches the site at the next release
+sync (below). The site never runs a harness.
+
 ## Rules
 
 - **Standard library only.** No third-party Python packages.
@@ -106,6 +116,12 @@ that is wrong here.
   `NPM_TOKEN` repository secret. The npm package is the wrapper only;
   `npx bottega-kit` clones the tag `bottega-kit--v<its version>`, so the tag
   must exist before anyone runs it.
+- **Sync the showcase site last**, once npm serves the version: in
+  `../bottega-kit.sh`, `npm run sync-kit` (it refuses a kit checkout that is
+  dirty or not on the release tag), review the home page copy in
+  `src/pages/index.astro` against the README, `npm run build`, commit, and
+  `npm run deploy` (a push to its `main` deploys instead once that repository
+  is on GitHub with the Cloudflare secrets).
 
 ### Version surfaces
 

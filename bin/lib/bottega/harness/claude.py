@@ -43,12 +43,13 @@ def proxied_env(profile, config_dir, environ=None):
     applied, so they can never reach a third-party
     endpoint, and CLAUDE_CONFIG_DIR points at a fresh directory so the user's
     own login and settings are not used either. `${NAME}` references in the
-    profile expand from the original environment.
+    profile expand from the original environment and the key file; only the
+    expanded env is added.
 
     Returns (env, names set, names removed).
     """
     environ = dict(os.environ if environ is None else environ)
-    extra = config.expand_env(profile, environ)
+    extra = config.expand_env(profile, config.environment(environ))
     env = dict(environ)
     removed = [name for name in PROXY_STRIPPED if name in env]
     for name in PROXY_STRIPPED:

@@ -12,9 +12,10 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
 - `bin/bottega` — the entry point; thin. All logic is in `bin/lib/bottega/`.
 - `bin/lib/bottega/` — Python 3 standard library only: `xdg` (paths), `util`
   (errors, atomic writes, slugify, git), `config` (profiles, roles, effort
-  sets, `${NAME}` expansion), `taskdoc` (task.md sections, `[T<n>]` ids, plan
-  hash, planner-output merge, approval checks), `state` (state.json, the
-  lock, task lookup), `worktree` (create, remove, rail hashing), `prompts`
+  sets, `${NAME}` expansion, the `secrets.env` key file), `taskdoc` (task.md
+  sections, `[T<n>]` ids, plan hash, planner-output merge, approval checks),
+  `state` (state.json, the lock, task lookup), `worktree` (create, remove,
+  rail hashing), `prompts`
   (the strict `{{var}}` engine and overrides), `harness/` (`HARNESS_MATRIX`,
   the registry, `claude.py` and `codex.py` drivers and parsers), `receipts`
   (run directories, `run.json`, `error.json`), `dispatch` (one role dispatch
@@ -47,7 +48,9 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
   plan changed) · 3 stopped · 64 bad invocation. argparse errors exit 64.
 - **Every harness flag lives in `HARNESS_MATRIX`** (`harness/__init__.py`);
   the suite `harness-matrix` pins each one against the work plan.
-- **Receipts never hold environment values**, only variable names.
+- **Receipts never hold environment values**, only variable names. The key
+  file `secrets.env` is parsed, never sourced, and refused unless only its
+  owner can read it; only the expanded profile `env` reaches a harness.
 - **Every deviation from the work plan goes in `NOTES.md`, dated.**
 - User-facing text is English, plain and short.
 

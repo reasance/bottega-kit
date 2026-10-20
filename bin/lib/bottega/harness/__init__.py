@@ -327,9 +327,10 @@ def get(name):
 
 def base_env(profile, environ=None):
     """Inherited environment plus the profile's expanded env (codex, and claude
-    profiles that are not proxied). Returns (env, names set)."""
+    profiles that are not proxied). `${NAME}` expands from the environment and
+    the key file; only the expanded env is added. Returns (env, names set)."""
     environ = dict(os.environ if environ is None else environ)
-    extra = config.expand_env(profile, environ)
+    extra = config.expand_env(profile, config.environment(environ))
     environ.update(extra)
     return environ, sorted(extra)
 

@@ -131,9 +131,10 @@ Code pointed at Z.AI's Anthropic-compatible endpoint:
 }
 ```
 
-`${ZAI_API_KEY}` is read from your environment when the reviewer runs;
-bottega-kit stores no secret, and `doctor` and `approve` refuse while it is
-unset. Because `ANTHROPIC_BASE_URL` is set, the reviewer runs with a fresh
+`${ZAI_API_KEY}` is read when the reviewer runs, from your environment or
+from `~/.config/bottega-kit/secrets.env` (one `NAME=value` line each, mode
+600, parsed and never executed); `doctor` and `approve` refuse while it is set
+in neither. Because `ANTHROPIC_BASE_URL` is set, the reviewer runs with a fresh
 Claude configuration directory and without your Anthropic credentials.
 `aliases` lists other names the endpoint may report for the model; any other
 name stops the run as `identity-mismatch`. To change one role for one task
@@ -181,8 +182,9 @@ A stopped task continues with `bottega resume <task> [--rounds N]`.
 - Retry a failed dispatch, fall back to another model, or substitute a profile.
 - Bring a model of its own. Every dispatch runs a profile you bound, and the
   harness must report the model you asked for.
-- Store a secret. Profiles name environment variables; receipts record names,
-  never values.
+- Put a secret in its configuration, its prompts, a task or a receipt.
+  Profiles name environment variables; the key file you keep at mode 600 may
+  hold their values; receipts record names, never values.
 - Merge, or push anywhere but `origin`.
 - Let the planner, the reviewer or the judge change your code: their runs are
   checked against the worktree before and after.

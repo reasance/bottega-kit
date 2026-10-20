@@ -667,3 +667,29 @@ No code change. `HARNESS_MATRIX` unchanged. Open unknowns are now the GitHub
 Enterprise host and the proxied (Z.AI) profile only. `CHANGELOG.md`'s 0.1.0
 section stays dated 2026-10-17 and untagged; its known-limits bullet is
 updated. Twenty-seven live dispatches in all; 2.39 USD on the 19th.
+
+## 2026-10-20 — a key file for `${NAME}` references
+
+Deviation from plan §2.2 ("bottega-kit stores no secrets"), on the owner's
+request ("ma non possiamo creare un .env per bottega-kit?", then "procedi").
+The occasion: the Z.AI key lives in delegation-kit's key file and in no shell
+startup file, so a `claude` profile pointed at Z.AI could not pass `doctor`
+from a fresh shell, or from this session, without an export by hand.
+
+What changed: `${XDG_CONFIG_HOME:-~/.config}/bottega-kit/secrets.env`, one
+`NAME=value` line each, is read for a referenced name the environment does
+not set. The rules, taken from delegation-kit's key files: parsed, never
+executed (`export`, quotes and CRLF tolerated); refused, with the `chmod 600`
+to run, while group or others can read it (`doctor` fails; `plan`,
+`approve`, `run` and `resume` exit 2); the environment wins; only the
+expanded profile `env` reaches a harness, never the rest of the file;
+receipts still hold names only; no project `.env` is ever read. `doctor`
+prints the file's variable names and, per bound profile, whether each
+reference comes from the environment or from the file. `config.environment`
+is the one merge point; `missing_env` and `expand_env` use it when no
+explicit environment is given, and `base_env` and `proxied_env` pass the
+inherited environment through it for expansion only. What §2.2 protects is
+restated in the README: no secret in the configuration, the prompts, the
+tasks or the receipts. Nine tests in the `config` suite, one through
+`bottega plan`. CHANGELOG 0.1.0 "Tasks and configuration" updated; still
+untagged, nothing pushed.

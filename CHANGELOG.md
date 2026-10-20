@@ -13,7 +13,10 @@ dispatch.
 **Tasks and configuration.** `bottega init` writes a starter configuration for
 the harnesses it finds on PATH, and `bottega doctor` checks python3, git, gh,
 the configuration, each role's harness and the environment variables profiles
-reference. `bottega new` creates a task: a directory outside the repository
+reference. A `${NAME}` a profile references is read from your environment or
+from `~/.config/bottega-kit/secrets.env`, one `NAME=value` line each, parsed
+and never executed, refused while anyone but you can read it. `bottega new`
+creates a task: a directory outside the repository
 with `task.md` holding your request verbatim, a worktree beside the repository
 and a `bottega/<task-id>` branch. `show`, `list` and `rm` manage tasks.
 `bottega signal` is the command agents run to report `ready`, `needs-work` or

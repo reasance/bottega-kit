@@ -43,8 +43,8 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
 Workers) generated from this checkout by its `scripts/sync-kit.mjs`: the
 README, `docs/*.md`, `templates/task.md`, `prompts/*.md`, the CHANGELOG, and
 the tables in `config.py`, `util.py` and `harness/__init__.py` through a
-python3 import. Its home page is the one hand-written description of the
-kit. A change to any of those files reaches the site at the next release
+python3 import. Its home page copy, `src/data/copy.json` there, is the one
+hand-written description of the kit. A change to any of those files reaches the site at the next release
 sync (below). The site never runs a harness.
 
 ## Rules
@@ -119,7 +119,7 @@ that is wrong here.
 - **Sync the showcase site last**, once npm serves the version: in
   `../bottega-kit.sh`, `npm run sync-kit` (it refuses a kit checkout that is
   dirty or not on the release tag), review the home page copy in
-  `src/pages/index.astro` against the README, `npm run build`, commit, and
+  `src/data/copy.json` against the README, `npm run build`, commit, and
   `npm run deploy` (a push to its `main` deploys instead once that repository
   is on GitHub with the Cloudflare secrets).
 

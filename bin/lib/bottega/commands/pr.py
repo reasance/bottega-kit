@@ -1,6 +1,6 @@
 """bottega pr: commit if needed, push to origin, open the pull request.
 
-Deterministic, no agent (plan §2.12, §5 M3). Allowed when the task is done
+Deterministic, no agent (plan §2.12). Allowed when the task is done
 or stopped; a stopped task's PR says so in its body. Only `origin` is ever
 touched; nothing is merged. gh is always given `--repo` from origin's URL,
 because gh on its own prefers a remote named `upstream`.

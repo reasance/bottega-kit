@@ -31,14 +31,14 @@ mkdir -p "$DATA_HOME" "$BIN_HOME"
 STAGE="$(mktemp -d "$DATA_HOME/.install.XXXXXX")"
 trap 'rm -rf -- "$STAGE"' EXIT
 
-# What ships: the command, its library, the templates (and the prompts, once
-# they exist), and the licence files.
+# What ships: the command, its library, the templates, the prompts and the
+# licence files.
 mkdir -p "$STAGE/bin/lib"
 cp "$KIT/bin/bottega" "$STAGE/bin/bottega"
 cp -R "$KIT/bin/lib/bottega" "$STAGE/bin/lib/bottega"
 find "$STAGE" -name __pycache__ -prune -exec rm -rf {} +
 cp -R "$KIT/templates" "$STAGE/templates"
-[ ! -d "$KIT/prompts" ] || cp -R "$KIT/prompts" "$STAGE/prompts"
+cp -R "$KIT/prompts" "$STAGE/prompts"
 cp "$KIT/LICENSE" "$KIT/NOTICE" "$STAGE/"
 chmod 755 "$STAGE/bin/bottega"
 

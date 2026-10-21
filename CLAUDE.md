@@ -36,6 +36,10 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
 - `docs/` — `process.md`, `configuration.md`, `compatibility.md`, `later.md`.
 - Shell only for `install.sh`, `uninstall.sh`, `doctor.sh`, `run-tests.sh` and
   the `tests/*.sh` runners.
+- `ruff.toml` — `target-version` py39 (the floor the README states) and
+  `extend-include` for the four Python executables without a `.py` suffix
+  (`bin/bottega`, the two fakes, the fake gh), so `ruff check bin tests`
+  covers them.
 
 ## The showcase site
 

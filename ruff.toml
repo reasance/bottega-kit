@@ -1,0 +1,4 @@
+# ruff 0.13.0, the version CI installs. The four Python executables without a
+# .py suffix are linted and formatted with everything else.
+target-version = "py39"
+extend-include = ["bin/bottega", "tests/fakes/claude", "tests/fakes/codex", "tests/fake-gh/gh"]

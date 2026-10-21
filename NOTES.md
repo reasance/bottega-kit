@@ -770,3 +770,35 @@ pushed: the site repository has no remote, like this one.
 
 No code change here. `CLAUDE.md` gains a section naming the site and the
 "sync the showcase site" step in "Release tagging".
+
+## 2026-10-21 — the site's copy file, and housekeeping
+
+`CLAUDE.md` names `src/data/copy.json` as the site's one hand-written
+description of the kit: the home page copy moved there from `index.astro`,
+with placeholders filled from the kit's tables, and a workflow cut it from
+1219 to 727 words. No kit code changed for that.
+
+Housekeeping the same day, after the owner asked for it:
+
+- The six merged branches (`m0-skeleton` to `m3-pr-docs-packaging`,
+  `probe-fixes`, `review-fixes`) were deleted; the workflow says a branch
+  goes after its merge, and these had stayed.
+- `ruff.toml`. `ruff check bin tests` had been skipping the four Python
+  executables without a `.py` suffix (`bin/bottega`, `tests/fakes/claude`,
+  `tests/fakes/codex`, `tests/fake-gh/gh`): 42 files, not 46. `extend-include`
+  names them and `target-version = "py39"` pins the floor the README states.
+  All four already passed; now the gate sees them. CI needs no change, ruff
+  reads the file.
+- `loop.stop()` refuses a reason outside `STOP_REASONS`, a tuple nothing had
+  read until now.
+- `install.sh` copies `prompts/` unconditionally; the "once they exist"
+  guard was M0's, before the prompts were written.
+- Three comments described milestones as future work (`config.py`,
+  `worktree.py`, `commands/pr.py`); reworded in the present.
+- The showcase site: `sharp` is now declared, the OG script had imported it
+  through Astro's own dependency; the MDX integration, which no page used,
+  is gone; prettier formatted two files it had never seen. `npm audit`
+  there lists Astro 5.18 advisories fixed only in Astro 7, and sharp
+  advisories fixed in 0.35, outside Astro's range: the site is static and
+  rasterises only its own card, so none of them applies at runtime; the
+  upgrade is a pass of its own, when the owner wants it.

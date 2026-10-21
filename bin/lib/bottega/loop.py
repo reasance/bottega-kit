@@ -241,6 +241,8 @@ def _entry(st, run_name):
 
 
 def stop(st, reason, detail, next_role):
+    if reason not in STOP_REASONS:
+        raise ValueError(f"unknown stop reason: {reason}")
     st["phase"] = "stopped"
     st["stopped"] = {"reason": reason, "detail": detail, "at": now_iso()}
     st["next_role"] = next_role

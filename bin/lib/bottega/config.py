@@ -19,8 +19,8 @@ from .util import Refused, UsageError, atomic_write_json
 SCHEMA_VERSION = 1
 DEFAULT_ROUNDS = 3
 
-# Effort levels each harness accepts. The harness registry (M1) builds on
-# this table; keep one source of truth.
+# Effort levels each harness accepts. The harness registry builds on this
+# table; keep one source of truth.
 HARNESS_EFFORTS = {
     "claude": ("low", "medium", "high", "xhigh", "max"),
     "codex": ("none", "minimal", "low", "medium", "high", "xhigh", "max"),

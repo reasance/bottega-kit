@@ -129,8 +129,8 @@ def remove(repo, path, branch):
     return done
 
 
-# Rails (used by the loop in M2): a role that must not change code is checked
-# by hashing HEAD and the tracked diff before and after it runs.
+# Rails, used by the loop: a role that must not change code is checked by
+# hashing HEAD and the tracked diff before and after it runs.
 
 
 def head(worktree):

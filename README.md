@@ -1,7 +1,7 @@
 # bottega-kit
 
 bottega-kit runs a planner, an implementer, a reviewer and an optional judge on the
-coding agents you already have — Claude Code and Codex today — one role each, in a
+coding agents you already have — Claude Code, Codex and Kimi Code today — one role each, in a
 git worktree, with a receipt for every step. You need git, gh, python3 and at least
 one of those CLIs.
 
@@ -28,7 +28,7 @@ bottega resume   after a stop, with a fresh cap
 
 A round is one implementer pass and one reviewer pass; the cap is 3 unless
 you change it. Each role runs under a profile from your configuration: a
-harness, which is the CLI that runs the role (`claude` or `codex`), a model
+harness, which is the CLI that runs the role (`claude`, `codex` or `kimi`), a model
 and an effort. One profile may serve several roles.
 
 ## Current release: 0.1.1
@@ -47,7 +47,8 @@ GitHub; 0.1.0 was verified with Claude Code 2.1.302 to 2.1.304 and Codex CLI
 - git
 - gh, logged in, for `bottega pr`
 - python3 3.9 or newer
-- at least one of `claude` (Claude Code) and `codex` (Codex CLI), logged in
+- at least one of `claude` (Claude Code), `codex` (Codex CLI) and `kimi`
+  (Kimi Code), logged in
 - node 18 or newer, only for `npx bottega-kit`
 
 ## Install
@@ -92,7 +93,10 @@ is on PATH:
 With `codex` on PATH as well, `init` also writes a `sol-builder` profile
 (`codex`, `gpt-5.6-sol`, effort `high`) and binds it to no role. With `codex`
 alone, `sol-builder` is the planner, the implementer and the reviewer, and
-there is no judge. Edit the file to bind the roles as you like; `bottega
+there is no judge. With `kimi` on PATH, `init` writes a `kimi` profile
+(`kimi-code/k3.1-pro`, effort `high`) the same way: bound to the planner,
+the implementer and the reviewer when `kimi` is the only CLI it finds, to no
+role otherwise. Edit the file to bind the roles as you like; `bottega
 doctor` checks it.
 
 The whole sequence, from a repository with an `origin` on GitHub:
@@ -157,7 +161,9 @@ of:
 
 You pay your providers; bottega-kit adds nothing. Each Claude Code dispatch's
 cost, as Claude Code reports it, is `cost_usd` in its `run.json`. Codex
-reports none: its usage goes to your ChatGPT plan. For scale, on 2026-10-23
+reports none: its usage goes to your ChatGPT plan. Kimi Code reports no cost
+either: its usage goes to your Kimi Code plan, and `run.json` keeps the
+tokens from Kimi Code's session log. For scale, on 2026-10-23
 the starter configuration above added an option to a 21-line Python CLI in
 one round: four dispatches, 2.07 USD and under five minutes, three quarters
 of it the Fable planner and judge. In the 0.1.0 runs, Sonnet at effort
@@ -209,7 +215,7 @@ endpoint. Both ran planner, implementer and reviewer live on 2026-10-23:
                     "ANTHROPIC_DEFAULT_OPUS_MODEL": "MiniMax-M3.1-Flash",
                     "ANTHROPIC_DEFAULT_SONNET_MODEL": "MiniMax-M3.1-Flash",
                     "ANTHROPIC_DEFAULT_HAIKU_MODEL": "MiniMax-M3.1-Flash"}},
-"kimi":    {"harness": "claude", "model": "kimi-k3", "effort": "high",
+"kimi-k3": {"harness": "claude", "model": "kimi-k3", "effort": "high",
             "env": {"ANTHROPIC_BASE_URL": "https://api.moonshot.ai/anthropic",
                     "ANTHROPIC_AUTH_TOKEN": "${KIMI_API_KEY}",
                     "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k3",
@@ -219,8 +225,9 @@ endpoint. Both ran planner, implementer and reviewer live on 2026-10-23:
 
 The Kimi key is a Kimi Platform API key, not the login of the `kimi` CLI.
 Kimi K3.1 Pro is not on that API yet; when `GET /v1/models` lists it, change
-`model` and the three `ANTHROPIC_DEFAULT_*` values. See
-[docs/configuration.md](docs/configuration.md).
+`model` and the three `ANTHROPIC_DEFAULT_*` values. With a Kimi Code login,
+the `kimi` harness runs K3.1 Pro without a key (the `kimi` profile `init`
+writes). See [docs/configuration.md](docs/configuration.md).
 
 ## The roles
 
@@ -264,7 +271,8 @@ A stopped task continues with `bottega resume <task> [--rounds N]`.
 - Retry a failed dispatch, fall back to another model, or substitute a profile.
 - Bring a model of its own. Every dispatch runs a profile you bound. Claude
   Code reports the model it ran, and it must be the one you asked for; Codex
-  reports none, so its receipts say `requested-only` and rest on the request.
+  and Kimi Code report none, so their receipts say `requested-only` and rest
+  on the request.
 - Put a secret in its configuration, its prompts, a task or a receipt.
   Profiles name environment variables; the key file you keep at mode 600 may
   hold their values; receipts record names, never values.

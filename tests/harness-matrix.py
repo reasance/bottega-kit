@@ -85,7 +85,31 @@ CODEX_ROLES = {
     "reviewer": [("--sandbox", "workspace-write"), ("--add-dir", "{task_dir}")],
     "judge": [("--sandbox", "workspace-write"), ("--add-dir", "{task_dir}")],
 }
+# Kimi Code (2026-10-23): the prompt is the value of -p; each role's tools are
+# the `tools:` list of the agent file the dispatch writes.
+KIMI_BASE = [
+    ("-p", "{prompt}"),
+    ("--output-format", "stream-json"),
+    ("-m", "{model}"),
+    ("--agent-file", "{run_dir}/kimi-agent.md"),
+    ("--skills-dir", "{run_dir}/kimi-skills"),
+    ("--add-dir", "{task_dir}"),
+]
+KIMI_ROLES = {role: [] for role in ("planner", "implementer", "reviewer", "judge")}
+KIMI_TOOLS = {
+    "planner": ["Read", "Glob", "Grep"],
+    "implementer": ["Read", "Glob", "Grep", "Edit", "Write", "Bash"],
+    "reviewer": ["Read", "Glob", "Grep", "Bash"],
+    "judge": ["Read", "Glob", "Grep", "Bash"],
+}
+KIMI_ENV = {
+    "KIMI_MODEL_THINKING_EFFORT": "{effort}",
+    "KIMI_CODE_NO_AUTO_UPDATE": "1",
+    "KIMI_CODE_BUILTIN_PRODUCT_SKILLS": "0",
+    "GH_TOKEN": "bottega-kimi-gh-disabled",
+}
 NEVER = ("--fallback-model", "--bare", "--ignore-user-config", "--tools=")
+NEVER_KIMI = ("--yolo", "-y", "--auto", "--plan", "--session", "--continue")
 
 
 def contains_run(argv, cells):
@@ -114,6 +138,11 @@ class Fixture:
             "model": "gpt-5.6-sol",
             "effort": "medium",
             "env": {"MY_TOKEN": "${SECRET_SOURCE}", "PLAIN": "plain-value"},
+        }
+        cfg["profiles"]["kimi"] = {
+            "harness": "kimi",
+            "model": "kimi-code/k3.1-pro",
+            "effort": "high",
         }
         self.cfg = cfg
         self.box.write_config(cfg)
@@ -180,6 +209,12 @@ class Matrix(Fixture, unittest.TestCase):
                 argv = entry["argv"]
                 self.assertEqual(entry["tool"], harness_name)
                 expected = self.expand(base + roles[role], profile, outcome.run_dir)
+                if harness_name == "kimi":
+                    prompt = (outcome.run_dir / "prompt.md").read_text()
+                    expected = [
+                        tuple(prompt if arg == "{prompt}" else arg for arg in cell)
+                        for cell in expected
+                    ]
                 if budget:
                     expected.append(("--max-budget-usd", budget))
                 for cell in expected:
@@ -191,12 +226,19 @@ class Matrix(Fixture, unittest.TestCase):
                 self.assertEqual(flags(argv) - {"-"}, want - {"-"})
                 for banned in NEVER:
                     self.assertNotIn(banned, argv)
-                # Prompt on stdin, cwd = worktree, receipt matches.
+                # Prompt on stdin (kimi: the value of -p, kept out of the
+                # receipt's argv), cwd = worktree, receipt matches.
                 prompt = (outcome.run_dir / "prompt.md").read_text()
-                self.assertEqual(entry["stdin"], prompt)
+                recorded = [harness_name] + argv
+                if harness_name == "kimi":
+                    self.assertEqual(argv[argv.index("-p") + 1], prompt)
+                    self.assertEqual(entry["stdin"], "")
+                    recorded[recorded.index(prompt)] = "<prompt.md>"
+                else:
+                    self.assertEqual(entry["stdin"], prompt)
                 worktree = self.box.state(self.task)["worktree"]
                 self.assertEqual(Path(entry["cwd"]).resolve(), Path(worktree).resolve())
-                self.assertEqual(outcome.record["argv"], [harness_name] + argv)
+                self.assertEqual(outcome.record["argv"], recorded)
                 self.assertEqual(outcome.record["cwd"], worktree)
                 yield role, argv
 
@@ -219,6 +261,62 @@ class Matrix(Fixture, unittest.TestCase):
             if role == "planner":
                 self.assertNotIn("--add-dir", argv)
 
+    def test_kimi_every_cell_every_role(self):
+        for role, argv in self.check("kimi", "kimi", KIMI_BASE, KIMI_ROLES):
+            run_dir = Path(argv[argv.index("--agent-file") + 1]).parent
+            agent = (run_dir / "kimi-agent.md").read_text()
+            front = agent.split("---\n")[1]
+            tools = [line[4:] for line in front.splitlines() if line.startswith("  - ")]
+            self.assertEqual(tools, KIMI_TOOLS[role])
+            self.assertIn("name: bottega-%s\n" % role, front)
+            self.assertIn("subagents: []\n", front)
+            self.assertIn("${base_prompt}", agent.split("---\n", 2)[2])
+            skills = run_dir / "kimi-skills"
+            self.assertTrue(skills.is_dir())
+            self.assertEqual(list(skills.iterdir()), [])
+            for banned in NEVER_KIMI:
+                self.assertNotIn(banned, argv)
+
+    def test_kimi_environment(self):
+        outcome, entry = self.dispatch("implementer", "kimi")
+        self.assertTrue(outcome.ok, outcome.record)
+        names = set(outcome.record["env"]["set"])
+        self.assertLessEqual(set(KIMI_ENV), names)
+        self.assertLessEqual(
+            {"GIT_CONFIG_COUNT", "GIT_CONFIG_KEY_0", "GIT_CONFIG_VALUE_0"}, names
+        )
+        self.assertLessEqual(names, set(entry["env_names"]))
+        # The effort reached Kimi Code: the fake writes it into the session log.
+        self.assertEqual(outcome.record["usage"]["thinking_effort"], ["high"])
+
+    def test_kimi_blocks_push_and_gh(self):
+        probe = (
+            "import os, subprocess, sys; "
+            "url = subprocess.run(['git', 'config', '--get', 'remote.origin.pushurl'], "
+            "capture_output=True, text=True).stdout.strip(); "
+            "sys.stderr.write('pushurl=%s gh=%s\\n' % (url, os.environ['GH_TOKEN']))"
+        )
+        outcome, _ = self.dispatch(
+            "implementer", "kimi", default={"run": [["python3", "-c", probe]]}
+        )
+        self.assertTrue(outcome.ok, outcome.record)
+        stderr = (outcome.run_dir / "stderr.log").read_text()
+        self.assertIn("pushurl=bottega-push-disabled://", stderr)
+        self.assertIn("gh=bottega-kimi-gh-disabled", stderr)
+
+    def test_kimi_git_config_follows_the_users(self):
+        from bottega.harness import kimi
+
+        env = kimi.git_config_env({"GIT_CONFIG_COUNT": "2"}, {"a.b": "c"})
+        self.assertEqual(
+            env,
+            {
+                "GIT_CONFIG_KEY_2": "a.b",
+                "GIT_CONFIG_VALUE_2": "c",
+                "GIT_CONFIG_COUNT": "3",
+            },
+        )
+
     def test_matrix_has_one_bash_rule_spelling(self):
         rules = [
             arg
@@ -230,7 +328,16 @@ class Matrix(Fixture, unittest.TestCase):
         self.assertTrue(rules)
         for rule in rules:
             self.assertRegex(rule, r"^Bash\(.+ \*\)$")
-        self.assertEqual(set(harness.HARNESS_MATRIX), {"claude", "codex"})
+        self.assertEqual(set(harness.HARNESS_MATRIX), {"claude", "codex", "kimi"})
+        self.assertEqual(
+            {k: list(v) for k, v in harness.HARNESS_MATRIX["kimi"]["tools"].items()},
+            KIMI_TOOLS,
+        )
+        self.assertEqual(harness.HARNESS_MATRIX["kimi"]["env"], KIMI_ENV)
+        self.assertEqual(
+            harness.HARNESS_MATRIX["kimi"]["git_config"],
+            {"remote.origin.pushurl": "bottega-push-disabled://"},
+        )
         for name, spec in harness.HARNESS_MATRIX.items():
             self.assertEqual(set(spec["roles"]), set(state_roles()))
             self.assertEqual(
@@ -314,9 +421,49 @@ class Receipts(Fixture, unittest.TestCase):
         self.assertIsNone(outcome.record["cost_usd"])
         self.assertEqual(outcome.record["provider_reported_model"], "gpt-5.6-sol")
 
+    def test_kimi_final_usage_and_requested_only_identity(self):
+        step = {
+            "final": "K",
+            "events": [
+                {"role": "assistant", "tool_calls": [{"id": "t1"}]},
+                {"role": "tool", "tool_call_id": "t1", "content": "1\tx"},
+                {"role": "assistant", "content": [{"type": "text", "text": "early"}]},
+            ],
+        }
+        outcome, _ = self.dispatch("reviewer", "kimi", default=step)
+        self.assertTrue(outcome.ok, outcome.record)
+        self.assertEqual(outcome.final, "K")
+        record = outcome.record
+        self.assertEqual(record["model_identity_source"], "requested-only")
+        self.assertIsNone(record["provider_reported_model"])
+        self.assertEqual(record["observed_models"], [])
+        self.assertIsNone(record["cost_usd"])
+        usage = record["usage"]
+        self.assertEqual(usage["session_id"], "session_fake-1")
+        self.assertEqual(usage["requested_models"], ["kimi-code/k3.1-pro", "k3.1-pro"])
+        self.assertEqual(usage["tokens"]["inputOther"], 300)
+        self.assertEqual(usage["tokens"]["output"], 60)
+        self.assertEqual(usage["turn_endings"], ["completed"])
+        self.assertEqual(record["num_turns"], 1)
+
+    def test_kimi_session_id_is_never_a_pattern(self):
+        from bottega.harness import kimi
+
+        for bad in ("../x", "session_*", "a/b", "[x]", "", None):
+            event = {"role": "meta", "type": "session.resume_hint", "session_id": bad}
+            self.assertIsNone(kimi._session_id([event]), bad)
+        good = {"type": "session.resume_hint", "session_id": "session_7bdc-01"}
+        self.assertEqual(kimi._session_id([good]), "session_7bdc-01")
+
+    def test_kimi_without_a_session_log(self):
+        outcome, _ = self.dispatch("planner", "kimi", default={"no_session_log": True})
+        self.assertTrue(outcome.ok, outcome.record)
+        self.assertEqual(outcome.record["usage"], {"session_id": "session_fake-1"})
+        self.assertIsNone(outcome.record["num_turns"])
+
     def test_parsers_tolerate_unknown_and_malformed_lines(self):
         raw = 'not json\n[1, 2]\n{"type": "mystery", "data": {"x": 1}}\n\n'
-        for name in ("opus-builder", "sol-builder"):
+        for name in ("opus-builder", "sol-builder", "kimi"):
             with self.subTest(profile=name):
                 outcome, _ = self.dispatch(
                     "planner", name, default={"final": "ok", "raw": raw}
@@ -592,6 +739,9 @@ class Doctor(unittest.TestCase):
             ok, detail = harness.get("codex").check()
             self.assertTrue(ok)
             self.assertIn("codex-cli 0.163.0", detail)
+            ok, detail = harness.get("kimi").check()
+            self.assertTrue(ok)
+            self.assertIn("2.3.1", detail)
             os.environ["PATH"] = "/usr/bin:/bin"
             ok, detail = harness.get("claude").check()
             self.assertFalse(ok)

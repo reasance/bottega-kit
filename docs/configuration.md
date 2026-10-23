@@ -13,8 +13,11 @@ a starter for the harnesses it finds on PATH and refuses to overwrite an
 existing file without `--force`. `bottega doctor` validates it. Below is the
 starter with both `claude` and `codex` on PATH; with `claude` alone it has
 no `sol-builder`; with `codex` alone it has only `sol-builder`, bound as
-planner, implementer and reviewer, and no judge. With neither, it is the
-`claude` one.
+planner, implementer and reviewer, and no judge. With `kimi` on PATH it also
+has a `kimi` profile (`"harness": "kimi", "model": "kimi-code/k3.1-pro",
+"effort": "high"`), bound the same way as `sol-builder` when `kimi` is the
+only CLI found, to no role otherwise. With none of them, it is the `claude`
+one.
 
 ```json
 {
@@ -46,9 +49,9 @@ A profile is a harness, a model and an effort.
 
 | key | required | what |
 |---|---|---|
-| `harness` | yes | `claude` (Claude Code) or `codex` (Codex CLI) |
-| `model` | yes | the model name passed to the harness |
-| `effort` | yes | `claude`: `low`, `medium`, `high`, `xhigh`, `max`. `codex`: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max` |
+| `harness` | yes | `claude` (Claude Code), `codex` (Codex CLI) or `kimi` (Kimi Code) |
+| `model` | yes | the model name passed to the harness; for `kimi`, a model alias of Kimi Code's `config.toml`, such as `kimi-code/k3.1-pro` |
+| `effort` | yes | `claude`: `low`, `medium`, `high`, `xhigh`, `max`. `codex`: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. `kimi`: `low`, `high`, `max` |
 | `env` | no | environment variables set for the harness; values may reference your environment as `${NAME}` |
 | `aliases` | no | other model names the harness may report for this model |
 | `timeout` | no | seconds; the dispatch is killed after it and the task stops with `timeout` |
@@ -60,9 +63,11 @@ Any other key is an error.
 the requested `model` or one of `aliases`. Anything else stops the task with
 `identity-mismatch`. For Claude Code the check uses the session's model and
 each turn's model; helper models it lists in its usage are recorded and not
-checked. Codex reports no model, so nothing is checked: its receipts say
-`model_identity_source: requested-only`, and `aliases` has no effect on a
-`codex` profile.
+checked. Codex and Kimi Code report no model, so nothing is checked: their
+receipts say `model_identity_source: requested-only`, and `aliases` has no
+effect on a `codex` or `kimi` profile. A `kimi` receipt also records, under
+`usage`, the model and effort Kimi Code asked its provider for and the
+tokens, read from Kimi Code's own session log; they are not a check.
 
 **Environment references.** `"ANTHROPIC_AUTH_TOKEN": "${ZAI_API_KEY}"` is
 expanded when the harness starts, from your environment or, for a name your
@@ -104,8 +109,19 @@ fails the dispatch: on 2026-10-23 `kimi-k3.1-pro` answered 404 on Moonshot's
 endpoint, and its `GET /v1/models` listed up to `kimi-k3`.
 
 Harnesses authenticate on their own: Claude Code through its login or
-keychain, Codex through `~/.codex`. bottega-kit never handles their
+keychain, Codex through `~/.codex`, Kimi Code through `kimi login` and
+`~/.kimi-code` (or `KIMI_CODE_HOME`). bottega-kit never handles their
 credentials.
+
+**Kimi Code profiles.** `kimi` runs with your own Kimi Code configuration:
+your login, your model aliases, your hooks and your MCP servers' processes,
+as Codex runs with your `config.toml`. Per dispatch, bottega-kit narrows it:
+an agent file lists the role's tools, an empty `--skills-dir` replaces your
+skills, and the environment sets the effort, turns off Kimi Code's update
+check and its built-in product skills, and disables `git push` to origin and
+`gh` (see [compatibility.md](compatibility.md#kimi)). Each dispatch is also a
+Kimi Code session in your history: `kimi -r <session_id>` reopens it, with
+the `session_id` from the receipt's `usage`.
 
 ## The key file
 

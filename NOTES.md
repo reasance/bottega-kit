@@ -927,3 +927,49 @@ profile each: both done in round 1, every receipt `provider-reported` with
 the requested name alone, so no alias. Mapping the three
 `ANTHROPIC_DEFAULT_*_MODEL` variables to the same model kept Claude Code's
 own requests on it. Numbers in `docs/compatibility.md`.
+
+## 2026-10-23 — Kimi Code as a native harness
+
+The owner asked for Kimi K3.1 Pro in bottega-kit. Moonshot's API does not
+serve it to the owner's key (see the entry on proxied profiles); Kimi Code,
+the owner's subscription, does, through the `kimi` CLI and its OAuth login.
+On the owner's word ("vai con driver nativo") the `kimi` harness, a 0.2.0
+candidate in `docs/later.md`, is built now. Decisions, from Kimi Code
+2.3.1's documentation (`llms-full.txt`) and a live probe:
+
+- **Prompt as an argument.** `kimi -p` reads no prompt from stdin (`-p ""`
+  exits 1, "Prompt cannot be empty"). `Invocation` gains `recorded_argv`, so
+  the receipt's `argv` shows `<prompt.md>` instead of the prompt. The
+  prompt is visible in the process list while the dispatch runs.
+- **Role permissions through an agent file**, `--agent-file
+  <run dir>/kimi-agent.md`, whose `tools:` Kimi Code enforces before each
+  call; the body is `${base_prompt}`. `-p` runs under the `auto` policy and
+  cannot take `--yolo`, `--auto` or `--plan`.
+- **No deny rule for a shell command** outside `config.toml`, which is the
+  user's. The push and gh guards are environment: `remote.origin.pushurl`
+  through `GIT_CONFIG_*` (appended after the user's), and an invalid
+  `GH_TOKEN`. Verified live: `git push` and `/usr/bin/git push` exit 128,
+  `gh auth status` exits 1. A push to an explicit URL is not blocked.
+- **Effort** has no flag; `KIMI_MODEL_THINKING_EFFORT` sets it, and the
+  session log showed the value sent. The effort set is `low`, `high`, `max`,
+  the levels Kimi Code declares for its K3 models.
+- **No isolated `KIMI_CODE_HOME`**: a fresh home has no login, and copying
+  the user's OAuth credentials could rotate their refresh token. So the
+  user's config runs, hooks and MCP servers included, as `codex` runs with
+  the user's `config.toml`; `--skills-dir` with an empty directory replaces
+  skills, and the agent file gives no MCP tool. Each dispatch is a session
+  in the user's Kimi Code history.
+- **Identity:** no stream-json event names a model, so `requested-only`.
+  The session log (`wire.jsonl`, found through the `session.resume_hint`
+  event) records what Kimi Code requested and the tokens; the parser reads
+  them into `usage`, never into the identity check, and tolerates a missing
+  log.
+- **The matrix renders without a prompt:** `fill()` leaves a placeholder
+  that has no value as it is, so a caller that passes no prompt keeps
+  working. On the owner's word the showcase site gained a `kimi` section
+  (reasance/bottega-kit.sh#1, to merge with the sync of the release that
+  ships it); its sync passes `<prompt.md>`, as the receipts record it.
+
+Live run, in `docs/compatibility.md`: K3.1 Pro at effort `high` as planner,
+implementer, reviewer and judge on a throwaway repository, done in round 1,
+the judge's verdict "Merge: yes".

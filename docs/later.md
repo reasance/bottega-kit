@@ -13,7 +13,7 @@ refreshed for 0.1.0 on 2026-10-17 with what the milestones deferred.
   add/modify only, `git apply --check`), applied in the worktree, verdict in the
   receipt. Text-patch profiles are implementer-only: they have no shell, so they
   cannot signal, and `approve` refuses them in other roles.
-- Agentic drivers for `kimi`, `grok` and `gemini`.
+- Agentic drivers for `grok` and `gemini` (`kimi` landed after 0.1.1).
 
 ## Later
 

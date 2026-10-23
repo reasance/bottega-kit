@@ -90,16 +90,50 @@ in the README. Keys came from `secrets.env`.
   listed `kimi-k2.6`, `kimi-k2.7-code`, `kimi-k2.7-code-highspeed` and
   `kimi-k3`.
 
+### Kimi Code, native, 2026-10-23
+
+Kimi Code 2.3.1, signed in to a Kimi Code plan, `kimi-code/k3.1-pro` at
+effort `high` in every role, through an install of the `kimi-harness`
+branch in a scratch directory, the shipped prompts, cap 2. One task, "add a
+`--times N` option", on a local throwaway greeter repository whose `origin`
+pointed nowhere:
+
+| seq | role | duration | requests | tokens in / cache read / out | signal |
+|---|---|---|---|---|---|
+| 1 | planner | 29 s | 2 | 4,725 / 12,544 / 1,684 | — (plan) |
+| 2 | implementer | 69 s | 9 | 12,318 / 112,640 / 3,387 | — |
+| 3 | reviewer | 73 s | 8 | 17,550 / 106,752 / 3,252 | ready |
+| 4 | judge | 26 s | 4 | 8,361 / 42,496 / 913 | ready |
+
+- Done in round 1; the judge's verdict was "Merge: yes". Every receipt says
+  `requested-only`, and the session logs show `k3.1-pro` requested at
+  effort `high`. No warning, no new untracked file, the rails unchanged for
+  the read-only roles.
+- Before the run, a probe at effort `low` with the planner's agent file
+  listed Glob, Grep, Read and `select_tools` as the agent's tools, and it
+  could neither write a file nor run a shell command.
+- An implementer dispatch built by the harness and asked to try them:
+  `git config --get remote.origin.pushurl` printed
+  `bottega-push-disabled://`; `git push origin HEAD` and
+  `/usr/bin/git push origin HEAD` exited 128 ("remote helper
+  'bottega-push-disabled' aborted session"); `gh auth status` exited 1
+  ("The token in GH_TOKEN is invalid").
+- `kimi -p ""` with the prompt on stdin exits 1, "Prompt cannot be empty":
+  hence the prompt as an argument.
+
 ## The harness matrix
 
-Every flag lives in `HARNESS_MATRIX`, in `bin/lib/bottega/harness/__init__.py`.
-The `harness-matrix` suite pins each cell.
+Every flag lives in `HARNESS_MATRIX`, in `bin/lib/bottega/harness/__init__.py`,
+with Kimi Code's per-role tools and environment. The `harness-matrix` suite
+pins each cell.
 
-### Common to both
+### Common to all
 
-- The working directory is the task's worktree; the prompt goes on stdin.
+- The working directory is the task's worktree; the prompt goes on stdin,
+  except for `kimi` (below).
 - The environment is yours plus the profile's `env` (see
-  [configuration.md](configuration.md) for proxied Claude profiles).
+  [configuration.md](configuration.md) for proxied Claude profiles), and for
+  `kimi` the variables below.
 - A profile `timeout` kills the harness's process group; the task stops with
   `timeout`. After every run the process group is killed, so nothing the
   agent started outlives the dispatch.
@@ -162,6 +196,56 @@ caches. The rails stop the task if tracked code changes. Codex has no deny
 rules: a commit fails because Codex keeps the git directory read-only, a push
 fails only while the sandbox blocks the network, and `gh` runs (see the 0.1.0 snapshot, below).
 
+### kimi
+
+Base command, the same for every role:
+
+```
+kimi -p <prompt> --output-format stream-json -m <model>
+  --agent-file <run dir>/kimi-agent.md --skills-dir <run dir>/kimi-skills
+  --add-dir <task dir>
+```
+
+The prompt is the value of `-p`: Kimi Code reads no prompt from stdin. The
+receipt's `argv` shows it as `<prompt.md>`; the text is in `prompt.md`. `-p`
+runs under Kimi Code's `auto` permission policy, so nothing asks.
+
+| role | `tools:` in the agent file |
+|---|---|
+| planner | `Read`, `Glob`, `Grep` |
+| implementer | `Read`, `Glob`, `Grep`, `Edit`, `Write`, `Bash` |
+| reviewer | `Read`, `Glob`, `Grep`, `Bash` |
+| judge | `Read`, `Glob`, `Grep`, `Bash` |
+
+The agent file (`name: bottega-<role>`, `subagents: []`, body
+`${base_prompt}`) is written into the run directory and kept with the
+receipt. Kimi Code enforces its `tools:` list before every call, so a role
+has no other tool, `Agent` and the web tools included. `--skills-dir` names
+an empty directory, which replaces your skills.
+
+Environment added to yours: `KIMI_MODEL_THINKING_EFFORT=<effort>` (Kimi Code
+has no effort flag), `KIMI_CODE_NO_AUTO_UPDATE=1`,
+`KIMI_CODE_BUILTIN_PRODUCT_SKILLS=0`, and two guards, because Kimi Code has
+no command-line deny rule for a shell command:
+`GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_n`/`GIT_CONFIG_VALUE_n` set
+`remote.origin.pushurl` to `bottega-push-disabled://`, after any
+`GIT_CONFIG_*` you set, so a push to origin fails; and `GH_TOKEN` is a
+token GitHub refuses, so `gh` fails. A push to an explicit URL is not
+blocked; the rails still stop a read-only role that commits.
+
+No event names the model, so a Kimi receipt says `requested-only`. The final
+message is the last `assistant` message with text. From the
+`session.resume_hint` event's `session_id`, the parser reads Kimi Code's
+session log, `<KIMI_CODE_HOME>/sessions/*/<session id>/agents/main/wire.jsonl`
+(`~/.kimi-code` by default), into `usage`: the requests, the model alias and
+model name Kimi Code asked for, the effort it sent, the turn endings and the
+tokens (`inputOther`, `inputCacheRead`, `inputCacheCreation`, `output`);
+`num_turns` and `duration_ms` come from its `turn.ended` events. A missing
+log leaves only `session_id`.
+
+Not narrowed: your Kimi Code hooks run, and your MCP servers start, though
+the agent file gives the role none of their tools.
+
 ### gh, for bottega pr
 
 ```
@@ -181,6 +265,8 @@ Still unverified after the live runs, this release's and 0.1.0's:
 - Codex CLI 0.164.0, in any role;
 - Kimi K3.1 Pro through Moonshot's Anthropic endpoint: not served to the
   key used on 2026-10-23; `kimi-k3` is verified;
+- Kimi Code with another provider than its own Kimi Code login, and
+  with a `KIMI_CODE_HOME` of its own;
 - the credential stripping of a proxied profile against a set
   `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`: on the 20th nothing was
   set, so there was nothing to remove. The offline suite covers it with a

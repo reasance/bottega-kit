@@ -31,14 +31,16 @@ you change it. Each role runs under a profile from your configuration: a
 harness, which is the CLI that runs the role (`claude` or `codex`), a model
 and an effort. One profile may serve several roles.
 
-## Current release: 0.1.0
+## Current release: 0.1.1
 
-The first release: `init`, `doctor`, `new`, `plan`, `approve`, `run`, `resume`,
-`pr` and the task commands, on the `claude` and `codex` harnesses. The loop
-was verified live on 2026-10-17, 2026-10-19 and 2026-10-20 with Claude Code
-2.1.302 to 2.1.304 and Codex CLI 0.163.0, each in every role, a reviewer on
-Z.AI's endpoint through Claude Code, and `bottega pr` opening a pull request
-on GitHub. See [docs/compatibility.md](docs/compatibility.md).
+Documentation: what to do after `run`, a task followed end to end, what a
+task costs. The commands are those of 0.1.0: `init`, `doctor`, `new`,
+`plan`, `approve`, `run`, `resume`, `pr` and the task commands, on the
+`claude` and `codex` harnesses. 0.1.1 was verified live on 2026-10-23 with
+Claude Code 2.1.309 and the starter configuration, through `bottega pr` on
+GitHub; 0.1.0 was verified with Claude Code 2.1.302 to 2.1.304 and Codex CLI
+0.163.0, each in every role, and a reviewer on Z.AI's endpoint. See
+[docs/compatibility.md](docs/compatibility.md).
 
 ## What you need
 
@@ -155,13 +157,14 @@ of:
 
 You pay your providers; bottega-kit adds nothing. Each Claude Code dispatch's
 cost, as Claude Code reports it, is `cost_usd` in its `run.json`. Codex
-reports none: its usage goes to your ChatGPT plan. For scale, on 2026-10-19
-the starter configuration above added an option to a 20-line Python CLI in
-one round: four dispatches, 2.16 USD and under five minutes, three quarters
-of it the Fable planner and judge. Sonnet at effort `medium` cost 0.03 to
-0.08 USD a dispatch on the same kind of task. A larger task costs more: more
-files to read, more rounds. [docs/compatibility.md](docs/compatibility.md)
-lists every dispatch of the live runs.
+reports none: its usage goes to your ChatGPT plan. For scale, on 2026-10-23
+the starter configuration above added an option to a 21-line Python CLI in
+one round: four dispatches, 2.07 USD and under five minutes, three quarters
+of it the Fable planner and judge. In the 0.1.0 runs, Sonnet at effort
+`medium` cost 0.03 to 0.08 USD a dispatch on the same kind of task. A larger
+task costs more: more files to read, more rounds.
+[docs/compatibility.md](docs/compatibility.md) lists every dispatch of the
+live runs.
 
 ## Example: three vendors, no judge
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // bottega-kit npm installer: a thin wrapper over the repository's ./install.sh.
 //
-// `npx bottega-kit` clones https://github.com/matteoscurati/bottega-kit at the
+// `npx bottega-kit` clones https://github.com/reasance/bottega-kit at the
 // tag that matches this package's own version (bottega-kit--v<version>), runs
 // ./install.sh from the clone, then ./doctor.sh, then deletes the clone.
 // install.sh copies what it installs into BOTTEGA_DATA_HOME and records the
@@ -20,7 +20,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import process from "node:process";
 
-const DEFAULT_REPO = "https://github.com/matteoscurati/bottega-kit";
+const DEFAULT_REPO = "https://github.com/reasance/bottega-kit";
 const TAG_PREFIX = "bottega-kit--v";
 const USAGE =
   "usage: npx bottega-kit [--ref <tag-or-branch>] [--repo <git-url>] [--skip-doctor]";

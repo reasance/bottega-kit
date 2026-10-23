@@ -802,3 +802,13 @@ Housekeeping the same day, after the owner asked for it:
   advisories fixed in 0.35, outside Astro's range: the site is static and
   rasterises only its own card, so none of them applies at runtime; the
   upgrade is a pass of its own, when the owner wants it.
+
+## 2026-10-23 — the repository lives under the reasance organisation
+
+The owner moved the kit to `https://github.com/reasance/bottega-kit`. It had
+never been pushed, so nothing was transferred: the repository is created
+there. `package.json` (`repository`, `homepage`, `bugs`), the npm wrapper's
+`DEFAULT_REPO` and the README's `git clone` line point at it; `author.url`
+stays the owner's profile. The earlier entries that name
+`matteoscurati/bottega-kit` are left as written. No version is on npm yet,
+so no published wrapper clones the old URL.

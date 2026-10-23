@@ -85,7 +85,23 @@ So your Anthropic credentials never reach the third-party endpoint. The
 profile's own `env` may set any of them again. Claude Code does not know the
 endpoint's prices: the receipt's `cost_usd` and the `max_budget_usd` limit
 use its own default table, which overstated a GLM run on Z.AI about
-fifteenfold on 2026-10-20 (see [compatibility.md](compatibility.md)).
+fifteenfold on 2026-10-20 and a MiniMax run about thirteenfold on
+2026-10-23 (see [compatibility.md](compatibility.md)).
+
+Endpoints that have run live, each with the model name it reported:
+
+| provider | `ANTHROPIC_BASE_URL` | `model` | reported | key |
+|---|---|---|---|---|
+| Z.AI | `https://api.z.ai/api/anthropic` | `glm-5.3-flash` | `glm-5.3-flash` | a Z.AI API key |
+| MiniMax | `https://api.minimax.io/anthropic` | `MiniMax-M3.1-Flash` | `MiniMax-M3.1-Flash` | a MiniMax API key |
+| Moonshot (Kimi) | `https://api.moonshot.ai/anthropic` | `kimi-k3` | `kimi-k3` | a Kimi Platform API key, not the `kimi` CLI's login |
+
+Set `ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL` and
+`ANTHROPIC_DEFAULT_HAIKU_MODEL` to the same `model`, so the requests Claude
+Code makes on its own also go to that model; on 2026-10-23 every MiniMax and
+Kimi receipt listed that model alone. A model the endpoint does not serve
+fails the dispatch: on 2026-10-23 `kimi-k3.1-pro` answered 404 on Moonshot's
+endpoint, and its `GET /v1/models` listed up to `kimi-k3`.
 
 Harnesses authenticate on their own: Claude Code through its login or
 keychain, Codex through `~/.codex`. bottega-kit never handles their

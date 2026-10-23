@@ -4,6 +4,11 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
+**Documentation.** MiniMax M3.1 Flash and Kimi K3 as proxied `claude`
+profiles: README examples, a table of the Anthropic-compatible endpoints
+that have run live in `docs/configuration.md`, and the two live runs of
+2026-10-23 in `docs/compatibility.md`. No code changes.
+
 ## [0.1.1] — 2026-10-23
 
 Documentation only; the commands behave as in 0.1.0.

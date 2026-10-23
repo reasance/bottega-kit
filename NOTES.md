@@ -899,3 +899,31 @@ the guards, harmlessly. Each release is published by hand, then the failed
 run is left as it is (a re-run refuses the version, already on npm).
 `CLAUDE.md`'s release steps say so. No `NPM_TOKEN`: a token that bypasses
 two-factor is what the owner declined for 0.1.0.
+
+## 2026-10-23 — MiniMax and Kimi as proxied Claude profiles
+
+The owner asked for MiniMax M3.1 Flash and Kimi K3.1 Pro, and chose proxied
+`claude` profiles with a live run each over native drivers (`docs/later.md`
+keeps the Kimi driver and the `openai-compatible` harness as 0.2.0
+candidates). No code changes: both providers serve an Anthropic-compatible
+endpoint, the path Z.AI already took.
+
+Keys: the owner asked me to make `~/.config/bottega-kit/secrets.env` and to
+find the keys elsewhere, read-only. `MINIMAX_API_KEY` was copied, without
+being shown, from `~/.config/delegation-kit/.env` into a new `secrets.env`
+created at mode 600; that file was only read. No Kimi API key existed: the
+`kimi` CLI signs in to Kimi Code with OAuth, and its token was not reused.
+The owner created a Kimi Platform key and added `KIMI_API_KEY` to
+`secrets.env` themselves.
+
+Kimi K3.1 Pro: `kimi-k3.1-pro` answered 404 on
+`https://api.moonshot.ai/anthropic` and `GET /v1/models` listed up to
+`kimi-k3`. On the owner's choice the run used `kimi-k3`, and the docs say
+to change the model name once the API lists K3.1 Pro.
+
+Before each run, one 16-token request to the endpoint confirmed the model
+name it accepts and reports. Then planner, implementer and reviewer on one
+profile each: both done in round 1, every receipt `provider-reported` with
+the requested name alone, so no alias. Mapping the three
+`ANTHROPIC_DEFAULT_*_MODEL` variables to the same model kept Claude Code's
+own requests on it. Numbers in `docs/compatibility.md`.

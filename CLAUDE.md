@@ -116,8 +116,10 @@ that is wrong here.
   `gh release create "bottega-kit--v<VERSION>" --title "bottega-kit <VERSION>" --notes-file <notes>`.
 - Pushing the tag runs `.github/workflows/publish-npm.yml`, which checks the
   tag against `package.json`, runs the version check with `--tag` and the npm
-  wrapper test, refuses a version already on npm, and publishes with the
-  `NPM_TOKEN` repository secret. The npm package is the wrapper only;
+  wrapper test, refuses a version already on npm, and publishes through npm
+  trusted publishing, with provenance and no token (the package's Trusted
+  Publisher names this repository and `publish-npm.yml`; 0.1.0 was published
+  by hand, see `NOTES.md`). The npm package is the wrapper only;
   `npx bottega-kit` clones the tag `bottega-kit--v<its version>`, so the tag
   must exist before anyone runs it.
 - **Sync the showcase site last**, once npm serves the version: in

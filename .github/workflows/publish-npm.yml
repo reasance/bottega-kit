@@ -6,8 +6,10 @@ name: Publish npm
 # version and runs ./install.sh, so the npm package and the git release
 # describe the same version by construction.
 #
-# Requires one repository secret: NPM_TOKEN (an npm automation token, so a
-# publish never needs a human one-time password).
+# No secret: npm trusted publishing. The package's Trusted Publisher on
+# npmjs.com names reasance/bottega-kit and this file, publish-npm.yml; npm
+# trades the runner's OIDC identity for a short-lived credential and attaches
+# a provenance statement.
 
 on:
   push:
@@ -18,6 +20,9 @@ on:
 
 permissions:
   contents: read
+  # Trusted publishing and provenance both use the runner's OIDC identity;
+  # provenance needs package.json's repository to name this repository.
+  id-token: write
 
 concurrency:
   group: npm-${{ github.ref }}
@@ -55,8 +60,13 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: 'https://registry.npmjs.org'
+
+      # Trusted publishing needs npm 11.5.1 or later. Pinned: this job can
+      # publish, so it never installs an unpinned npm.
+      - name: npm with trusted publishing
+        run: npm install -g npm@11.6.2
 
       - name: Wrapper tests
         run: node --test tests/npm-installer.test.mjs
@@ -69,6 +79,4 @@ jobs:
           fi
 
       - name: Publish
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public

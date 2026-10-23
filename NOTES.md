@@ -866,3 +866,36 @@ uses this run's numbers and dates the Sonnet range to 0.1.0.
 
 The 0.1.1 tag is the first one `publish-npm.yml` runs on: npm trusted
 publishing, with provenance.
+
+## 2026-10-23 — 0.1.1 published by hand: npm trusted publishing refuses this repository
+
+The tag push ran `publish-npm.yml` for the first time (run 39974239667).
+Every guard passed and the provenance statement was signed, then the PUT
+failed: `E403 OIDC permission denied for this action`. A re-run after the
+owner checked the Trusted Publisher failed the same way. The configuration
+is right: `npm trust list bottega-kit` shows GitHub, `reasance/bottega-kit`,
+`publish-npm.yml`, no environment (so `npm trust github` answered 400: one
+already exists).
+
+Cause: `reasance/bottega-kit` was created on 2026-10-23, after 2026-07-15,
+so GitHub signs its OIDC tokens with immutable subject claims;
+`gh api repos/reasance/bottega-kit/actions/oidc/customization/sub` says
+`use_immutable_subject: true`, prefix
+`repo:reasance@247802277/bottega-kit@1430949588`. npm's trusted publishing
+matches only `repo:OWNER/REPO:…`. Open upstream as npm/cli#9969, untriaged
+since late September; other projects report the same error. It cannot be
+turned off on GitHub's side.
+
+What was done: the owner published 0.1.1 by hand with two-factor, from a
+clean worktree of the tag; the tarball's shasum (`0c034a3a…`) is the one
+the CI run built. npm serves 0.1.1 as `latest`, without provenance;
+`npx bottega-kit` installs the tag `bottega-kit--v0.1.1` at `6ca1985`. The
+entry above that said 0.1.1 would be the first release with provenance is
+wrong.
+
+`publish-npm.yml` stays as it is: it will work unchanged once npm matches
+the new subject, and until then a tag push fails at the publish step after
+the guards, harmlessly. Each release is published by hand, then the failed
+run is left as it is (a re-run refuses the version, already on npm).
+`CLAUDE.md`'s release steps say so. No `NPM_TOKEN`: a token that bypasses
+two-factor is what the owner declined for 0.1.0.

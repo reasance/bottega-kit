@@ -85,8 +85,8 @@ So your Anthropic credentials never reach the third-party endpoint. The
 profile's own `env` may set any of them again. Claude Code does not know the
 endpoint's prices: the receipt's `cost_usd` and the `max_budget_usd` limit
 use its own default table, which overstated a GLM run on Z.AI about
-fifteenfold on 2026-10-20 and a MiniMax run about thirteenfold on
-2026-10-23 (see [compatibility.md](compatibility.md)).
+fifteenfold on 2026-10-20, a MiniMax run about 36 times and a Kimi run
+about three times on 2026-10-23 (see [compatibility.md](compatibility.md)).
 
 Endpoints that have run live, each with the model name it reported:
 

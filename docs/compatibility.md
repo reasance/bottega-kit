@@ -73,11 +73,14 @@ in the README. Keys came from `secrets.env`.
 
 - MiniMax, "add a `--times N` option": done in round 1, 11 tests passing.
   Claude Code priced the three dispatches at 0.59 USD; their tokens (45,273
-  input, 224,633 cache reads, 10,231 output) cost at most 0.047 USD at
-  MiniMax's list price of 0.15 / 0.60 per million, cache reads counted as
-  input, so about thirteen times less.
-- Kimi, "add a `--shout` flag": done in round 1, 4 tests passing. Tokens:
-  1,372 input, 93,440 cache reads, 4,853 output.
+  input, 224,633 cache reads, 10,231 output) cost 0.016 USD at MiniMax's
+  pay-as-you-go list price (0.15 input, 0.015 cache read, 0.60 output per
+  million), about 36 times less.
+- Kimi, "add a `--shout` flag": done in round 1, 4 tests passing. Claude
+  Code priced it at 0.34 USD; its tokens (1,372 input, 93,440 cache reads,
+  4,853 output) cost 0.105 USD at Moonshot's K3 price (3 input, 0.30 cache
+  hit, 15 output per million, as published copies of its price page give it;
+  the page itself renders its table in the browser), about a third.
 - Every receipt says `model_identity_source: provider-reported` with the
   requested name and no other model, so no alias was needed and Claude
   Code's own requests stayed on the endpoint. No permission denial, no

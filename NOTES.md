@@ -825,11 +825,15 @@ and in CI.
 
 - **CHANGELOG** 0.1.0 is dated 2026-10-23, the day of the tag, as the entry
   of 2026-10-17 said it would be.
-- **`publish-npm.yml`** publishes with `--provenance --access public` and
-  grants `id-token: write`, so the package carries an npm provenance
-  statement from its first version; provenance cannot be added to a version
-  after it is published. It relies on `package.json`'s `repository` naming
-  `reasance/bottega-kit`.
-- The first publish uses the `NPM_TOKEN` secret, since npm configures a
-  trusted publisher only on a package that already exists. Moving to trusted
-  publishing, and dropping the token, is left for after 0.1.0.
+- **0.1.0 is published by hand**, from the owner's machine at the tag, with
+  npm's two-factor check: npm configures a trusted publisher only on a
+  package that already exists, and the owner chose that over a CI token
+  that bypasses two-factor. So 0.1.0 has no provenance statement; it cannot
+  gain one later. `publish-npm.yml` is disabled while the tag is pushed, so
+  the tag push does not run a publish that has no credential.
+- **`publish-npm.yml`** moves to trusted publishing for 0.1.1 onward:
+  `id-token: write`, no `NPM_TOKEN`, Node 22 with npm pinned to 11.6.2
+  (trusted publishing needs 11.5.1 or later), `npm publish --provenance
+  --access public`. It is re-enabled once the package's Trusted Publisher
+  names `reasance/bottega-kit` and `publish-npm.yml`. The first tag that
+  runs it is its first test.

@@ -51,9 +51,44 @@ What the run showed:
 - Nothing failed.
 
 Not run for 0.1.1: Codex (0.164.0 is installed; the last Codex run was
-0.163.0, in the 0.1.0 snapshot below), a proxied profile, and the
-`questions`, `needs-work`, `blocked` and `resume` paths, which the offline
-suites cover.
+0.163.0, in the 0.1.0 snapshot below), and the `questions`, `needs-work`,
+`blocked` and `resume` paths, which the offline suites cover.
+
+### Proxied profiles, 2026-10-23, after the 0.1.1 tag
+
+Two more tasks on a local throwaway copy of the same greeter repository,
+through an install of `main` in a scratch directory, Claude Code 2.1.309, the
+shipped prompts. Each ran one proxied `claude` profile, at effort `high`, as
+planner, implementer and reviewer, no judge, cap 2; the profiles are the ones
+in the README. Keys came from `secrets.env`.
+
+| seq | role | endpoint | reported model | duration | cost USD as Claude Code priced it | signal |
+|---|---|---|---|---|---|---|
+| 1 | planner | MiniMax | MiniMax-M3.1-Flash | 34 s | 0.132 | — (plan) |
+| 2 | implementer | MiniMax | MiniMax-M3.1-Flash | 26 s | 0.253 | — |
+| 3 | reviewer | MiniMax | MiniMax-M3.1-Flash | 46 s | 0.209 | ready |
+| 1 | planner | Moonshot | kimi-k3 | 51 s | 0.088 | — (plan) |
+| 2 | implementer | Moonshot | kimi-k3 | 104 s | 0.153 | — |
+| 3 | reviewer | Moonshot | kimi-k3 | 66 s | 0.102 | ready |
+
+- MiniMax, "add a `--times N` option": done in round 1, 11 tests passing.
+  Claude Code priced the three dispatches at 0.59 USD; their tokens (45,273
+  input, 224,633 cache reads, 10,231 output) cost 0.016 USD at MiniMax's
+  pay-as-you-go list price (0.15 input, 0.015 cache read, 0.60 output per
+  million), about 36 times less.
+- Kimi, "add a `--shout` flag": done in round 1, 4 tests passing. Claude
+  Code priced it at 0.34 USD; its tokens (1,372 input, 93,440 cache reads,
+  4,853 output) cost 0.105 USD at Moonshot's K3 price (3 input, 0.30 cache
+  hit, 15 output per million, as published copies of its price page give it;
+  the page itself renders its table in the browser), about a third.
+- Every receipt says `model_identity_source: provider-reported` with the
+  requested name and no other model, so no alias was needed and Claude
+  Code's own requests stayed on the endpoint. No permission denial, no
+  warning; the reviewer signalled with the absolute path both times.
+- `kimi-k3.1-pro`, released the same day, answered 404 on Moonshot's
+  Anthropic endpoint for this key; `GET https://api.moonshot.ai/v1/models`
+  listed `kimi-k2.6`, `kimi-k2.7-code`, `kimi-k2.7-code-highspeed` and
+  `kimi-k3`.
 
 ## The harness matrix
 
@@ -144,6 +179,8 @@ Still unverified after the live runs, this release's and 0.1.0's:
 - `bottega pr` with `--repo` on a GitHub Enterprise host (github.com is
   verified);
 - Codex CLI 0.164.0, in any role;
+- Kimi K3.1 Pro through Moonshot's Anthropic endpoint: not served to the
+  key used on 2026-10-23; `kimi-k3` is verified;
 - the credential stripping of a proxied profile against a set
   `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`: on the 20th nothing was
   set, so there was nothing to remove. The offline suite covers it with a

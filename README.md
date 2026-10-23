@@ -199,6 +199,29 @@ name stops the run as `identity-mismatch` (on 2026-10-20 Z.AI reported
 `glm-5.3-flash`, the requested name, so the alias went unused). To change one
 role for one task only, pass `--role implementer=sol-builder` to `bottega new`.
 
+MiniMax and Kimi run the same way, each through its own Anthropic-compatible
+endpoint. Both ran planner, implementer and reviewer live on 2026-10-23:
+
+```json
+"minimax": {"harness": "claude", "model": "MiniMax-M3.1-Flash", "effort": "high",
+            "env": {"ANTHROPIC_BASE_URL": "https://api.minimax.io/anthropic",
+                    "ANTHROPIC_AUTH_TOKEN": "${MINIMAX_API_KEY}",
+                    "ANTHROPIC_DEFAULT_OPUS_MODEL": "MiniMax-M3.1-Flash",
+                    "ANTHROPIC_DEFAULT_SONNET_MODEL": "MiniMax-M3.1-Flash",
+                    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "MiniMax-M3.1-Flash"}},
+"kimi":    {"harness": "claude", "model": "kimi-k3", "effort": "high",
+            "env": {"ANTHROPIC_BASE_URL": "https://api.moonshot.ai/anthropic",
+                    "ANTHROPIC_AUTH_TOKEN": "${KIMI_API_KEY}",
+                    "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k3",
+                    "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k3",
+                    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "kimi-k3"}}
+```
+
+The Kimi key is a Kimi Platform API key, not the login of the `kimi` CLI.
+Kimi K3.1 Pro is not on that API yet; when `GET /v1/models` lists it, change
+`model` and the three `ANTHROPIC_DEFAULT_*` values. See
+[docs/configuration.md](docs/configuration.md).
+
 ## The roles
 
 | role | what it does | what it may change | its product |

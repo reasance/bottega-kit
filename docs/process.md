@@ -13,6 +13,154 @@ bottega pr       commit if needed, push to origin, open the pull request
 bottega resume   after a stop, with a fresh cap
 ```
 
+## A task, end to end
+
+One task on a small repository at `~/code/export-tool`. The commands and
+what they print are the kit's own, run against its test fakes; the words of
+the plan, the findings and the verdict show the shape a model writes, not a
+recorded model. Durations are left out, and paths shortened.
+
+```
+$ bottega new --title "Add a dry-run flag" --request "Add --dry-run to the export command."
+task      20261023-1634-add-a-dry-run-flag
+task.md   ~/.local/share/bottega-kit/tasks/export-tool/20261023-1634-add-a-dry-run-flag/task.md
+worktree  ~/code/export-tool-worktrees/20261023-1634-add-a-dry-run-flag
+branch    bottega/20261023-1634-add-a-dry-run-flag (from main)
+next: edit task.md if you like, then: bottega plan 20261023-1634-add-a-dry-run-flag
+
+$ bottega plan dry-run-flag
+001 planner fable claude-fable-5-1 → questions
+
+1. Should `--dry-run` print the rows it would export, or only their count? Rows make the output as long as a real export; a count is one line but shows less.
+
+answer in ~/.local/share/bottega-kit/tasks/export-tool/20261023-1634-add-a-dry-run-flag/task.md, then run: bottega plan 20261023-1634-add-a-dry-run-flag
+```
+
+The question is now a `## Questions for you` section in `task.md`. Write the
+answer under it, in the file, and plan again:
+
+```markdown
+## Questions for you
+
+1. Should `--dry-run` print the rows it would export, or only their count? ...
+
+   A count. One line is enough.
+```
+
+```
+$ bottega plan dry-run-flag
+002 planner fable claude-fable-5-1 → planned
+
+$ bottega approve dry-run-flag
+approved 20261023-1634-add-a-dry-run-flag
+  planner     fable (claude, claude-fable-5-1, effort max)
+  implementer opus-builder (claude, claude-opus-5-5, effort high)
+  reviewer    opus-reviewer (claude, claude-opus-5-5, effort high)
+  judge       fable (claude, claude-fable-5-1, effort max)
+rounds    3
+plan      sha256 0c979d92811c
+to-do     3 item(s), T1..T3; 3 new id(s)
+next: bottega run 20261023-1634-add-a-dry-run-flag
+
+$ bottega run dry-run-flag
+003 implementer opus-builder claude-opus-5-5 → done
+004 reviewer opus-reviewer claude-opus-5-5 → needs-work
+005 implementer opus-builder claude-opus-5-5 → done
+006 reviewer opus-reviewer claude-opus-5-5 → ready
+007 judge fable claude-fable-5-1 → ready
+bottega run: done: the reviewer and the judge found it ready in round 2 of 3
+next: read the branch bottega/20261023-1634-add-a-dry-run-flag, then: bottega pr 20261023-1634-add-a-dry-run-flag
+```
+
+In round 1 the reviewer found the test incomplete, signalled `needs-work`
+and unticked `[T2]`; in round 2 the implementer finished it and the reviewer
+found it ready. `task.md` at the end, below `## Original Request`:
+
+```markdown
+## Overview
+
+Add `--dry-run` to `export`: it reads and validates the rows as usual, prints how
+many it would write and to which file, and writes nothing. Decided from your
+answer: a count, not the rows. Assumed: the exit code is the same as a real
+export's, so scripts can use `--dry-run` as a check.
+
+## Implementation Plan
+
+### Phase 1: the flag
+
+**Files to modify / create:**
+- `export.py` — parse `--dry-run`; skip the write when it is set and print
+  `would export N rows to PATH`.
+
+## Testing Strategy
+
+### Unit tests
+- `test_export.py` — `--dry-run` writes no file and prints the count.
+
+### Manual QA
+- **Tool:** the CLI, `python3 export.py`.
+- **Setup and safety:** a temporary directory as the output target; deleted afterwards.
+- **Scenario:** run `python3 export.py --dry-run --out $TMP/out.csv`.
+- **Expected evidence:** `would export 3 rows to $TMP/out.csv` on stdout, and no `out.csv`.
+
+## To-Do List
+
+### Implementation
+- [x] [T1] Parse `--dry-run` in `export.py` and skip the write
+
+### Testing
+- [x] [T2] Add `test_export.py` covering `--dry-run`
+- [x] [T3] Run the manual QA scenario
+
+## Project Docs Update
+
+Add `--dry-run` to the usage line in `README.md`.
+
+## Review Findings
+
+- [T1] Verified in `export.py`.
+- [T2] Verified: the test now asserts the file does not exist; `python3 -m unittest` passes, 4 tests.
+- [T3] Ran the scenario again: `would export 3 rows to /tmp/qa/out.csv`, no file.
+
+## Verdict
+
+Merge. The change is small, matches the plan, and the test covers the one
+behaviour that matters: nothing is written.
+```
+
+The answered question is gone: the planner records what it settled in the
+Overview. Read the changes in the worktree, then `bottega pr dry-run-flag`.
+
+A task that stops looks like this, with the reasons and the receipt on
+stderr:
+
+```
+$ bottega run failed-uploads
+002 implementer opus-builder claude-opus-5-5 → done
+003 reviewer opus-reviewer claude-opus-5-5 → blocked
+bottega run: stopped: blocked: no way to test retries without a fake upload server
+receipt: ~/.local/share/bottega-kit/tasks/export-tool/20261023-1635-retry-failed-uploads/runs/003-reviewer
+findings: ~/.local/share/bottega-kit/tasks/export-tool/20261023-1635-retry-failed-uploads/task.md
+resume with: bottega resume 20261023-1635-retry-failed-uploads [--rounds N] (restarts at the reviewer)
+
+$ bottega show failed-uploads
+...
+phase     stopped
+round     1 of 3
+next      reviewer
+signal    blocked by reviewer (run 003-reviewer): no way to test retries without a fake upload server
+stopped   blocked: no way to test retries without a fake upload server
+
+seq role        profile          status  reason                 signal     duration
+001 planner     fable            ok      -                      -          ...
+002 implementer opus-builder     ok      -                      -          ...
+003 reviewer    opus-reviewer    ok      -                      blocked    ...
+```
+
+From here: `resume`, or edit the plan, approve it again and `run`, or `pr`
+anyway, or `rm`. [Resume](#resume) and the README's "After `run`" say what
+each does.
+
 ## Phases
 
 `state.json` holds the task's phase:

@@ -4,6 +4,10 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-10-23
+
+Documentation only; the commands behave as in 0.1.0.
+
 **Documentation.** The README says why the roles are separate, what to do
 after `run` (read the worktree, `show`, `list`, the four ways on from a stop,
 `pr` on a stopped task, `rm`), what a task costs, and which starter `init`
@@ -12,6 +16,11 @@ through every command, including the `task.md` it ends with and a task that
 stops. The README and `docs/configuration.md` no longer say every harness
 must report its model: Codex reports none, and its receipts say
 `requested-only`.
+
+**Verification.** `docs/compatibility.md` has a new verified snapshot: one
+live task on 2026-10-23 with Claude Code 2.1.309 and the starter
+configuration, done in round 1, 2.07 USD, then `bottega pr` on GitHub. The
+0.1.0 snapshot is kept below it, marked as not re-run.
 
 ## [0.1.0] — 2026-10-23
 

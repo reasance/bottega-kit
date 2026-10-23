@@ -837,3 +837,32 @@ and in CI.
   --access public`. It is re-enabled once the package's Trusted Publisher
   names `reasance/bottega-kit` and `publish-npm.yml`. The first tag that
   runs it is its first test.
+
+## 2026-10-23 — 0.1.1: a live run on the starter configuration
+
+The owner asked to merge, tag and release the documentation pass of the same
+day as 0.1.1, and chose the live run with the starter configuration ("Run
+live con lo starter") over a cheaper one or none. One task, "add a
+`--times N` option", on a throwaway greeter repository pushed to a private
+`matteoscurati/bottega-probe`, through an install of `main` at the merge of
+the documentation pull request in the session scratchpad
+(`BOTTEGA_DATA_HOME`, `BOTTEGA_BIN_HOME`, `XDG_CONFIG_HOME` there,
+`GH_CONFIG_DIR` at the real `~/.config/gh`). Claude Code 2.1.309; Fable at
+max as planner and judge, Opus at high as implementer and reviewer, each
+profile with `timeout` 1800 and `max_budget_usd` 3.
+
+Four dispatches, done in round 1 of 3, 2.07 USD; `bottega pr` opened the
+pull request and a second `pr` printed `pr exists:`. Both models were
+reported by name, no permission denial, no warning. Nothing in
+`HARNESS_MATRIX` changes. Codex 0.164.0 is installed but was not run, and is
+now an open unknown in `docs/compatibility.md`.
+
+`docs/compatibility.md`: the "Verified snapshot" is this run. The 0.1.0
+snapshot is not dropped: it moves, unchanged, to a section of its own at
+the end, marked as not re-run, because its findings (the deny rules, the
+Codex event shapes, the fixes) are still the only record of them. Nothing
+from it is presented as verified for 0.1.1. The README's cost paragraph
+uses this run's numbers and dates the Sonnet range to 0.1.0.
+
+The 0.1.1 tag is the first one `publish-npm.yml` runs on: npm trusted
+publishing, with provenance.

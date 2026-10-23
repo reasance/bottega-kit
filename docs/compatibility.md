@@ -10,6 +10,167 @@ before tagging. Numbers are never carried forward from an earlier release.
 
 ## Verified snapshot
 
+**0.1.1, verified live on 2026-10-23** on macOS 26.5.1 (Darwin 25.5.0),
+python3 3.15.0, git 2.50.1, gh 2.103.0 and Claude Code 2.1.309, through an
+install of the release commit in a scratch directory. One task on a
+throwaway repository: a 21-line Python CLI with a two-test unittest suite,
+on a private GitHub repository created for the run. The configuration was
+the starter `bottega init` writes, with `timeout` 1800 and
+`max_budget_usd` 3 added to each profile; the shipped prompts, no override.
+
+| task | roles | dispatches | result |
+|---|---|---|---|
+| add a `--times N` option, N at least 1 | `fable` (`claude-fable-5-1`, max) as planner and judge, `opus-builder` and `opus-reviewer` (`claude-opus-5-5`, high) | 4 | done in round 1 of 3; then `bottega pr` |
+
+Per dispatch (duration, and cost as Claude Code reported it):
+
+| seq | role | harness | reported model | duration | cost USD | signal |
+|---|---|---|---|---|---|---|
+| 1 | planner | claude | claude-fable-5-1 | 160 s | 0.908 | — (plan) |
+| 2 | implementer | claude | claude-opus-5-5 | 34 s | 0.243 | — |
+| 3 | reviewer | claude | claude-opus-5-5 | 30 s | 0.235 | ready |
+| 4 | judge | claude | claude-fable-5-1 | 49 s | 0.686 | ready |
+
+Four dispatches, 2.07 USD, 4 min 33 s of dispatch time.
+
+What the run showed:
+
+- Every receipt says `model_identity_source: provider-reported`, and each
+  reported name is the requested one; the starter needs no alias.
+- The planner asked nothing: it listed eight decisions in the Overview "for
+  the reviewer to audit", and seven to-do items. The implementer changed
+  only the three files the plan named; the unit suite went from 2 to 8
+  tests. The reviewer ran the suite and all nine manual QA commands, and
+  one more of its own; the judge read the diff and signalled `ready`.
+- No permission denial in any `result` event, and no warning in any
+  `run.json`: no commit by the implementer, no new untracked file left by a
+  read-only role.
+- `bottega pr` committed the three files with the task title, pushed the
+  branch over ssh and opened the pull request; a second `pr` printed
+  `pr exists: <url>`.
+- Nothing failed.
+
+Not run for 0.1.1: Codex (0.164.0 is installed; the last Codex run was
+0.163.0, in the 0.1.0 snapshot below), a proxied profile, and the
+`questions`, `needs-work`, `blocked` and `resume` paths, which the offline
+suites cover.
+
+## The harness matrix
+
+Every flag lives in `HARNESS_MATRIX`, in `bin/lib/bottega/harness/__init__.py`.
+The `harness-matrix` suite pins each cell.
+
+### Common to both
+
+- The working directory is the task's worktree; the prompt goes on stdin.
+- The environment is yours plus the profile's `env` (see
+  [configuration.md](configuration.md) for proxied Claude profiles).
+- A profile `timeout` kills the harness's process group; the task stops with
+  `timeout`. After every run the process group is killed, so nothing the
+  agent started outlives the dispatch.
+
+### claude
+
+Base command:
+
+```
+claude -p --model <model> --effort <effort> --output-format stream-json --verbose
+  --permission-prompts none --setting-sources "" --strict-mcp-config
+  --mcp-config '{"mcpServers":{}}' --settings '{"disableAllHooks":true}'
+  --disable-slash-commands --no-session-persistence --add-dir <task dir>
+  [--max-budget-usd <n>]
+```
+
+| role | added flags |
+|---|---|
+| planner | `--permission-mode dontAsk --tools Read,Glob,Grep` |
+| implementer | `--permission-mode acceptEdits --tools Read,Edit,Write,Glob,Grep,Bash --allowedTools Bash --disallowedTools "Bash(git push *)" "Bash(gh *)"` |
+| reviewer | `--permission-mode dontAsk --tools Read,Glob,Grep,Bash --allowedTools Bash --disallowedTools "Bash(git push *)" "Bash(gh *)" "Bash(git commit *)"` |
+| judge | `--permission-mode dontAsk --tools Read,Glob,Grep,Bash --allowedTools "Bash(git diff *)" "Bash(git log *)" "Bash(git show *)" "Bash(<bottega> signal *)"` |
+
+`--fallback-model` and `--bare` are never used. Read from the `stream-json`
+events: the final message from the `result` event's `.result`; the model
+from the `system/init` event's `.model` and each assistant event's
+`.message.model`; usage, cost, duration and turns from the `result` event;
+`is_error: true` is a failed dispatch.
+
+The Claude reviewer has Bash so it can run tests. That it does not change
+code is enforced by the rails (HEAD and the tracked diff checked around the
+run), not by a sandbox. The deny rules were verified on 2026-10-19 (the 0.1.0 snapshot, below):
+they deny the bare command, the command with arguments, and a command joined
+with `&&` that contains it.
+
+### codex
+
+Base command:
+
+```
+codex exec -m <model> -c model_reasoning_effort="<effort>" -c approval_policy="never"
+  -c mcp_servers={} -c features.multi_agent=false --json -o <run dir>/output.md
+  --ephemeral --color never -C <worktree> -
+```
+
+| role | added flags |
+|---|---|
+| planner | `--sandbox read-only` |
+| implementer | `--sandbox workspace-write --add-dir <task dir>` |
+| reviewer | `--sandbox workspace-write --add-dir <task dir>` |
+| judge | `--sandbox workspace-write --add-dir <task dir>` |
+
+`--ignore-user-config` is never used, because your provider and login may
+live in `~/.codex/config.toml`. The final message is the `-o` file. The model
+comes from the top-level `model` or `response.model` of any event, or the
+model of a session or turn event; usage from the last `turn.completed`.
+
+The Codex reviewer and judge can write in the worktree, because tests write
+caches. The rails stop the task if tracked code changes. Codex has no deny
+rules: a commit fails because Codex keeps the git directory read-only, a push
+fails only while the sandbox blocks the network, and `gh` runs (see the 0.1.0 snapshot, below).
+
+### gh, for bottega pr
+
+```
+gh pr view <branch> --repo <host/owner/repo> --json url,state
+gh pr create --repo <host/owner/repo> --base <base> --head <branch> --title <title> --body-file <file>
+```
+
+`<host/owner/repo>` comes from `origin`'s configured URL. `pr` runs
+`git push -u origin <branch>` itself; `gh` never pushes.
+
+## Open unknowns
+
+Still unverified after the live runs, this release's and 0.1.0's:
+
+- `bottega pr` with `--repo` on a GitHub Enterprise host (github.com is
+  verified);
+- Codex CLI 0.164.0, in any role;
+- the credential stripping of a proxied profile against a set
+  `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`: on the 20th nothing was
+  set, so there was nothing to remove. The offline suite covers it with a
+  fake harness; the alias path stays offline too, since Z.AI reported the
+  requested name.
+
+## Reproduce the offline gates
+
+```sh
+ruff check bin tests && ruff format --check bin tests
+git ls-files '*.sh' 'bin/*' 'tests/fakes/*' | while read -r f; do
+  head -1 "$f" | grep -q '^#!.*\(bash\|sh\)' && printf '%s\n' "$f"
+done | xargs shellcheck -S warning
+bash tests/version-consistency.sh
+node --test tests/npm-installer.test.mjs
+./run-tests.sh
+```
+
+The release gate (`CLAUDE.md`, "Before tagging") is one live end-to-end run,
+`new`, `plan`, `approve`, `run`, `pr`, on a throwaway repository, run only
+when the owner authorizes it. Its results replace the snapshot above.
+
+## The 0.1.0 snapshot
+
+Kept as it was recorded for 0.1.0 and not re-run since: these numbers and
+findings are about Claude Code 2.1.302 to 2.1.304 and Codex CLI 0.163.0.
+
 **0.1.0, verified live on 2026-10-17, 2026-10-19 and 2026-10-20** on macOS
 (Darwin 25.5.0), python3 3.15.0, git 2.50.1, Codex CLI 0.163.0, gh 2.102.0,
 and Claude Code 2.1.302 on the 17th, 2.1.303 on the 19th, 2.1.304 on the
@@ -261,113 +422,3 @@ What the live runs settled:
 - For whoever repeats the probe: it overrides `XDG_CONFIG_HOME`, and gh keeps
   its login there, so `bottega pr` found gh logged out until `GH_CONFIG_DIR`
   pointed at the real `~/.config/gh`. A normal install overrides nothing.
-
-## The harness matrix
-
-Every flag lives in `HARNESS_MATRIX`, in `bin/lib/bottega/harness/__init__.py`.
-The `harness-matrix` suite pins each cell.
-
-### Common to both
-
-- The working directory is the task's worktree; the prompt goes on stdin.
-- The environment is yours plus the profile's `env` (see
-  [configuration.md](configuration.md) for proxied Claude profiles).
-- A profile `timeout` kills the harness's process group; the task stops with
-  `timeout`. After every run the process group is killed, so nothing the
-  agent started outlives the dispatch.
-
-### claude
-
-Base command:
-
-```
-claude -p --model <model> --effort <effort> --output-format stream-json --verbose
-  --permission-prompts none --setting-sources "" --strict-mcp-config
-  --mcp-config '{"mcpServers":{}}' --settings '{"disableAllHooks":true}'
-  --disable-slash-commands --no-session-persistence --add-dir <task dir>
-  [--max-budget-usd <n>]
-```
-
-| role | added flags |
-|---|---|
-| planner | `--permission-mode dontAsk --tools Read,Glob,Grep` |
-| implementer | `--permission-mode acceptEdits --tools Read,Edit,Write,Glob,Grep,Bash --allowedTools Bash --disallowedTools "Bash(git push *)" "Bash(gh *)"` |
-| reviewer | `--permission-mode dontAsk --tools Read,Glob,Grep,Bash --allowedTools Bash --disallowedTools "Bash(git push *)" "Bash(gh *)" "Bash(git commit *)"` |
-| judge | `--permission-mode dontAsk --tools Read,Glob,Grep,Bash --allowedTools "Bash(git diff *)" "Bash(git log *)" "Bash(git show *)" "Bash(<bottega> signal *)"` |
-
-`--fallback-model` and `--bare` are never used. Read from the `stream-json`
-events: the final message from the `result` event's `.result`; the model
-from the `system/init` event's `.model` and each assistant event's
-`.message.model`; usage, cost, duration and turns from the `result` event;
-`is_error: true` is a failed dispatch.
-
-The Claude reviewer has Bash so it can run tests. That it does not change
-code is enforced by the rails (HEAD and the tracked diff checked around the
-run), not by a sandbox. The deny rules were verified on 2026-10-19 (above):
-they deny the bare command, the command with arguments, and a command joined
-with `&&` that contains it.
-
-### codex
-
-Base command:
-
-```
-codex exec -m <model> -c model_reasoning_effort="<effort>" -c approval_policy="never"
-  -c mcp_servers={} -c features.multi_agent=false --json -o <run dir>/output.md
-  --ephemeral --color never -C <worktree> -
-```
-
-| role | added flags |
-|---|---|
-| planner | `--sandbox read-only` |
-| implementer | `--sandbox workspace-write --add-dir <task dir>` |
-| reviewer | `--sandbox workspace-write --add-dir <task dir>` |
-| judge | `--sandbox workspace-write --add-dir <task dir>` |
-
-`--ignore-user-config` is never used, because your provider and login may
-live in `~/.codex/config.toml`. The final message is the `-o` file. The model
-comes from the top-level `model` or `response.model` of any event, or the
-model of a session or turn event; usage from the last `turn.completed`.
-
-The Codex reviewer and judge can write in the worktree, because tests write
-caches. The rails stop the task if tracked code changes. Codex has no deny
-rules: a commit fails because Codex keeps the git directory read-only, a push
-fails only while the sandbox blocks the network, and `gh` runs (see above).
-
-### gh, for bottega pr
-
-```
-gh pr view <branch> --repo <host/owner/repo> --json url,state
-gh pr create --repo <host/owner/repo> --base <base> --head <branch> --title <title> --body-file <file>
-```
-
-`<host/owner/repo>` comes from `origin`'s configured URL. `pr` runs
-`git push -u origin <branch>` itself; `gh` never pushes.
-
-## Open unknowns
-
-Still unverified after the live runs above:
-
-- `bottega pr` with `--repo` on a GitHub Enterprise host (github.com is
-  verified);
-- the credential stripping of a proxied profile against a set
-  `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`: on the 20th nothing was
-  set, so there was nothing to remove. The offline suite covers it with a
-  fake harness; the alias path stays offline too, since Z.AI reported the
-  requested name.
-
-## Reproduce the offline gates
-
-```sh
-ruff check bin tests && ruff format --check bin tests
-git ls-files '*.sh' 'bin/*' 'tests/fakes/*' | while read -r f; do
-  head -1 "$f" | grep -q '^#!.*\(bash\|sh\)' && printf '%s\n' "$f"
-done | xargs shellcheck -S warning
-bash tests/version-consistency.sh
-node --test tests/npm-installer.test.mjs
-./run-tests.sh
-```
-
-The release gate (`CLAUDE.md`, "Before tagging") is one live end-to-end run,
-`new`, `plan`, `approve`, `run`, `pr`, on a throwaway repository, run only
-when the owner authorizes it. Its results replace the snapshot above.

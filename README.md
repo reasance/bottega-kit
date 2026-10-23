@@ -52,7 +52,7 @@ then `./doctor.sh`, and deletes the clone. `doctor` fails on a new machine
 until you run `bottega init`. Or from a clone:
 
 ```sh
-git clone https://github.com/matteoscurati/bottega-kit
+git clone https://github.com/reasance/bottega-kit
 cd bottega-kit
 ./install.sh
 ```

@@ -13,13 +13,13 @@
     "name": "Matteo Scurati",
     "url": "https://github.com/matteoscurati"
   },
-  "homepage": "https://github.com/matteoscurati/bottega-kit#readme",
+  "homepage": "https://github.com/reasance/bottega-kit#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/matteoscurati/bottega-kit.git"
+    "url": "git+https://github.com/reasance/bottega-kit.git"
   },
   "bugs": {
-    "url": "https://github.com/matteoscurati/bottega-kit/issues"
+    "url": "https://github.com/reasance/bottega-kit/issues"
   },
   "license": "MIT",
   "type": "module",

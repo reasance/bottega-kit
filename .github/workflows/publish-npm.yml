@@ -18,6 +18,9 @@ on:
 
 permissions:
   contents: read
+  # npm provenance: the runner's OIDC identity signs where the package was
+  # built. It needs package.json's repository to name this repository.
+  id-token: write
 
 concurrency:
   group: npm-${{ github.ref }}
@@ -69,6 +72,6 @@ jobs:
           fi
 
       - name: Publish
-        run: npm publish
+        run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

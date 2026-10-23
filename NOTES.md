@@ -812,3 +812,24 @@ there. `package.json` (`repository`, `homepage`, `bugs`), the npm wrapper's
 stays the owner's profile. The earlier entries that name
 `matteoscurati/bottega-kit` are left as written. No version is on npm yet,
 so no published wrapper clones the old URL.
+
+## 2026-10-23 — 0.1.0 tagged without a fresh live run
+
+The owner asked to tag and publish 0.1.0 now. `CLAUDE.md` asks for a live
+end-to-end run before tagging; this release carries the "Verified snapshot"
+of 2026-10-17, 19 and 20 forward instead, by the owner's decision. What
+changed since that run: the housekeeping of 2026-10-21 (ruff configuration,
+`loop.stop()` checking its reason, `install.sh` copying `prompts/`
+unconditionally, comments) and the repository URL. All gates pass locally
+and in CI.
+
+- **CHANGELOG** 0.1.0 is dated 2026-10-23, the day of the tag, as the entry
+  of 2026-10-17 said it would be.
+- **`publish-npm.yml`** publishes with `--provenance --access public` and
+  grants `id-token: write`, so the package carries an npm provenance
+  statement from its first version; provenance cannot be added to a version
+  after it is published. It relies on `package.json`'s `repository` naming
+  `reasance/bottega-kit`.
+- The first publish uses the `NPM_TOKEN` secret, since npm configures a
+  trusted publisher only on a package that already exists. Moving to trusted
+  publishing, and dropping the token, is left for after 0.1.0.

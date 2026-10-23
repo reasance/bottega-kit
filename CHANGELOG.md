@@ -4,6 +4,15 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
+**Documentation.** The README says why the roles are separate, what to do
+after `run` (read the worktree, `show`, `list`, the four ways on from a stop,
+`pr` on a stopped task, `rm`), what a task costs, and which starter `init`
+writes for each set of CLIs. `docs/process.md` opens with one task followed
+through every command, including the `task.md` it ends with and a task that
+stops. The README and `docs/configuration.md` no longer say every harness
+must report its model: Codex reports none, and its receipts say
+`requested-only`.
+
 ## [0.1.0] — 2026-10-23
 
 The first release. A planner, an implementer, a reviewer and an optional judge

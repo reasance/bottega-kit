@@ -10,7 +10,11 @@ alone can read it.
 
 `${XDG_CONFIG_HOME:-~/.config}/bottega-kit/config.json`. `bottega init` writes
 a starter for the harnesses it finds on PATH and refuses to overwrite an
-existing file without `--force`. `bottega doctor` validates it.
+existing file without `--force`. `bottega doctor` validates it. Below is the
+starter with both `claude` and `codex` on PATH; with `claude` alone it has
+no `sol-builder`; with `codex` alone it has only `sol-builder`, bound as
+planner, implementer and reviewer, and no judge. With neither, it is the
+`claude` one.
 
 ```json
 {
@@ -56,7 +60,9 @@ Any other key is an error.
 the requested `model` or one of `aliases`. Anything else stops the task with
 `identity-mismatch`. For Claude Code the check uses the session's model and
 each turn's model; helper models it lists in its usage are recorded and not
-checked.
+checked. Codex reports no model, so nothing is checked: its receipts say
+`model_identity_source: requested-only`, and `aliases` has no effect on a
+`codex` profile.
 
 **Environment references.** `"ANTHROPIC_AUTH_TOKEN": "${ZAI_API_KEY}"` is
 expanded when the harness starts, from your environment or, for a name your

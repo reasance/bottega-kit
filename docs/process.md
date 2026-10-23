@@ -311,7 +311,9 @@ test caches, are recorded and reported as a warning. The implementer is the
 only role that edits the worktree; it should not commit, and a commit is a
 warning in its receipt. On Claude Code, `git push` and `gh` are denied to
 the implementer and the reviewer, and `git commit` to the reviewer; on Codex
-the sandbox makes a commit in the worktree fail and blocks the network. See
+the sandbox makes a commit in the worktree fail and blocks the network; on
+Kimi Code each role's agent file lists its tools, and the environment makes
+a push to origin and `gh` fail. See
 [compatibility.md](compatibility.md) for what each of those was seen to do.
 
 Each harness is also started with the narrowest permissions it offers for the

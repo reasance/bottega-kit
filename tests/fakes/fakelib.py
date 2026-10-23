@@ -243,6 +243,75 @@ def claude_main(argv):
     return 0
 
 
+def kimi_main(argv):
+    """`kimi -p <prompt>`, in the shapes Kimi Code 2.3.1 printed on 2026-10-23:
+    stream-json messages on stdout, and a session log with the requested
+    model, the effort and the tokens under $KIMI_CODE_HOME/sessions."""
+    if "--version" in argv or "-V" in argv:
+        print("2.3.1")
+        return 0
+    prompt = option(argv, "-p", "--prompt")
+    if not prompt:
+        sys.stderr.write("Error: Prompt cannot be empty.\n")
+        return 1
+    scenario = load_scenario()
+    log = log_path(scenario)
+    number, step = next_call(scenario, log)
+    cwd = Path.cwd()
+    record(log, "kimi", argv, cwd, "", number)
+    act(step, cwd, option(argv, "--add-dir"), scenario)
+    final = None if step.get("no_final") else step.get("final", "fake final message")
+    session = "session_fake-%d" % number
+    sys.stdout.write(step.get("raw", ""))
+    emit({"role": "meta", "type": "system.version", "version": "2.3.1"})
+    for event in step.get("events") or []:
+        emit(event)
+    if final is not None:
+        emit({"role": "assistant", "content": final})
+    emit(
+        {
+            "role": "meta",
+            "type": "session.resume_hint",
+            "session_id": session,
+            "command": "kimi -r " + session,
+        }
+    )
+    home = Path(os.environ.get("KIMI_CODE_HOME") or Path.home() / ".kimi-code")
+    wire = home / "sessions" / "wd_fake" / session / "agents" / "main" / "wire.jsonl"
+    wire.parent.mkdir(parents=True, exist_ok=True)
+    alias = option(argv, "-m", "--model") or "fake-model"
+    lines = [
+        {
+            "type": "llm.request",
+            "agentId": "main",
+            "model": alias.split("/")[-1],
+            "modelAlias": alias,
+            "thinkingEffort": os.environ.get("KIMI_MODEL_THINKING_EFFORT"),
+        },
+        {
+            "type": "usage.record",
+            "agentId": "main",
+            "model": alias,
+            "usage": {
+                "inputOther": 300,
+                "output": 60,
+                "inputCacheRead": 1200,
+                "inputCacheCreation": 0,
+            },
+        },
+        {
+            "type": "turn.ended",
+            "agentId": "main",
+            "reason": "completed",
+            "durationMs": 7,
+        },
+    ]
+    if not step.get("no_session_log"):
+        wire.write_text("".join(json.dumps(line) + "\n" for line in lines))
+    finish(step)
+    return 0
+
+
 def codex_main(argv):
     if "--version" in argv:
         print("codex-cli 0.163.0")

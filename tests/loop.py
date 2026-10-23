@@ -385,6 +385,19 @@ class Transitions(LoopFixture, unittest.TestCase):
         self.assertEqual(self.state()["phase"], "done")
         self.assertEqual(self.lines[0].group(4), "gpt-5.6-sol")
 
+    def test_kimi_implementer_and_reviewer(self):
+        self.approved("--role", "implementer=kimi", "--role", "reviewer=kimi")
+        self.run_(implement(), review("ready"), judge("ready"))
+        self.assertEqual(
+            [(c["tool"], m.group(3)) for c, m in zip(self.calls, self.lines)],
+            [("kimi", "kimi"), ("kimi", "kimi"), ("claude", "fable")],
+        )
+        self.assertEqual(self.state()["phase"], "done")
+        self.assertEqual(self.lines[0].group(4), "kimi-code/k3.1-pro")
+        reviewer = self.run_json(3, "reviewer")
+        self.assertEqual(reviewer["signal"]["status"], "ready")
+        self.assertEqual(reviewer["model_identity_source"], "requested-only")
+
 
 class Merging(LoopFixture, unittest.TestCase):
     def test_findings_cannot_add_or_end_a_section(self):

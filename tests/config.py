@@ -64,9 +64,9 @@ class Validation(unittest.TestCase):
 
     def test_harness_must_be_registered(self):
         value = with_changes(
-            lambda c: c["profiles"]["opus-builder"].update(harness="kimi")
+            lambda c: c["profiles"]["opus-builder"].update(harness="gemini")
         )
-        self.assertProblem(value, "harness must be one of claude, codex")
+        self.assertProblem(value, "harness must be one of claude, codex, kimi")
 
     def test_model_must_be_non_empty(self):
         value = with_changes(lambda c: c["profiles"]["opus-builder"].update(model=" "))
@@ -83,6 +83,11 @@ class Validation(unittest.TestCase):
             ("codex", "xhigh", True),
             ("codex", "max", True),
             ("codex", "extreme", False),
+            ("kimi", "low", True),
+            ("kimi", "high", True),
+            ("kimi", "max", True),
+            ("kimi", "medium", False),
+            ("kimi", "xhigh", False),
         ]:
             value = with_changes(
                 lambda c, h=harness, e=effort: c["profiles"]["opus-builder"].update(
@@ -273,6 +278,16 @@ class Starter(unittest.TestCase):
         self.assertEqual(both["roles"], config.CLAUDE_ROLES)
         self.assertIn("sol-builder", both["profiles"])
         self.assertEqual(config.starter([])["roles"], config.CLAUDE_ROLES)
+
+    def test_kimi_only_and_with_others(self):
+        value = config.starter(["kimi"])
+        self.assertEqual(set(value["profiles"]), {"kimi"})
+        self.assertEqual(value["roles"], config.KIMI_ROLES)
+        self.assertEqual(value["profiles"]["kimi"]["model"], "kimi-code/k3.1-pro")
+        every = config.starter(["claude", "codex", "kimi"])
+        self.assertEqual(every["roles"], config.CLAUDE_ROLES)
+        self.assertLessEqual({"sol-builder", "kimi"}, set(every["profiles"]))
+        self.assertEqual(config.starter(["codex", "kimi"])["roles"], config.CODEX_ROLES)
 
 
 class RoleOverride(unittest.TestCase):

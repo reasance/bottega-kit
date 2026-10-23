@@ -223,7 +223,7 @@ def _dispatch(st, seq, role, profile_name, profile, harness, invocation, name, r
         "identity_models": parsed.identity_models,
         "observed_models": parsed.models,
         "effort": profile["effort"],
-        "argv": invocation.argv,
+        "argv": invocation.recorded_argv,
         "env": {"set": invocation.env_set, "removed": invocation.env_removed},
         "cwd": invocation.cwd,
         "started": started,

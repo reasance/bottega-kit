@@ -24,9 +24,11 @@ DEFAULT_ROUNDS = 3
 HARNESS_EFFORTS = {
     "claude": ("low", "medium", "high", "xhigh", "max"),
     "codex": ("none", "minimal", "low", "medium", "high", "xhigh", "max"),
+    # The levels Kimi Code declares for its K3 models (`support_efforts`).
+    "kimi": ("low", "high", "max"),
 }
 # The executable each harness drives.
-HARNESS_BINARIES = {"claude": "claude", "codex": "codex"}
+HARNESS_BINARIES = {"claude": "claude", "codex": "codex", "kimi": "kimi"}
 
 REQUIRED_ROLES = ("planner", "implementer", "reviewer")
 OPTIONAL_ROLES = ("judge",)
@@ -312,18 +314,31 @@ CODEX_ROLES = {
     "implementer": "sol-builder",
     "reviewer": "sol-builder",
 }
+# A model alias of Kimi Code's own config.toml, provisioned by `kimi login`.
+KIMI_PROFILES = {
+    "kimi": {"harness": "kimi", "model": "kimi-code/k3.1-pro", "effort": "high"},
+}
+KIMI_ROLES = {
+    "planner": "kimi",
+    "implementer": "kimi",
+    "reviewer": "kimi",
+}
 
 
 def starter(harnesses):
     """A starter configuration for the harnesses found on PATH."""
     profiles, roles = {}, {}
-    if "claude" in harnesses or "codex" not in harnesses:
+    if "claude" in harnesses or not {"codex", "kimi"} & set(harnesses):
         profiles.update(CLAUDE_PROFILES)
         roles.update(CLAUDE_ROLES)
     if "codex" in harnesses:
         profiles.update(CODEX_PROFILES)
         if not roles:
             roles.update(CODEX_ROLES)
+    if "kimi" in harnesses:
+        profiles.update(KIMI_PROFILES)
+        if not roles:
+            roles.update(KIMI_ROLES)
     return validate(
         {
             "schema_version": SCHEMA_VERSION,

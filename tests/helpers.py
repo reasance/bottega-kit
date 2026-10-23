@@ -183,6 +183,7 @@ CANONICAL = {
             "effort": "high",
         },
         "sol-builder": {"harness": "codex", "model": "gpt-5.6-sol", "effort": "high"},
+        "kimi": {"harness": "kimi", "model": "kimi-code/k3.1-pro", "effort": "high"},
         "glm-reviewer": {
             "harness": "claude",
             "model": "glm-5.3-flash",

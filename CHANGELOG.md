@@ -9,6 +9,18 @@ profiles: README examples, a table of the Anthropic-compatible endpoints
 that have run live in `docs/configuration.md`, and the two live runs of
 2026-10-23 in `docs/compatibility.md`. No code changes.
 
+**A third harness: Kimi Code.** `"harness": "kimi"` runs a role with
+`kimi -p` on your own Kimi Code login, for instance
+`kimi-code/k3.1-pro`; effort `low`, `high` or `max`. Each dispatch writes an
+agent file whose `tools:` list is the role's tool set, replaces your skills
+with an empty directory, sets the effort through
+`KIMI_MODEL_THINKING_EFFORT`, and makes `git push` to origin and `gh` fail
+through the environment, since Kimi Code has no deny rule for a shell
+command. Kimi Code reports no model, so its receipts say `requested-only`;
+they record the requested model, the effort and the tokens from Kimi Code's
+session log. `bottega init` adds a `kimi` profile when it finds `kimi`.
+Verified live on 2026-10-23 with Kimi Code 2.3.1 and K3.1 Pro in every role.
+
 ## [0.1.1] — 2026-10-23
 
 Documentation only; the commands behave as in 0.1.0.

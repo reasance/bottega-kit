@@ -3,7 +3,7 @@
 ## What this is
 
 A local CLI that runs a planner, an implementer, a reviewer and an optional
-judge on coding-agent CLIs (`claude`, `codex`) in a git worktree. It is an
+judge on coding-agent CLIs (`claude`, `codex`, `kimi`) in a git worktree. It is an
 independent product: it does not import from or call delegation-kit at
 runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
 
@@ -17,7 +17,7 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
   `state` (state.json, the lock, task lookup), `worktree` (create, remove,
   rail hashing), `prompts`
   (the strict `{{var}}` engine and overrides), `harness/` (`HARNESS_MATRIX`,
-  the registry, `claude.py` and `codex.py` drivers and parsers), `receipts`
+  the registry, `claude.py`, `codex.py` and `kimi.py` drivers and parsers), `receipts`
   (run directories, `run.json`, `error.json`), `dispatch` (one role dispatch
   end to end), `loop` (the transition table `run` and `resume` drive), `cli`
   (argparse), `commands/` (one module per subcommand; `pr` drives git and gh,
@@ -26,7 +26,7 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
 - `templates/task.md` — the task document template.
 - `tests/<suite>.sh` runs `tests/<suite>.py` (unittest) in an isolated
   HOME/XDG/PATH set up by `tests/lib/sandbox.sh`. `tests/helpers.py` holds the
-  shared fixtures. `tests/fakes/{claude,codex}` stand in for the real CLIs;
+  shared fixtures. `tests/fakes/{claude,codex,kimi}` stand in for the real CLIs;
   `tests/fake-gh/gh` stands in for gh and is put on PATH only by the `pr`
   suite. `tests/version-consistency.sh` and `tests/version-tag.sh` are suites
   of their own.
@@ -37,8 +37,8 @@ runtime. The work plan and its closed decisions are recorded in `NOTES.md`.
 - Shell only for `install.sh`, `uninstall.sh`, `doctor.sh`, `run-tests.sh` and
   the `tests/*.sh` runners.
 - `ruff.toml` — `target-version` py39 (the floor the README states) and
-  `extend-include` for the four Python executables without a `.py` suffix
-  (`bin/bottega`, the two fakes, the fake gh), so `ruff check bin tests`
+  `extend-include` for the five Python executables without a `.py` suffix
+  (`bin/bottega`, the three fakes, the fake gh), so `ruff check bin tests`
   covers them.
 
 ## The showcase site

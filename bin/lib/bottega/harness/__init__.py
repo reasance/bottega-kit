@@ -35,7 +35,12 @@ def bash_rule(prefix):
 
 # Placeholders filled per dispatch. Only these names are substituted, so a
 # JSON argument such as '{"mcpServers":{}}' is left alone.
-PLACEHOLDER = re.compile(r"\{(model|effort|task_dir|run_dir|worktree|bottega)\}")
+PLACEHOLDER = re.compile(r"\{(model|effort|task_dir|run_dir|worktree|bottega|prompt)\}")
+
+# Kimi Code: the tools each role's agent file allows (`tools:`), enforced by
+# the CLI before every tool call. Everything else, Agent and the web tools
+# included, is unavailable to the role.
+KIMI_READ_TOOLS = ("Read", "Glob", "Grep")
 
 HARNESS_MATRIX = {
     "claude": {
@@ -140,6 +145,46 @@ HARNESS_MATRIX = {
         # The prompt comes on stdin.
         "tail": ("-",),
     },
+    "kimi": {
+        "binary": "kimi",
+        # `kimi -p` takes the prompt as an argument, not on stdin, and runs
+        # under the `auto` permission policy: every tool the agent file allows
+        # runs without asking.
+        "base": (
+            "-p",
+            "{prompt}",
+            "--output-format",
+            "stream-json",
+            "-m",
+            "{model}",
+            "--agent-file",
+            "{run_dir}/kimi-agent.md",
+            "--skills-dir",
+            "{run_dir}/kimi-skills",
+            "--add-dir",
+            "{task_dir}",
+        ),
+        "budget": None,
+        "roles": {"planner": (), "implementer": (), "reviewer": (), "judge": ()},
+        "tail": (),
+        "tools": {
+            "planner": KIMI_READ_TOOLS,
+            "implementer": KIMI_READ_TOOLS + ("Edit", "Write", "Bash"),
+            "reviewer": KIMI_READ_TOOLS + ("Bash",),
+            "judge": KIMI_READ_TOOLS + ("Bash",),
+        },
+        # Kimi Code has no command-line deny rule for a shell command, so the
+        # environment does what Claude Code's `Bash(git push *)` and
+        # `Bash(gh *)` rules do: origin's push URL is unusable, and gh gets a
+        # token GitHub refuses. GIT_CONFIG_* is appended to any the user has.
+        "env": {
+            "KIMI_MODEL_THINKING_EFFORT": "{effort}",
+            "KIMI_CODE_NO_AUTO_UPDATE": "1",
+            "KIMI_CODE_BUILTIN_PRODUCT_SKILLS": "0",
+            "GH_TOKEN": "bottega-kimi-gh-disabled",
+        },
+        "git_config": {"remote.origin.pushurl": "bottega-push-disabled://"},
+    },
 }
 
 # Credentials that must never reach a third-party endpoint (plan §4.4).
@@ -164,9 +209,21 @@ PROXY_STRIPPED = ANTHROPIC_CREDENTIALS + (
 class Invocation:
     """What to spawn: argv, environment, stdin, cwd. `env_set` and
     `env_removed` are variable names only, for the receipt; `cleanup` lists
-    temporary directories to delete after the run."""
+    temporary directories to delete after the run. `recorded_argv` is the argv
+    the receipt keeps, when it differs from the one spawned (a prompt passed
+    as an argument is already in prompt.md)."""
 
-    def __init__(self, argv, env, stdin, cwd, env_set=(), env_removed=(), cleanup=()):
+    def __init__(
+        self,
+        argv,
+        env,
+        stdin,
+        cwd,
+        env_set=(),
+        env_removed=(),
+        cleanup=(),
+        recorded_argv=None,
+    ):
         self.argv = list(argv)
         self.env = dict(env)
         self.stdin = stdin
@@ -174,6 +231,7 @@ class Invocation:
         self.env_set = sorted(env_set)
         self.env_removed = sorted(env_removed)
         self.cleanup = list(cleanup)
+        self.recorded_argv = list(recorded_argv or argv)
 
 
 class Parsed:
@@ -211,9 +269,14 @@ class Parsed:
 
 
 def fill(args, values):
-    """Substitute the known placeholders in each argument."""
+    """Substitute the known placeholders in each argument. A placeholder with
+    no value is left as it is, so the matrix can be rendered for display
+    without a prompt."""
     return [
-        PLACEHOLDER.sub(lambda match: str(values[match.group(1)]), arg) for arg in args
+        PLACEHOLDER.sub(
+            lambda match: str(values.get(match.group(1), match.group(0))), arg
+        )
+        for arg in args
     ]
 
 
@@ -315,9 +378,13 @@ class Harness:
 
 def get(name):
     """The registered harness called `name`."""
-    from . import claude, codex
+    from . import claude, codex, kimi
 
-    registry = {"claude": claude.ClaudeHarness, "codex": codex.CodexHarness}
+    registry = {
+        "claude": claude.ClaudeHarness,
+        "codex": codex.CodexHarness,
+        "kimi": kimi.KimiHarness,
+    }
     if name not in registry:
         raise config.ConfigError(
             "unknown harness %r (harnesses: %s)" % (name, ", ".join(sorted(registry)))

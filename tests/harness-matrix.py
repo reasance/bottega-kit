@@ -108,8 +108,116 @@ KIMI_ENV = {
     "KIMI_CODE_BUILTIN_PRODUCT_SKILLS": "0",
     "GH_TOKEN": "bottega-kimi-gh-disabled",
 }
+# Grok Build 1.0.62 (2026-10-24): Claude Code's permission flags with Grok's
+# tool ids; the prompt is read from the run directory.
+GROK_BASE = [
+    ("--prompt-file", "{run_dir}/prompt.md"),
+    ("--output-format", "streaming-messages-json"),
+    ("-m", "{model}"),
+    ("--reasoning-effort", "{effort}"),
+    ("--no-subagents",),
+    ("--disable-web-search",),
+    ("--no-auto-update",),
+    ("--deny", "MCPTool"),
+]
+GROK_ROLES = {
+    "planner": [
+        ("--permission-mode", "dontAsk"),
+        ("--tools", "read_file,grep,list_dir"),
+    ],
+    "implementer": [
+        ("--permission-mode", "acceptEdits"),
+        ("--tools", "read_file,grep,list_dir,search_replace,write,run_terminal_cmd"),
+        ("--allow", "Bash"),
+        ("--allow", "Edit({task_dir}/**)"),
+        ("--deny", "Bash(git push *)"),
+        ("--deny", "Bash(gh *)"),
+    ],
+    "reviewer": [
+        ("--permission-mode", "dontAsk"),
+        ("--tools", "read_file,grep,list_dir,run_terminal_cmd"),
+        ("--allow", "Bash"),
+        ("--deny", "Bash(git push *)"),
+        ("--deny", "Bash(gh *)"),
+        ("--deny", "Bash(git commit *)"),
+    ],
+    "judge": [
+        ("--permission-mode", "dontAsk"),
+        ("--tools", "read_file,grep,list_dir,run_terminal_cmd"),
+        ("--allow", "Bash(git diff *)"),
+        ("--allow", "Bash(git log *)"),
+        ("--allow", "Bash(git show *)"),
+        ("--allow", "Bash(%s signal *)" % BOTTEGA),
+    ],
+}
+GROK_ENV = {
+    **{
+        "GROK_%s_%s_ENABLED" % (source, kind): "0"
+        for source in ("CLAUDE", "CURSOR")
+        for kind in ("AGENTS", "HOOKS", "MCPS", "RULES", "SKILLS")
+    },
+    "GROK_DISABLE_AUTOUPDATER": "1",
+    "GH_TOKEN": "bottega-gh-disabled",
+}
+# Gemini CLI 0.65.0: the prompt on stdin; each role's tools are the admin
+# policy the dispatch writes.
+GEMINI_BASE = [
+    ("--output-format", "stream-json"),
+    ("-m", "{model}"),
+    ("--skip-trust",),
+    ("--approval-mode", "default"),
+    ("--admin-policy", "{run_dir}/gemini-policy.toml"),
+    ("--allowed-mcp-server-names", "bottega-none"),
+    ("--include-directories", "{task_dir}"),
+]
+GEMINI_ROLES = {role: [] for role in ("planner", "implementer", "reviewer", "judge")}
+GEMINI_READ = ["read_file", "read_many_files", "list_directory", "glob", "grep_search"]
+GEMINI_POLICY = {
+    "planner": {"allow": GEMINI_READ},
+    "implementer": {
+        "allow": GEMINI_READ + ["replace", "write_file", "run_shell_command"],
+        "shell_deny": ["git push", "gh "],
+    },
+    "reviewer": {
+        "allow": GEMINI_READ + ["run_shell_command"],
+        "shell_deny": ["git push", "gh ", "git commit"],
+    },
+    "judge": {
+        "allow": GEMINI_READ,
+        "shell_allow": ["git diff", "git log", "git show", "%s signal" % BOTTEGA],
+    },
+}
+# Muse Code 1.4.12: `muse exec`; the prompt is read from the run directory.
+MUSE_BASE = [
+    ("exec",),
+    ("--json",),
+    ("--prompt-file", "{run_dir}/prompt.md"),
+    ("--model", "{model}"),
+    ("--reasoning-effort", "{effort}"),
+    ("--contributor-mode", "off"),
+    ("--workspace", "{worktree}"),
+    ("--no-session-log",),
+    ("--no-foreign-personal-context",),
+    ("--disable-web-tools",),
+    ("--disable-reminders",),
+    ("--disable-request-user-input",),
+    ("--approval-mode", "never"),
+    ("--approval-judge", "off"),
+]
+MUSE_ROLES = {
+    "planner": [("--disable-write",), ("--disable-shell",)],
+    "implementer": [],
+    "reviewer": [("--disable-write",)],
+    "judge": [("--disable-write",)],
+}
 NEVER = ("--fallback-model", "--bare", "--ignore-user-config", "--tools=")
 NEVER_KIMI = ("--yolo", "-y", "--auto", "--plan", "--session", "--continue")
+NEVER_GROK = ("--yolo", "--always-approve", "-p", "--single", "--sandbox")
+NEVER_GEMINI = ("--yolo", "-y", "-p", "--prompt", "--sandbox", "-s")
+NEVER_MUSE = ("--yolo", "--disable-approval", "--trust-workspace", "--provider")
+# The harnesses that read the prompt from the run directory's prompt.md.
+PROMPT_FILE = ("grok", "muse")
+PUSH_GUARD = {"GIT_CONFIG_COUNT", "GIT_CONFIG_KEY_0", "GIT_CONFIG_VALUE_0"}
 
 
 def contains_run(argv, cells):
@@ -142,6 +250,21 @@ class Fixture:
         cfg["profiles"]["kimi"] = {
             "harness": "kimi",
             "model": "kimi-code/k3.1-pro",
+            "effort": "high",
+        }
+        cfg["profiles"]["grok"] = {
+            "harness": "grok",
+            "model": "grok-4.7",
+            "effort": "xhigh",
+        }
+        cfg["profiles"]["gemini"] = {
+            "harness": "gemini",
+            "model": "gemini-3.8-flash",
+            "effort": "default",
+        }
+        cfg["profiles"]["muse"] = {
+            "harness": "muse",
+            "model": "muse-wonder-1.0",
             "effort": "high",
         }
         self.cfg = cfg
@@ -234,6 +357,9 @@ class Matrix(Fixture, unittest.TestCase):
                     self.assertEqual(argv[argv.index("-p") + 1], prompt)
                     self.assertEqual(entry["stdin"], "")
                     recorded[recorded.index(prompt)] = "<prompt.md>"
+                elif harness_name in PROMPT_FILE:
+                    self.assertEqual(entry["stdin"], "")
+                    self.assertNotIn(prompt, argv)
                 else:
                     self.assertEqual(entry["stdin"], prompt)
                 worktree = self.box.state(self.task)["worktree"]
@@ -276,6 +402,74 @@ class Matrix(Fixture, unittest.TestCase):
             self.assertEqual(list(skills.iterdir()), [])
             for banned in NEVER_KIMI:
                 self.assertNotIn(banned, argv)
+
+    def test_grok_every_cell_every_role(self):
+        for role, argv in self.check("grok", "grok", GROK_BASE, GROK_ROLES):
+            for banned in NEVER_GROK:
+                self.assertNotIn(banned, argv)
+            if role != "implementer":
+                self.assertNotIn("search_replace", " ".join(argv))
+
+    def test_gemini_every_cell_every_role(self):
+        for role, argv in self.check("gemini", "gemini", GEMINI_BASE, GEMINI_ROLES):
+            for banned in NEVER_GEMINI:
+                self.assertNotIn(banned, argv)
+            run_dir = Path(argv[argv.index("--admin-policy") + 1]).parent
+            rules = gemini_rules(run_dir / "gemini-policy.toml")
+            want = GEMINI_POLICY[role]
+            # Everything denied, then the role's tools, then its shell rules.
+            self.assertEqual(rules[0], {"toolName": "*", "decision": "deny", "p": 1})
+            self.assertEqual(
+                rules[1], {"toolName": want["allow"], "decision": "allow", "p": 500}
+            )
+            shell = [r for r in rules[2:] if r.get("toolName") == "run_shell_command"]
+            self.assertEqual(
+                [(r["commandPrefix"], r["decision"]) for r in shell],
+                [(want[k], k[6:]) for k in ("shell_allow", "shell_deny") if k in want],
+            )
+            for rule in shell:
+                self.assertEqual(rule["p"], 900 if rule["decision"] == "deny" else 500)
+
+    def test_muse_every_cell_every_role(self):
+        for role, argv in self.check("muse", "muse", MUSE_BASE, MUSE_ROLES):
+            self.assertEqual(argv[0], "exec")
+            for banned in NEVER_MUSE:
+                self.assertNotIn(banned, argv)
+
+    def test_grok_gemini_muse_environment(self):
+        for name, extra in (
+            ("grok", GROK_ENV),
+            ("gemini", {"GH_TOKEN": "bottega-gh-disabled"}),
+            ("muse", {"MUSE_NO_AUTO_UPDATE": "1", "GH_TOKEN": "bottega-gh-disabled"}),
+        ):
+            with self.subTest(harness=name):
+                self.assertEqual(harness.HARNESS_MATRIX[name]["env"], extra)
+                self.assertEqual(
+                    harness.HARNESS_MATRIX[name]["git_config"],
+                    {"remote.origin.pushurl": "bottega-push-disabled://"},
+                )
+                outcome, entry = self.dispatch("implementer", name)
+                self.assertTrue(outcome.ok, outcome.record)
+                names = set(outcome.record["env"]["set"])
+                self.assertEqual(names, set(extra) | PUSH_GUARD)
+                self.assertLessEqual(names, set(entry["env_names"]))
+
+    def test_grok_gemini_muse_block_push_and_gh(self):
+        probe = (
+            "import os, subprocess, sys; "
+            "url = subprocess.run(['git', 'config', '--get', 'remote.origin.pushurl'], "
+            "capture_output=True, text=True).stdout.strip(); "
+            "sys.stderr.write('pushurl=%s gh=%s\\n' % (url, os.environ['GH_TOKEN']))"
+        )
+        for name in ("grok", "gemini", "muse"):
+            with self.subTest(harness=name):
+                outcome, _ = self.dispatch(
+                    "implementer", name, default={"run": [["python3", "-c", probe]]}
+                )
+                self.assertTrue(outcome.ok, outcome.record)
+                stderr = (outcome.run_dir / "stderr.log").read_text()
+                self.assertIn("pushurl=bottega-push-disabled://", stderr)
+                self.assertIn("gh=bottega-gh-disabled", stderr)
 
     def test_kimi_environment(self):
         outcome, entry = self.dispatch("implementer", "kimi")
@@ -328,7 +522,10 @@ class Matrix(Fixture, unittest.TestCase):
         self.assertTrue(rules)
         for rule in rules:
             self.assertRegex(rule, r"^Bash\(.+ \*\)$")
-        self.assertEqual(set(harness.HARNESS_MATRIX), {"claude", "codex", "kimi"})
+        self.assertEqual(
+            set(harness.HARNESS_MATRIX),
+            {"claude", "codex", "gemini", "grok", "kimi", "muse"},
+        )
         self.assertEqual(
             {k: list(v) for k, v in harness.HARNESS_MATRIX["kimi"]["tools"].items()},
             KIMI_TOOLS,
@@ -347,6 +544,19 @@ class Matrix(Fixture, unittest.TestCase):
 
 def state_roles():
     return ("planner", "implementer", "reviewer", "judge")
+
+
+def gemini_rules(path):
+    """The [[rule]] tables of a policy file the gemini harness wrote: TOML
+    whose values are JSON, so json reads each one."""
+    rules = []
+    for block in path.read_text().split("[[rule]]")[1:]:
+        rule = {}
+        for line in block.strip().splitlines():
+            key, value = line.split(" = ", 1)
+            rule["p" if key == "priority" else key] = json.loads(value)
+        rules.append(rule)
+    return rules
 
 
 class Receipts(Fixture, unittest.TestCase):
@@ -581,6 +791,99 @@ class Failures(Fixture, unittest.TestCase):
         step = {"events": [{"type": "session_configured", "msg": {"model": "gpt-x"}}]}
         outcome, _ = self.dispatch("planner", "sol-builder", default=step)
         self.assertEqual(outcome.reason, "identity-mismatch")
+
+    def test_grok_identity_cost_and_the_unknown_model(self):
+        outcome, _ = self.dispatch(
+            "reviewer", "grok", default={"final": "G", "usage_extra": ["grok-helper"]}
+        )
+        self.assertTrue(outcome.ok, outcome.record)
+        record = outcome.record
+        self.assertEqual(outcome.final, "G")
+        self.assertEqual(record["model_identity_source"], "provider-reported")
+        self.assertEqual(record["provider_reported_model"], "grok-4.7")
+        self.assertEqual(record["identity_models"], ["grok-4.7"])
+        self.assertIn("grok-helper", record["observed_models"])
+        self.assertEqual(record["cost_usd"], 0.0123)
+        # "unknown" is Grok's word for no model: dropped, never a mismatch.
+        outcome, _ = self.dispatch("planner", "grok", default={"model": "unknown"})
+        self.assertTrue(outcome.ok, outcome.record)
+        self.assertEqual(outcome.record["model_identity_source"], "requested-only")
+        self.assertEqual(outcome.record["observed_models"], [])
+        outcome, _ = self.dispatch(
+            "planner", "grok", default={"assistant_model": "grok-4.5"}
+        )
+        self.assertEqual(outcome.reason, "identity-mismatch")
+
+    def test_gemini_final_after_the_last_tool_and_requested_only(self):
+        step = {
+            "final": "the verdict",
+            "usage_extra": ["gemini-3.1-flash-lite"],
+            "events": [
+                {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": "Reading.",
+                    "delta": True,
+                },
+                {"type": "tool_use", "tool_name": "read_file", "tool_id": "t1"},
+                {"type": "tool_result", "tool_id": "t1", "status": "success"},
+                {"type": "error", "severity": "warning", "message": "loop?"},
+            ],
+        }
+        outcome, _ = self.dispatch("reviewer", "gemini", default=step)
+        self.assertTrue(outcome.ok, outcome.record)
+        self.assertEqual(outcome.final, "the verdict")
+        record = outcome.record
+        self.assertEqual(record["model_identity_source"], "requested-only")
+        self.assertIsNone(record["provider_reported_model"])
+        self.assertEqual(
+            sorted(record["observed_models"]),
+            ["gemini-3.1-flash-lite", "gemini-3.8-flash"],
+        )
+        self.assertIsNone(record["cost_usd"])
+        self.assertEqual(record["usage"]["input_tokens"], 130)
+        # A model in the stats is never compared with the request.
+        outcome, _ = self.dispatch("planner", "gemini", default={"model": "gemini-x"})
+        self.assertTrue(outcome.ok, outcome.record)
+        for step in ({"is_error": True}, {"no_final": True}):
+            with self.subTest(step=step):
+                outcome, _ = self.dispatch("planner", "gemini", default=step)
+                self.assertEqual(outcome.reason, "dispatch-failed")
+                self.assertEqual(self.error(outcome)["phase"], "parse")
+
+    def test_muse_final_usage_and_identity(self):
+        outcome, _ = self.dispatch("reviewer", "muse", default={"final": "M"})
+        self.assertTrue(outcome.ok, outcome.record)
+        self.assertEqual(outcome.final, "M")
+        record = outcome.record
+        self.assertEqual(record["model_identity_source"], "provider-reported")
+        self.assertEqual(record["provider_reported_model"], "muse-wonder-1.0")
+        self.assertIsNone(record["cost_usd"])
+        usage = record["usage"]
+        self.assertEqual(usage["session_id"], "fake-muse-session-1")
+        self.assertEqual(usage["tokens"]["input_tokens"], 300)
+        self.assertEqual(usage["tokens"]["cached_tokens"], 1200)
+        self.assertEqual(usage["calls"], 2)
+        outcome, _ = self.dispatch(
+            "planner", "muse", default={"model": "muse-spark-1.3"}
+        )
+        self.assertEqual(outcome.reason, "identity-mismatch")
+        for step in ({"is_error": True}, {"no_final": True}):
+            with self.subTest(step=step):
+                outcome, _ = self.dispatch("planner", "muse", default=step)
+                self.assertEqual(outcome.reason, "dispatch-failed")
+                self.assertEqual(self.error(outcome)["phase"], "parse")
+
+    def test_muse_without_a_model_name_rests_on_the_request(self):
+        stream = json.dumps(
+            {
+                "stream": {"kind": "session", "id": "s1"},
+                "payload": {"kind": "run_usage", "models": [{"model": None}]},
+            }
+        )
+        parsed = harness.get("muse").parse(self.box.root, stream, "", 0)
+        self.assertEqual(parsed.identity_models, [])
+        self.assertIsNone(parsed.final)
 
     def test_alias_is_accepted(self):
         self.cfg["profiles"]["opus-builder"]["aliases"] = ["claude-other"]

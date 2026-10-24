@@ -1,4 +1,5 @@
-"""Shared engine for the fake `claude` and `codex` executables.
+"""Shared engine for the fake harness executables (claude, codex, kimi, grok,
+gemini, muse).
 
 The fakes stand in for the real CLIs in every suite; no suite ever dispatches
 a real model. They are driven by BOTTEGA_FAKE_SCENARIO, which is either inline
@@ -14,12 +15,14 @@ JSON or the path of a JSON file:
 A step may hold, all optional:
 
     model           the model the fake reports (default: the requested one)
-    assistant_model / usage_model   claude only: report a different name there
-    usage_extra     claude only: more modelUsage keys (helper models)
+    assistant_model / usage_model   claude, grok: report a different name there
+    usage_extra     claude, grok: more modelUsage keys (helper models);
+                    gemini: more stats.models keys
     events          extra JSON events written after the first one
     final           the final message (default "fake final message")
     no_final        true: produce no final message
-    is_error        claude only: the result event says is_error
+    is_error        claude, grok: the result event says is_error; gemini:
+                    the result status is "error"; muse: the run is "failed"
     writes          {relative path: content} written under the working dir
     tick / untick   to-do ids to tick or untick in task.md
     task_doc        task.md path (default: <--add-dir>/task.md)
@@ -184,6 +187,40 @@ def claude_main(argv):
     record(log, "claude", argv, cwd, stdin, number)
     act(step, cwd, option(argv, "--add-dir"), scenario)
     requested = option(argv, "--model") or "fake-model"
+    claude_stream(step, number, requested, cwd, argv)
+    finish(step)
+    return 0
+
+
+def task_dir_of(prompt_file):
+    """The task directory, from a prompt at <task dir>/runs/<run>/prompt.md."""
+    return str(Path(prompt_file).parent.parent.parent) if prompt_file else None
+
+
+def grok_main(argv):
+    """`grok --prompt-file <run dir>/prompt.md`: Claude Code's stream shape."""
+    if "--version" in argv or "-v" in argv:
+        print("grok 1.0.62 (fake) [stable]")
+        return 0
+    prompt_file = option(argv, "--prompt-file")
+    if not prompt_file or not Path(prompt_file).read_text(encoding="utf-8"):
+        sys.stderr.write("Error: empty prompt\n")
+        return 1
+    scenario = load_scenario()
+    log = log_path(scenario)
+    number, step = next_call(scenario, log)
+    cwd = Path.cwd()
+    record(log, "grok", argv, cwd, "", number)
+    act(step, cwd, task_dir_of(prompt_file), scenario)
+    claude_stream(
+        step, number, option(argv, "-m", "--model") or "fake-model", cwd, argv
+    )
+    finish(step)
+    return 0
+
+
+def claude_stream(step, number, requested, cwd, argv):
+    """The stream-json events of one Claude Code (or Grok Build) run."""
     model = step.get("model", requested)
     final = None if step.get("no_final") else step.get("final", "fake final message")
     started = time.time()
@@ -239,8 +276,6 @@ def claude_main(argv):
     if final is not None:
         result["result"] = final
     emit(result)
-    finish(step)
-    return 0
 
 
 def kimi_main(argv):
@@ -359,6 +394,148 @@ def codex_main(argv):
                 "output_tokens": 50,
             },
         }
+    )
+    finish(step)
+    return 0
+
+
+def gemini_main(argv):
+    """`gemini` with the prompt on stdin: the stream-json shape of Gemini CLI
+    0.65.0 (init, message deltas, tool_use/tool_result, result with stats)."""
+    if "--version" in argv or "-v" in argv:
+        print("0.65.0")
+        return 0
+    stdin = sys.stdin.read() if not sys.stdin.isatty() else ""
+    if not stdin.strip():
+        sys.stderr.write("No input provided via stdin.\n")
+        return 42
+    scenario = load_scenario()
+    log = log_path(scenario)
+    number, step = next_call(scenario, log)
+    cwd = Path.cwd()
+    record(log, "gemini", argv, cwd, stdin, number)
+    act(step, cwd, option(argv, "--include-directories"), scenario)
+    requested = option(argv, "-m", "--model") or "fake-model"
+    model = step.get("model", requested)
+    final = None if step.get("no_final") else step.get("final", "fake final message")
+    session = "fake-gemini-session-%d" % number
+    sys.stdout.write(step.get("raw", ""))
+    emit({"type": "init", "session_id": session, "model": requested})
+    emit({"type": "message", "role": "user", "content": stdin})
+    for event in step.get("events") or []:
+        emit(event)
+    if final is not None:
+        half = len(final) // 2
+        for chunk in (final[:half], final[half:]):
+            emit(
+                {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": chunk,
+                    "delta": True,
+                }
+            )
+    models = {model: {"total_tokens": 160, "input_tokens": 120, "output_tokens": 40}}
+    for name in step.get("usage_extra") or []:
+        models[name] = {"total_tokens": 15, "input_tokens": 10, "output_tokens": 5}
+    result = {
+        "type": "result",
+        "status": "error" if step.get("is_error") else "success",
+        "stats": {
+            "total_tokens": sum(m["total_tokens"] for m in models.values()),
+            "input_tokens": sum(m["input_tokens"] for m in models.values()),
+            "output_tokens": sum(m["output_tokens"] for m in models.values()),
+            "duration_ms": 9,
+            "tool_calls": 0,
+            "models": models,
+        },
+    }
+    if step.get("is_error"):
+        result["error"] = {"type": "FatalError", "message": "fake failure"}
+    emit(result)
+    finish(step)
+    return 0
+
+
+def muse_record(number, sequence, kind, payload):
+    return {
+        "schema_version": 1,
+        "stream": {"kind": "session", "id": "fake-muse-session-%d" % number},
+        "sequence": sequence,
+        "payload_type": kind,
+        "payload": payload,
+    }
+
+
+def muse_main(argv):
+    """`muse exec --json --prompt-file <run dir>/prompt.md`: the record shape
+    of Muse Code 1.4.12 (payload kinds run_output_delta, run_usage,
+    run_terminal)."""
+    if "--version" in argv or "-V" in argv:
+        print("Muse Code 1.4.12 (fake)")
+        return 0
+    if not argv or argv[0] != "exec":
+        sys.stderr.write("fake muse: only `muse exec` is supported\n")
+        return 2
+    prompt_file = option(argv, "--prompt-file")
+    if not prompt_file or not Path(prompt_file).read_text(encoding="utf-8"):
+        sys.stderr.write("muse: empty prompt\n")
+        return 64
+    scenario = load_scenario()
+    log = log_path(scenario)
+    number, step = next_call(scenario, log)
+    cwd = Path.cwd()
+    record(log, "muse", argv, cwd, "", number)
+    act(step, cwd, task_dir_of(prompt_file), scenario)
+    requested = option(argv, "--model") or "fake-model"
+    model = step.get("model", requested)
+    final = None if step.get("no_final") else step.get("final", "fake final message")
+    sys.stdout.write(step.get("raw", ""))
+    seq = 0
+    for event in step.get("events") or []:
+        seq += 1
+        emit(muse_record(number, seq, "event", event))
+    if final is not None:
+        seq += 1
+        emit(
+            muse_record(
+                number,
+                seq,
+                "run.output.delta",
+                {"kind": "run_output_delta", "text": final},
+            )
+        )
+    usage = {
+        "kind": "run_usage",
+        "models": [
+            {
+                "model": model,
+                "input_tokens": 300,
+                "cached_tokens": 1200,
+                "output_tokens": 60,
+                "reasoning_tokens": 20,
+                "calls": 2,
+            }
+        ],
+        "calls": 2,
+        "allowance": None,
+    }
+    seq += 1
+    emit(muse_record(number, seq, "run.usage", usage))
+    terminal = "failed" if step.get("is_error") else "completed"
+    seq += 1
+    emit(
+        muse_record(
+            number,
+            seq,
+            "run.terminal." + terminal,
+            {
+                "kind": "run_terminal",
+                "terminal": terminal,
+                "text": final if terminal == "completed" else None,
+                "reason": "fake failure" if terminal == "failed" else None,
+            },
+        )
     )
     finish(step)
     return 0

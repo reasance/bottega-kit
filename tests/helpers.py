@@ -184,6 +184,13 @@ CANONICAL = {
         },
         "sol-builder": {"harness": "codex", "model": "gpt-5.6-sol", "effort": "high"},
         "kimi": {"harness": "kimi", "model": "kimi-code/k3.1-pro", "effort": "high"},
+        "grok": {"harness": "grok", "model": "grok-4.7", "effort": "high"},
+        "gemini": {
+            "harness": "gemini",
+            "model": "gemini-3.8-flash",
+            "effort": "default",
+        },
+        "muse": {"harness": "muse", "model": "muse-wonder-1.0", "effort": "high"},
         "glm-reviewer": {
             "harness": "claude",
             "model": "glm-5.3-flash",

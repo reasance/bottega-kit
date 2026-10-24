@@ -26,9 +26,16 @@ HARNESS_EFFORTS = {
     "codex": ("none", "minimal", "low", "medium", "high", "xhigh", "max"),
     # The levels Kimi Code declares for its K3 models (`support_efforts`).
     "kimi": ("low", "high", "max"),
+    # The levels Grok Build lists for grok-4.6 and grok-4.7.
+    "grok": ("low", "medium", "high", "xhigh"),
+    # Gemini CLI takes no effort from its command line; a run thinks at the
+    # CLI's default for the model.
+    "gemini": ("default",),
+    # `muse exec --reasoning-effort`.
+    "muse": ("none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"),
 }
 # The executable each harness drives.
-HARNESS_BINARIES = {"claude": "claude", "codex": "codex", "kimi": "kimi"}
+HARNESS_BINARIES = {name: name for name in HARNESS_EFFORTS}
 
 REQUIRED_ROLES = ("planner", "implementer", "reviewer")
 OPTIONAL_ROLES = ("judge",)
@@ -325,20 +332,47 @@ KIMI_ROLES = {
 }
 
 
+GROK_PROFILES = {
+    "grok": {"harness": "grok", "model": "grok-4.7", "effort": "high"},
+}
+GEMINI_PROFILES = {
+    "gemini": {
+        "harness": "gemini",
+        "model": "gemini-3.8-flash",
+        "effort": "default",
+    },
+}
+MUSE_PROFILES = {
+    "muse": {"harness": "muse", "model": "muse-wonder-1.0", "effort": "high"},
+}
+
+
+def _one_profile_roles(name):
+    return {"planner": name, "implementer": name, "reviewer": name}
+
+
+# In order of preference: the first harness found binds the roles; every
+# harness found adds its profiles.
+STARTERS = (
+    ("claude", CLAUDE_PROFILES, CLAUDE_ROLES),
+    ("codex", CODEX_PROFILES, CODEX_ROLES),
+    ("kimi", KIMI_PROFILES, KIMI_ROLES),
+    ("grok", GROK_PROFILES, _one_profile_roles("grok")),
+    ("gemini", GEMINI_PROFILES, _one_profile_roles("gemini")),
+    ("muse", MUSE_PROFILES, _one_profile_roles("muse")),
+)
+
+
 def starter(harnesses):
-    """A starter configuration for the harnesses found on PATH."""
+    """A starter configuration for the harnesses found on PATH (claude's
+    when none is)."""
+    found = set(harnesses) & {name for name, _, _ in STARTERS} or {"claude"}
     profiles, roles = {}, {}
-    if "claude" in harnesses or not {"codex", "kimi"} & set(harnesses):
-        profiles.update(CLAUDE_PROFILES)
-        roles.update(CLAUDE_ROLES)
-    if "codex" in harnesses:
-        profiles.update(CODEX_PROFILES)
-        if not roles:
-            roles.update(CODEX_ROLES)
-    if "kimi" in harnesses:
-        profiles.update(KIMI_PROFILES)
-        if not roles:
-            roles.update(KIMI_ROLES)
+    for name, starter_profiles, starter_roles in STARTERS:
+        if name in found:
+            profiles.update(starter_profiles)
+            if not roles:
+                roles.update(starter_roles)
     return validate(
         {
             "schema_version": SCHEMA_VERSION,

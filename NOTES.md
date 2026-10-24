@@ -1036,3 +1036,16 @@ probes on the owner's subscriptions:
   terminal sandbox refuses to read `~/.gitconfig`, so `GIT_CONFIG_GLOBAL`
   made every git command fail; it is gone, and git runs without a global
   config (no role commits).
+- **Prices checked on 2026-10-24** (owner: "verifica online tutti i
+  costi aggiornati"), at the official pages where they could be read:
+  MiniMax-M3.1-Flash 0.15 / 0.015 cache read / 0.60 (platform.minimax.io),
+  GLM-5.3-Flash 0.15 / 0.03 cached / 0.50 (docs.z.ai), both as the docs had
+  them; kimi-k3 3 / 0.30 cached / 15, with cache writes at 3 (5 min) and
+  6 (1 h), read from the source of platform.kimi.ai's price page, which
+  also lists `kimi-k3.1-pro` at 2 / 10 / 0.20 (whether the owner's key is
+  served it now was not rechecked); `grok-4.7` 2 / 0.50 / 6 below a 200 k
+  prompt (docs.x.ai); Gemini 3.8 Flash 0.75 / 0.075 / 3.75 until
+  2026-12-31, double from 2027-01-01 (ai.google.dev). `muse-wonder-1.0` at
+  4 / 0.20 / 20 comes only from third-party copies of Meta's announcement.
+  Grok Build's own `cost_usd` was 0.34 times the `grok-4.7` list price on
+  every dispatch of the run; why is not documented.

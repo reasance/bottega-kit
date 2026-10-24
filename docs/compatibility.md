@@ -78,9 +78,11 @@ in the README. Keys came from `secrets.env`.
   million), about 36 times less.
 - Kimi, "add a `--shout` flag": done in round 1, 4 tests passing. Claude
   Code priced it at 0.34 USD; its tokens (1,372 input, 93,440 cache reads,
-  4,853 output) cost 0.105 USD at Moonshot's K3 price (3 input, 0.30 cache
-  hit, 15 output per million, as published copies of its price page give it;
-  the page itself renders its table in the browser), about a third.
+  4,853 output) cost 0.105 USD at Moonshot's K3 price (3 input, 0.30
+  cached input, 15 output per million; read on 2026-10-24 from the source
+  of platform.kimi.ai's price page, whose table renders only in the
+  browser), about a third. The page also prices cache writes, 3 for a
+  5-minute and 6 for a 1-hour entry; the figure counts none.
 - Every receipt says `model_identity_source: provider-reported` with the
   requested name and no other model, so no alias was needed and Claude
   Code's own requests stayed on the endpoint. No permission denial, no
@@ -135,7 +137,11 @@ greeter repository whose `origin` was a local bare repository:
 | 3 | reviewer | 148 s | 7 | 0.082 | ready |
 | 4 | judge | 45 s | 5 | 0.039 | ready |
 
-- Done in round 1, 0.27 USD in all; the judge's verdict was "Merge: yes".
+- Done in round 1, 0.27 USD in all as Grok Build reported it; the judge's
+  verdict was "Merge: yes". Every dispatch's `cost_usd` is its tokens at
+  0.68 input, 0.17 cached input and 2.04 output per million: 0.34 times the
+  `grok-4.7` API list price on docs.x.ai on 2026-10-24 (2, 0.50, 6 below a
+  200 k prompt), at which the run would have cost 0.80 USD.
   Every receipt reports `grok-4.7`, the requested name; `modelUsage` also
   names `grok-4.7-build`, recorded as observed. The rails were unchanged
   for the read-only roles; the implementer's test run left `__pycache__/`.
@@ -164,7 +170,11 @@ cap and task:
 | 4 | judge | 10 s | 3 | 95,255 / 62,696 / 828 | ready |
 
 - Done in round 1; the judge's verdict was "Merge: yes". Every receipt
-  reports `muse-wonder-1.0`, checked against the request. The reviewer's
+  reports `muse-wonder-1.0`, checked against the request. The usage went to
+  the Muse Code subscription; at the API price published for
+  `muse-wonder-1.0` (4 input, 0.20 cached input, 20 output per million, in
+  third-party copies of Meta's announcement, not read at Meta) the run
+  would have cost about 0.86 USD. The reviewer's
   and judge's `bottega signal` wrote into the task directory from inside
   Muse Code's sandbox.
 - Before the run, two dispatches built by the harness: the planner had no
@@ -188,7 +198,11 @@ prompts, cap and task:
 | 4 | judge | 50 s | 96,316 / 2,286 / 3,249 | ready |
 
 - Done in round 1; the judge's verdict was "Merge: yes". Every receipt
-  says `requested-only`. No new untracked file, the rails unchanged for the
+  says `requested-only`. The usage went to the Google account `agy` signs
+  in with; at the Gemini API's paid price for Gemini 3.8 Flash on
+  ai.google.dev on 2026-10-24 (0.75 input, 0.075 cached input, 3.75 output
+  and thinking per million, until 2026-12-31; double from 2027-01-01) the
+  run would have cost about 0.50 USD. No new untracked file, the rails unchanged for the
   read-only roles, no dispatch HOME left behind. The planner's `ls -la` was
   refused by `command(*)`; the reviewer ran the tests and both signals
   reached the task directory from inside the sandbox.

@@ -169,11 +169,14 @@ cost, as Claude Code reports it, is `cost_usd` in its `run.json`. Codex
 reports none: its usage goes to your ChatGPT plan. Kimi Code reports no cost
 either: its usage goes to your Kimi Code plan, and `run.json` keeps the
 tokens from Kimi Code's session log. Grok Build reports a cost, kept in
-`cost_usd`; Muse Code and the Antigravity CLI report tokens only. For scale, on 2026-10-23
-the starter configuration above added an option to a 21-line Python CLI in
-one round: four dispatches, 2.07 USD and under five minutes, three quarters
-of it the Fable planner and judge. In the 0.1.0 runs, Sonnet at effort
-`medium` cost 0.03 to 0.08 USD a dispatch on the same kind of task. A larger
+`cost_usd`; Muse Code and the Antigravity CLI report tokens only. For
+scale, on 2026-10-23 the starter configuration above added an option to a
+21-line Python CLI in one round: four dispatches, 2.07 USD and under five
+minutes, three quarters of it the Fable planner and judge. On 2026-10-24
+the same task took 0.27 USD on Grok Build, as it reported it, and would
+have taken about 0.86 USD on Muse Code and 0.50 USD on the Antigravity CLI
+at API list prices (both bill a subscription). In the 0.1.0 runs, Sonnet at
+effort `medium` cost 0.03 to 0.08 USD a dispatch on the same kind of task. A larger
 task costs more: more files to read, more rounds.
 [docs/compatibility.md](docs/compatibility.md) lists every dispatch of the
 live runs.

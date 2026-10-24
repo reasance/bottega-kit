@@ -28,9 +28,8 @@ HARNESS_EFFORTS = {
     "kimi": ("low", "high", "max"),
     # The levels Grok Build lists for grok-4.6 and grok-4.7.
     "grok": ("low", "medium", "high", "xhigh"),
-    # Gemini CLI takes no effort from its command line; a run thinks at the
-    # CLI's default for the model.
-    "gemini": ("default",),
+    # `agy --effort`; which levels a model honours is the model's.
+    "agy": ("low", "medium", "high", "xhigh", "max"),
     # `muse exec --reasoning-effort`.
     "muse": ("none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"),
 }
@@ -335,11 +334,11 @@ KIMI_ROLES = {
 GROK_PROFILES = {
     "grok": {"harness": "grok", "model": "grok-4.7", "effort": "high"},
 }
-GEMINI_PROFILES = {
+AGY_PROFILES = {
     "gemini": {
-        "harness": "gemini",
-        "model": "gemini-3.8-flash",
-        "effort": "default",
+        "harness": "agy",
+        "model": "gemini-3.8-flash-high",
+        "effort": "high",
     },
 }
 MUSE_PROFILES = {
@@ -358,8 +357,8 @@ STARTERS = (
     ("codex", CODEX_PROFILES, CODEX_ROLES),
     ("kimi", KIMI_PROFILES, KIMI_ROLES),
     ("grok", GROK_PROFILES, _one_profile_roles("grok")),
-    ("gemini", GEMINI_PROFILES, _one_profile_roles("gemini")),
     ("muse", MUSE_PROFILES, _one_profile_roles("muse")),
+    ("agy", AGY_PROFILES, _one_profile_roles("gemini")),
 )
 
 

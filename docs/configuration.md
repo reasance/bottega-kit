@@ -16,8 +16,14 @@ no `sol-builder`; with `codex` alone it has only `sol-builder`, bound as
 planner, implementer and reviewer, and no judge. With `kimi` on PATH it also
 has a `kimi` profile (`"harness": "kimi", "model": "kimi-code/k3.1-pro",
 "effort": "high"`), bound the same way as `sol-builder` when `kimi` is the
-only CLI found, to no role otherwise. With none of them, it is the `claude`
-one.
+only CLI found, to no role otherwise. `grok` and `muse` on PATH add a
+`grok` profile (`"harness": "grok", "model": "grok-4.7", "effort": "high"`)
+and a `muse` profile (`"harness": "muse", "model": "muse-wonder-1.0",
+"effort": "high"`) the same way, and `agy` a `gemini` profile (`"harness":
+"agy", "model": "gemini-3.8-flash-high", "effort": "high"`); the first CLI
+found in the order `claude`, `codex`, `kimi`, `grok`, `muse`, `agy` binds
+the roles. With none of them, it is the
+`claude` one.
 
 ```json
 {
@@ -49,9 +55,9 @@ A profile is a harness, a model and an effort.
 
 | key | required | what |
 |---|---|---|
-| `harness` | yes | `claude` (Claude Code), `codex` (Codex CLI) or `kimi` (Kimi Code) |
+| `harness` | yes | `claude` (Claude Code), `codex` (Codex CLI), `kimi` (Kimi Code), `grok` (Grok Build), `muse` (Muse Code) or `agy` (Antigravity CLI) |
 | `model` | yes | the model name passed to the harness; for `kimi`, a model alias of Kimi Code's `config.toml`, such as `kimi-code/k3.1-pro` |
-| `effort` | yes | `claude`: `low`, `medium`, `high`, `xhigh`, `max`. `codex`: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. `kimi`: `low`, `high`, `max` |
+| `effort` | yes | `claude`: `low`, `medium`, `high`, `xhigh`, `max`. `codex`: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. `kimi`: `low`, `high`, `max`. `grok`: `low`, `medium`, `high`, `xhigh`. `muse`: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, `ultra`. `agy`: `low`, `medium`, `high`, `xhigh`, `max`, as far as the model takes them |
 | `env` | no | environment variables set for the harness; values may reference your environment as `${NAME}` |
 | `aliases` | no | other model names the harness may report for this model |
 | `timeout` | no | seconds; the dispatch is killed after it and the task stops with `timeout` |
@@ -63,9 +69,11 @@ Any other key is an error.
 the requested `model` or one of `aliases`. Anything else stops the task with
 `identity-mismatch`. For Claude Code the check uses the session's model and
 each turn's model; helper models it lists in its usage are recorded and not
-checked. Codex and Kimi Code report no model, so nothing is checked: their
-receipts say `model_identity_source: requested-only`, and `aliases` has no
-effect on a `codex` or `kimi` profile. A `kimi` receipt also records, under
+checked; Grok Build is read the same way. Muse Code names each model that
+served the run, and every one is checked. Codex and Kimi Code report no
+model, nor does the Antigravity CLI, so nothing is checked: their receipts
+say `model_identity_source: requested-only`, and `aliases` has no effect on
+a `codex`, `kimi` or `agy` profile. A `kimi` receipt also records, under
 `usage`, the model and effort Kimi Code asked its provider for and the
 tokens, read from Kimi Code's own session log; they are not a check.
 
@@ -110,8 +118,9 @@ endpoint, and its `GET /v1/models` listed up to `kimi-k3`.
 
 Harnesses authenticate on their own: Claude Code through its login or
 keychain, Codex through `~/.codex`, Kimi Code through `kimi login` and
-`~/.kimi-code` (or `KIMI_CODE_HOME`). bottega-kit never handles their
-credentials.
+`~/.kimi-code` (or `KIMI_CODE_HOME`), Grok Build through `grok login`, Muse
+Code through its own sign-in, the Antigravity CLI through `agy`'s sign-in.
+bottega-kit never handles their credentials.
 
 **Kimi Code profiles.** `kimi` runs with your own Kimi Code configuration:
 your login, your model aliases, your hooks and your MCP servers' processes,
@@ -122,6 +131,26 @@ check and its built-in product skills, and disables `git push` to origin and
 `gh` (see [compatibility.md](compatibility.md#kimi)). Each dispatch is also a
 Kimi Code session in your history: `kimi -r <session_id>` reopens it, with
 the `session_id` from the receipt's `usage`.
+
+**Grok Build and Muse Code profiles.** Both run with your own
+configuration and login, narrowed per dispatch by command-line flags: the
+role's tools and permission rules for `grok`, Muse Code's write and shell
+switches for `muse`, and for both the push and `gh` guards of `kimi` (see
+[compatibility.md](compatibility.md#grok)). `grok` also turns off Claude
+Code's and Cursor's configuration, which Grok Build otherwise loads; your
+Grok Build plugins and hooks still run. `muse` turns contributor mode off
+for every dispatch, whatever your setting, and keeps no session log; your
+Muse Code skills still load.
+
+**Antigravity CLI profiles.** `agy` reads its permission rules only from
+its own settings file, so each dispatch runs with a temporary HOME whose
+settings hold the role's rules and a symbolic link to your `agy` sign-in
+file; nothing else of your `agy` configuration (settings, hooks, plugins,
+MCP servers, skills, rules) reaches the run, and the directory is deleted
+afterwards. Model names carry their effort (`gemini-3.8-flash-high`; `agy
+models` lists them); `effort` is passed as `--effort` too. No dispatch
+stays in your `agy` history. See
+[compatibility.md](compatibility.md#agy).
 
 ## The key file
 

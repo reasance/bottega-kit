@@ -186,9 +186,9 @@ CANONICAL = {
         "kimi": {"harness": "kimi", "model": "kimi-code/k3.1-pro", "effort": "high"},
         "grok": {"harness": "grok", "model": "grok-4.7", "effort": "high"},
         "gemini": {
-            "harness": "gemini",
-            "model": "gemini-3.8-flash",
-            "effort": "default",
+            "harness": "agy",
+            "model": "gemini-3.8-flash-high",
+            "effort": "high",
         },
         "muse": {"harness": "muse", "model": "muse-wonder-1.0", "effort": "high"},
         "glm-reviewer": {

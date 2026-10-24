@@ -48,11 +48,12 @@ GROK_READ_TOOLS = "read_file,grep,list_dir"
 GROK_SHELL_TOOL = "run_terminal_cmd"
 GROK_EDIT_TOOLS = "search_replace,write"
 
-# Gemini CLI's built-in tools each role may call. The dispatch writes them
-# into an admin-tier policy file (`--admin-policy`), which outranks the
-# user's own policies: every other tool is denied.
-GEMINI_READ_TOOLS = ("read_file", "read_many_files", "list_directory", "glob")
-GEMINI_READ_TOOLS += ("grep_search",)
+# Antigravity CLI permission rules (`action(target)`), written per dispatch
+# into the settings file of a fresh HOME. A deny rule beats every allow and
+# the workspace default; `command(...)` matches a command prefix word by word.
+AGY_NO_REACH = ("mcp(*)", "read_url(*)", "execute_url(*)")
+AGY_READ_ONLY = ("write_file(*)",)
+AGY_NO_PUSH = ("command(git push)", "command(gh)")
 
 # For a harness without a command-line deny rule that covers every spelling
 # of a push: origin's push URL is unusable, and gh gets a token GitHub
@@ -296,46 +297,70 @@ HARNESS_MATRIX = {
         },
         "git_config": PUSH_DISABLED,
     },
-    "gemini": {
-        "binary": "gemini",
-        # The prompt comes on stdin, which makes the run headless. No user
-        # MCP server is allowed (none has this name); the admin policy
-        # decides every tool call.
+    "agy": {
+        "binary": "agy",
+        # Antigravity CLI in print mode. The prompt is the value of `-p`.
+        # The workspace is the `--add-dir` folders, the worktree first; the
+        # working directory alone did not make one on 2026-10-24.
+        # `agy` reads permission rules only from its settings file, so each
+        # dispatch runs with a fresh HOME whose settings hold the role's
+        # rules (below); the terminal sandbox stays on.
         "base": (
+            "-p",
+            "{prompt}",
             "--output-format",
             "stream-json",
-            "-m",
+            "--model",
             "{model}",
-            "--skip-trust",
-            "--approval-mode",
-            "default",
-            "--admin-policy",
-            "{run_dir}/gemini-policy.toml",
-            "--allowed-mcp-server-names",
-            "bottega-none",
-            "--include-directories",
+            "--effort",
+            "{effort}",
+            "--print-timeout",
+            "0s",
+            "--disable-slash-commands",
+            "--sandbox",
+            "--add-dir",
+            "{worktree}",
+            "--add-dir",
             "{task_dir}",
         ),
         "budget": None,
-        "roles": {"planner": (), "implementer": (), "reviewer": (), "judge": ()},
+        "roles": {
+            "planner": (),
+            "implementer": ("--mode", "accept-edits"),
+            "reviewer": (),
+            "judge": (),
+        },
         "tail": (),
-        "tools": {
-            "planner": GEMINI_READ_TOOLS,
-            "implementer": GEMINI_READ_TOOLS
-            + ("replace", "write_file", "run_shell_command"),
-            "reviewer": GEMINI_READ_TOOLS + ("run_shell_command",),
-            "judge": GEMINI_READ_TOOLS,
+        # `permissions` in the dispatch's settings file. Without a TTY a
+        # tool that needs approval is refused, so a command runs only when
+        # an allow rule covers it.
+        "permissions": {
+            "planner": {
+                "allow": (),
+                "deny": AGY_NO_REACH + AGY_READ_ONLY + ("command(*)",),
+            },
+            "implementer": {
+                "allow": ("command(*)",),
+                "deny": AGY_NO_REACH + AGY_NO_PUSH,
+            },
+            "reviewer": {
+                "allow": ("command(*)",),
+                "deny": AGY_NO_REACH
+                + AGY_READ_ONLY
+                + AGY_NO_PUSH
+                + ("command(git commit)",),
+            },
+            "judge": {
+                "allow": (
+                    "command(git diff)",
+                    "command(git log)",
+                    "command(git show)",
+                    "command({bottega} signal)",
+                ),
+                "deny": AGY_NO_REACH + AGY_READ_ONLY,
+            },
         },
-        # Shell commands denied to a role that has the shell, and the only
-        # ones allowed to the judge (prefixes, as the policy file spells them).
-        "shell_deny": {
-            "implementer": ("git push", "gh "),
-            "reviewer": ("git push", "gh ", "git commit"),
-        },
-        "shell_allow": {
-            "judge": ("git diff", "git log", "git show", "{bottega} signal"),
-        },
-        # Gemini CLI has no deny rule that sees every spelling of a push.
+        # `command(git push)` misses `/usr/bin/git push`.
         "env": {"GH_TOKEN": GH_DISABLED},
         "git_config": PUSH_DISABLED,
     },
@@ -571,12 +596,12 @@ class Harness:
 
 def get(name):
     """The registered harness called `name`."""
-    from . import claude, codex, gemini, grok, kimi, muse
+    from . import agy, claude, codex, grok, kimi, muse
 
     registry = {
+        "agy": agy.AgyHarness,
         "claude": claude.ClaudeHarness,
         "codex": codex.CodexHarness,
-        "gemini": gemini.GeminiHarness,
         "grok": grok.GrokHarness,
         "kimi": kimi.KimiHarness,
         "muse": muse.MuseHarness,

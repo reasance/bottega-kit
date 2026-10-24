@@ -973,3 +973,66 @@ candidate in `docs/later.md`, is built now. Decisions, from Kimi Code
 Live run, in `docs/compatibility.md`: K3.1 Pro at effort `high` as planner,
 implementer, reviewer and judge on a throwaway repository, done in round 1,
 the judge's verdict "Merge: yes".
+
+## 2026-10-24 — Grok Build, Muse Code and Antigravity as harnesses
+
+On the owner's word ("lavora anche agli harness futuri, incluse muse") the
+`grok` and `gemini` drivers of `docs/later.md` are built, with Muse Code as
+a sixth harness. Gemini ends up driven through the Antigravity CLI, not
+Gemini CLI (below). Decisions, from each CLI's own documentation and live
+probes on the owner's subscriptions:
+
+- **`grok` follows Claude Code's flags.** Grok Build 1.0.62's
+  `streaming-messages-json` is Claude Code's stream-json shape, so the
+  driver subclasses the claude one and drops the literal model name
+  `unknown`. The prompt is read with `--prompt-file`: headless Grok reads
+  no stdin. `Bash(git push *)` uses prefix-and-glob matching and misses a
+  bare `git push` (Claude Code's matches it), so the `kimi` push and gh
+  guards are set too. Grok Build loads Claude Code's and Cursor's hooks,
+  MCP servers, skills, rules and agents unless the ten
+  `GROK_{CLAUDE,CURSOR}_*_ENABLED` variables say no; they do. Not narrowed:
+  Grok's own plugins and hooks, the plugins it loads from
+  `~/.claude/plugins` (their MCP servers start; `--deny MCPTool` refuses
+  their tools), and the permission allows of `~/.claude/settings.local.json`:
+  `GROK_CONFIG` takes only an allowlist of keys. The model is reported and
+  checked; `modelUsage` adds `grok-4.7-build`, recorded as observed.
+- **`muse` uses Muse Code's own switches**: `--disable-write`,
+  `--disable-shell`, `--approval-mode never` with the approval judge off,
+  the sandbox left on. `--contributor-mode off` is forced on every
+  dispatch, although the owner's setting has it on: a dispatch's code must
+  not go to training without a decision made for it. No deny rule for a
+  shell command exists, so the push and gh guards are set. Muse Code's user
+  skills still load (`muse exec` has no switch for one run). `run_usage`
+  names the models that served the run; they are the identity.
+- **Gemini CLI is dropped before shipping.** Gemini CLI 0.65.0 refused the
+  owner's Google sign-in ("This client is no longer supported for Gemini
+  Code Assist for individuals … migrate to the Antigravity suite"); two
+  probe dispatches failed at authentication, before any model call. It
+  would still run with `GEMINI_API_KEY` or Vertex, which nothing here can
+  verify. Its offline driver (admin-tier `--admin-policy` files; a system
+  settings file is refused unless its directory is root-owned) is removed.
+- **`agy`, the Antigravity CLI, in its place** (owner's choice, "Fai
+  l'harness Antigravity"). `agy` reads permission rules only from
+  `~/.gemini/antigravity-cli/settings.json`, so each dispatch gets a fresh
+  HOME with the role's rules, deleted afterwards (a copy stays in the run
+  directory). The first attempt counted on the keychain, as
+  delegation-kit's runner does; on this machine `agy` keeps the sign-in in
+  `antigravity-oauth-token` under HOME, and the empty HOME started a
+  browser sign-in, which timed out unused. On the owner's choice ("Link al
+  file di accesso") the fresh HOME holds a symbolic link to that file;
+  bottega-kit never opens or copies it. If `agy` ever renews the token by
+  replacing the file rather than writing through the link, the renewal
+  lands in the deleted HOME and the next run uses the old token. With HOME
+  moved, `BOTTEGA_DATA_HOME` points at the kit's task data, so `bottega
+  signal` works.
+- **What the two `agy` probes changed** (planner and implementer, on the
+  owner's word for about six dispatches). The planner's write and shell
+  calls were refused by the settings' deny rules, and the implementer's
+  `git push` (bare too) and `gh` by `command(...)` rules. But (1) the
+  stream is `{"event": kind, kind: {...}}`, not the flat shape the
+  headless docs describe, so the parser was rewritten on the real output;
+  (2) with only the task directory under `--add-dir`, the agent treated it
+  as its working directory, so the worktree is passed first; (3) the
+  terminal sandbox refuses to read `~/.gitconfig`, so `GIT_CONFIG_GLOBAL`
+  made every git command fail; it is gone, and git runs without a global
+  config (no role commits).

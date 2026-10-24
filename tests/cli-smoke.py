@@ -39,7 +39,9 @@ class Basics(unittest.TestCase):
 
     def test_init_then_doctor(self):
         proc = self.box.bottega("init")
-        self.assertIn("harnesses found on PATH: claude, codex", proc.stdout)
+        self.assertIn(
+            "harnesses found on PATH: agy, claude, codex, grok, kimi, muse", proc.stdout
+        )
         written = json.loads(self.box.config_file.read_text())
         self.assertEqual(written["roles"]["planner"], "fable")
         self.assertEqual(written["profiles"]["sol-builder"]["harness"], "codex")

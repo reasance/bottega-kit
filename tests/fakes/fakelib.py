@@ -1,5 +1,5 @@
 """Shared engine for the fake harness executables (claude, codex, kimi, grok,
-gemini, muse).
+muse, agy).
 
 The fakes stand in for the real CLIs in every suite; no suite ever dispatches
 a real model. They are driven by BOTTEGA_FAKE_SCENARIO, which is either inline
@@ -16,13 +16,14 @@ A step may hold, all optional:
 
     model           the model the fake reports (default: the requested one)
     assistant_model / usage_model   claude, grok: report a different name there
-    usage_extra     claude, grok: more modelUsage keys (helper models);
-                    gemini: more stats.models keys
+    usage_extra     claude, grok: more modelUsage keys (helper models)
     events          extra JSON events written after the first one
     final           the final message (default "fake final message")
     no_final        true: produce no final message
-    is_error        claude, grok: the result event says is_error; gemini:
-                    the result status is "error"; muse: the run is "failed"
+    is_error        claude, grok: the result event says is_error; agy:
+                    the result status is "ERROR"; muse: the run is "failed"
+    no_response     agy: the result's response is empty (the text deltas
+                    are the final message)
     writes          {relative path: content} written under the working dir
     tick / untick   to-do ids to tick or untick in task.md
     task_doc        task.md path (default: <--add-dir>/task.md)
@@ -399,60 +400,81 @@ def codex_main(argv):
     return 0
 
 
-def gemini_main(argv):
-    """`gemini` with the prompt on stdin: the stream-json shape of Gemini CLI
-    0.65.0 (init, message deltas, tool_use/tool_result, result with stats)."""
-    if "--version" in argv or "-v" in argv:
-        print("0.65.0")
+def agy_event(kind, **body):
+    return {"event": kind, kind: body}
+
+
+def agy_main(argv):
+    """`agy -p <prompt>`, in the stream-json shape Antigravity CLI 1.4.7
+    printed on 2026-10-24: each line `{"event": kind, kind: {...}}` (init,
+    step_update, result). The init event also carries what
+    the fake found: HOME, the settings file and the sign-in link under it, so a
+    suite can check
+    the dispatch's HOME and that it is gone afterwards."""
+    if "--version" in argv:
+        print("1.4.7")
         return 0
-    stdin = sys.stdin.read() if not sys.stdin.isatty() else ""
-    if not stdin.strip():
-        sys.stderr.write("No input provided via stdin.\n")
-        return 42
+    prompt = option(argv, "-p", "--print", "--prompt")
+    if not prompt:
+        sys.stderr.write("Error: no prompt given\n")
+        return 1
     scenario = load_scenario()
     log = log_path(scenario)
     number, step = next_call(scenario, log)
     cwd = Path.cwd()
-    record(log, "gemini", argv, cwd, stdin, number)
-    act(step, cwd, option(argv, "--include-directories"), scenario)
-    requested = option(argv, "-m", "--model") or "fake-model"
-    model = step.get("model", requested)
+    record(log, "agy", argv, cwd, "", number)
+    act(step, cwd, option(argv, "--add-dir"), scenario)
+    requested = option(argv, "--model") or "fake-model"
     final = None if step.get("no_final") else step.get("final", "fake final message")
-    session = "fake-gemini-session-%d" % number
+    conversation = "fake-agy-conversation-%d" % number
+    home = os.environ.get("HOME", "")
+    settings = Path(home, ".gemini", "antigravity-cli", "settings.json")
+    sign_in = Path(home, ".gemini", "antigravity-cli", "antigravity-oauth-token")
     sys.stdout.write(step.get("raw", ""))
-    emit({"type": "init", "session_id": session, "model": requested})
-    emit({"type": "message", "role": "user", "content": stdin})
+    emit(
+        agy_event(
+            "init",
+            cwd=str(cwd),
+            tools=["view_file", "write_to_file", "run_command"],
+            permission_mode="request-review",
+            model=requested,
+            fake_home=home,
+            fake_settings=settings.read_text() if settings.is_file() else None,
+            fake_sign_in=os.readlink(sign_in) if sign_in.is_symlink() else None,
+        )
+    )
     for event in step.get("events") or []:
         emit(event)
     if final is not None:
         half = len(final) // 2
         for chunk in (final[:half], final[half:]):
             emit(
-                {
-                    "type": "message",
-                    "role": "assistant",
-                    "content": chunk,
-                    "delta": True,
-                }
+                agy_event(
+                    "step_update",
+                    conversation_id=conversation,
+                    step_index=1,
+                    state="ACTIVE",
+                    step_type="agent_response",
+                    text_delta=chunk,
+                )
             )
-    models = {model: {"total_tokens": 160, "input_tokens": 120, "output_tokens": 40}}
-    for name in step.get("usage_extra") or []:
-        models[name] = {"total_tokens": 15, "input_tokens": 10, "output_tokens": 5}
     result = {
-        "type": "result",
-        "status": "error" if step.get("is_error") else "success",
-        "stats": {
-            "total_tokens": sum(m["total_tokens"] for m in models.values()),
-            "input_tokens": sum(m["input_tokens"] for m in models.values()),
-            "output_tokens": sum(m["output_tokens"] for m in models.values()),
-            "duration_ms": 9,
-            "tool_calls": 0,
-            "models": models,
+        "conversation_id": conversation,
+        "status": "ERROR" if step.get("is_error") else "SUCCESS",
+        "response": "" if step.get("no_response") else (final or ""),
+        "duration_seconds": 1.5,
+        "num_turns": 2,
+        "usage": {
+            "input_tokens": 120,
+            "output_tokens": 40,
+            "thinking_tokens": 7,
+            "cache_read_tokens": 30,
+            "total_tokens": 167,
         },
     }
     if step.get("is_error"):
-        result["error"] = {"type": "FatalError", "message": "fake failure"}
-    emit(result)
+        result["error"] = "fake failure"
+    emit(agy_event("result", **result))
     finish(step)
     return 0
 

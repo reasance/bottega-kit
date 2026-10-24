@@ -67,7 +67,7 @@ class Validation(unittest.TestCase):
             lambda c: c["profiles"]["opus-builder"].update(harness="qwen")
         )
         self.assertProblem(
-            value, "harness must be one of claude, codex, gemini, grok, kimi, muse"
+            value, "harness must be one of agy, claude, codex, grok, kimi, muse"
         )
 
     def test_model_must_be_non_empty(self):
@@ -93,8 +93,9 @@ class Validation(unittest.TestCase):
             ("grok", "low", True),
             ("grok", "xhigh", True),
             ("grok", "max", False),
-            ("gemini", "default", True),
-            ("gemini", "high", False),
+            ("agy", "low", True),
+            ("agy", "max", True),
+            ("agy", "default", False),
             ("muse", "none", True),
             ("muse", "ultra", True),
             ("muse", "extreme", False),
@@ -299,23 +300,23 @@ class Starter(unittest.TestCase):
         self.assertLessEqual({"sol-builder", "kimi"}, set(every["profiles"]))
         self.assertEqual(config.starter(["codex", "kimi"])["roles"], config.CODEX_ROLES)
 
-    def test_grok_gemini_muse(self):
-        for name, model, effort in (
-            ("grok", "grok-4.7", "high"),
-            ("gemini", "gemini-3.8-flash", "default"),
-            ("muse", "muse-wonder-1.0", "high"),
+    def test_grok_muse_agy(self):
+        for harness, name, model in (
+            ("grok", "grok", "grok-4.7"),
+            ("muse", "muse", "muse-wonder-1.0"),
+            ("agy", "gemini", "gemini-3.8-flash-high"),
         ):
-            with self.subTest(harness=name):
-                alone = config.starter([name])
+            with self.subTest(harness=harness):
+                alone = config.starter([harness])
                 self.assertEqual(
                     alone["profiles"],
-                    {name: {"harness": name, "model": model, "effort": effort}},
+                    {name: {"harness": harness, "model": model, "effort": "high"}},
                 )
                 self.assertEqual(
                     alone["roles"],
                     {"planner": name, "implementer": name, "reviewer": name},
                 )
-                with_claude = config.starter(["claude", name])
+                with_claude = config.starter(["claude", harness])
                 self.assertEqual(with_claude["roles"], config.CLAUDE_ROLES)
                 self.assertIn(name, with_claude["profiles"])
         # The first harness in the order of preference binds the roles.

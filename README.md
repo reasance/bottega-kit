@@ -1,9 +1,10 @@
 # bottega-kit
 
-bottega-kit runs a planner, an implementer, a reviewer and an optional judge on the
-coding agents you already have — Claude Code, Codex and Kimi Code today — one role each, in a
-git worktree, with a receipt for every step. You need git, gh, python3 and at least
-one of those CLIs.
+bottega-kit runs a planner, an implementer, a reviewer and an optional judge
+on the coding agents you already have — Claude Code, Codex, Kimi Code, Grok
+Build, Muse Code and the Antigravity CLI today — one role each, in a git
+worktree, with a receipt for every step. You need git, gh, python3 and at
+least one of those CLIs.
 
 Why roles: the agent that reviews the code is not the one that wrote it, and
 it can run on another model or another vendor. You read and approve the plan
@@ -28,8 +29,9 @@ bottega resume   after a stop, with a fresh cap
 
 A round is one implementer pass and one reviewer pass; the cap is 3 unless
 you change it. Each role runs under a profile from your configuration: a
-harness, which is the CLI that runs the role (`claude`, `codex` or `kimi`), a model
-and an effort. One profile may serve several roles.
+harness, which is the CLI that runs the role (`claude`, `codex`, `kimi`,
+`grok`, `muse` or `agy`), a model and an effort. One profile may serve
+several roles.
 
 ## Current release: 0.1.1
 
@@ -47,8 +49,9 @@ GitHub; 0.1.0 was verified with Claude Code 2.1.302 to 2.1.304 and Codex CLI
 - git
 - gh, logged in, for `bottega pr`
 - python3 3.9 or newer
-- at least one of `claude` (Claude Code), `codex` (Codex CLI) and `kimi`
-  (Kimi Code), logged in
+- at least one of `claude` (Claude Code), `codex` (Codex CLI), `kimi`
+  (Kimi Code), `grok` (Grok Build), `muse` (Muse Code) and `agy` (the
+  Antigravity CLI), logged in
 - node 18 or newer, only for `npx bottega-kit`
 
 ## Install
@@ -96,7 +99,9 @@ alone, `sol-builder` is the planner, the implementer and the reviewer, and
 there is no judge. With `kimi` on PATH, `init` writes a `kimi` profile
 (`kimi-code/k3.1-pro`, effort `high`) the same way: bound to the planner,
 the implementer and the reviewer when `kimi` is the only CLI it finds, to no
-role otherwise. Edit the file to bind the roles as you like; `bottega
+role otherwise. `grok`, `muse` and `agy` add a `grok` (`grok-4.7`), a `muse`
+(`muse-wonder-1.0`) and a `gemini` (`gemini-3.8-flash-high`) profile, all
+at effort `high`, the same way. Edit the file to bind the roles as you like; `bottega
 doctor` checks it.
 
 The whole sequence, from a repository with an `origin` on GitHub:
@@ -163,7 +168,8 @@ You pay your providers; bottega-kit adds nothing. Each Claude Code dispatch's
 cost, as Claude Code reports it, is `cost_usd` in its `run.json`. Codex
 reports none: its usage goes to your ChatGPT plan. Kimi Code reports no cost
 either: its usage goes to your Kimi Code plan, and `run.json` keeps the
-tokens from Kimi Code's session log. For scale, on 2026-10-23
+tokens from Kimi Code's session log. Grok Build reports a cost, kept in
+`cost_usd`; Muse Code and the Antigravity CLI report tokens only. For scale, on 2026-10-23
 the starter configuration above added an option to a 21-line Python CLI in
 one round: four dispatches, 2.07 USD and under five minutes, three quarters
 of it the Fable planner and judge. In the 0.1.0 runs, Sonnet at effort
@@ -270,9 +276,9 @@ A stopped task continues with `bottega resume <task> [--rounds N]`.
 
 - Retry a failed dispatch, fall back to another model, or substitute a profile.
 - Bring a model of its own. Every dispatch runs a profile you bound. Claude
-  Code reports the model it ran, and it must be the one you asked for; Codex
-  and Kimi Code report none, so their receipts say `requested-only` and rest
-  on the request.
+  Code, Grok Build and Muse Code report the model they ran, and it must be
+  the one you asked for; Codex, Kimi Code and the Antigravity CLI report
+  none, so their receipts say `requested-only` and rest on the request.
 - Put a secret in its configuration, its prompts, a task or a receipt.
   Profiles name environment variables; the key file you keep at mode 600 may
   hold their values; receipts record names, never values.

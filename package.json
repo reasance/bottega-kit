@@ -1,6 +1,6 @@
 {
   "name": "bottega-kit",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A planner, an implementer, a reviewer and an optional judge on the coding agents you already have, in a git worktree, with a receipt for every step.",
   "keywords": [
     "claude-code",

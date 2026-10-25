@@ -10,49 +10,60 @@ before tagging. Numbers are never carried forward from an earlier release.
 
 ## Verified snapshot
 
-**0.1.1, verified live on 2026-10-23** on macOS 26.5.1 (Darwin 25.5.0),
-python3 3.15.0, git 2.50.1, gh 2.103.0 and Claude Code 2.1.309, through an
-install of the release commit in a scratch directory. One task on a
-throwaway repository: a 21-line Python CLI with a two-test unittest suite,
-on a private GitHub repository created for the run. The configuration was
-the starter `bottega init` writes, with `timeout` 1800 and
-`max_budget_usd` 3 added to each profile; the shipped prompts, no override.
+**0.2.0, verified live on 2026-10-25** on macOS 26.5.1 (Darwin 25.5.0),
+python3 3.15.0, git 2.50.1 and gh 2.103.2, through an install of `main` at
+the merge of the harness pull request (`05d4015`) in a scratch directory.
+CLIs: Grok Build 1.0.62, Muse Code 1.4.13, Antigravity CLI 1.4.7. One task
+on a throwaway repository: a 21-line Python CLI with a two-test unittest
+suite, on a private GitHub repository created for the run. The
+configuration was the starter `bottega init` writes, with `timeout` 1800 on
+the `grok`, `muse` and `gemini` profiles and `rounds` 1; the roles were
+bound with `bottega new --role`, one harness per role; the shipped prompts,
+no override.
 
 | task | roles | dispatches | result |
 |---|---|---|---|
-| add a `--times N` option, N at least 1 | `fable` (`claude-fable-5-1`, max) as planner and judge, `opus-builder` and `opus-reviewer` (`claude-opus-5-5`, high) | 4 | done in round 1 of 3; then `bottega pr` |
+| add a `--times N` option, N at least 1 | `grok` (`grok-4.7`, high) as planner and judge, `muse` (`muse-wonder-1.0`, high) as implementer, `gemini` on `agy` (`gemini-3.8-flash-high`, high) as reviewer | 4 | done in round 1 of 1; then `bottega pr` |
 
-Per dispatch (duration, and cost as Claude Code reported it):
+Per dispatch:
 
 | seq | role | harness | reported model | duration | cost USD | signal |
 |---|---|---|---|---|---|---|
-| 1 | planner | claude | claude-fable-5-1 | 160 s | 0.908 | — (plan) |
-| 2 | implementer | claude | claude-opus-5-5 | 34 s | 0.243 | — |
-| 3 | reviewer | claude | claude-opus-5-5 | 30 s | 0.235 | ready |
-| 4 | judge | claude | claude-fable-5-1 | 49 s | 0.686 | ready |
+| 1 | planner | grok | grok-4.7 (observed: grok-4.7, grok-4.7-build) | 154 s | 0.049 | — (plan) |
+| 2 | implementer | muse | muse-wonder-1.0 | 62 s | — | — |
+| 3 | reviewer | agy | — (requested-only) | 144 s | — | ready |
+| 4 | judge | grok | grok-4.7 (observed: grok-4.7, grok-4.7-build) | 63 s | 0.037 | ready |
 
-Four dispatches, 2.07 USD, 4 min 33 s of dispatch time.
+Four dispatches, 7 min 3 s of dispatch time. Grok Build reported 0.086 USD
+for its two; Muse Code and `agy` report tokens only, on their plans. At API
+list prices (in the sections below) the run is about 0.80 USD: grok 0.25,
+muse 0.41 (756,208 input tokens, 712,988 of them cached, 4,531 output), agy
+0.14 (81,788 input, 472,837 cache read, 10,800 output).
 
 What the run showed:
 
-- Every receipt says `model_identity_source: provider-reported`, and each
-  reported name is the requested one; the starter needs no alias.
-- The planner asked nothing: it listed eight decisions in the Overview "for
-  the reviewer to audit", and seven to-do items. The implementer changed
-  only the three files the plan named; the unit suite went from 2 to 8
-  tests. The reviewer ran the suite and all nine manual QA commands, and
-  one more of its own; the judge read the diff and signalled `ready`.
-- No permission denial in any `result` event, and no warning in any
-  `run.json`: no commit by the implementer, no new untracked file left by a
-  read-only role.
-- `bottega pr` committed the three files with the task title, pushed the
+- The grok and muse receipts say `model_identity_source:
+  provider-reported`, with the requested name; the agy receipt says
+  `requested-only`, as the `agy` section says it must.
+- The planner asked nothing: six decisions in the Overview, three phases,
+  five to-do items. The implementer changed only the three files the plan
+  named; the suite went from 2 to 11 tests. The reviewer ran the suite and
+  the three manual QA scenarios and signalled `ready`; the judge read the
+  diff and signalled `ready`.
+- No warning in any `run.json`: no commit by the implementer, no new
+  untracked file left by a read-only role.
+- `bottega pr` committed the worktree with the task title, pushed the
   branch over ssh and opened the pull request; a second `pr` printed
-  `pr exists: <url>`.
+  `pr exists: <url>`. It also committed two `__pycache__/*.pyc` files: the
+  greeter has no `.gitignore`, and the check of the worktree before `pr`
+  ran `python3 -m unittest` there. `pr` commits everything in the
+  worktree (`git add -A`), so read `git status` there before it.
 - Nothing failed.
 
-Not run for 0.1.1: Codex (0.164.0 is installed; the last Codex run was
-0.163.0, in the 0.1.0 snapshot below), and the `questions`, `needs-work`,
-`blocked` and `resume` paths, which the offline suites cover.
+Not run for 0.2.0: Claude Code (2.1.310 is installed; the last Claude Code
+run is the 0.1.1 snapshot below), Codex, and Kimi Code (the live run of
+2026-10-23 below). The `questions`, `needs-work`, `blocked` and `resume`
+paths are covered by the offline suites.
 
 ### Proxied profiles, 2026-10-23, after the 0.1.1 tag
 
@@ -529,6 +540,54 @@ node --test tests/npm-installer.test.mjs
 The release gate (`CLAUDE.md`, "Before tagging") is one live end-to-end run,
 `new`, `plan`, `approve`, `run`, `pr`, on a throwaway repository, run only
 when the owner authorizes it. Its results replace the snapshot above.
+
+## The 0.1.1 snapshot
+
+Kept as it was recorded for 0.1.1 and not re-run since.
+
+**0.1.1, verified live on 2026-10-23** on macOS 26.5.1 (Darwin 25.5.0),
+python3 3.15.0, git 2.50.1, gh 2.103.0 and Claude Code 2.1.309, through an
+install of the release commit in a scratch directory. One task on a
+throwaway repository: a 21-line Python CLI with a two-test unittest suite,
+on a private GitHub repository created for the run. The configuration was
+the starter `bottega init` writes, with `timeout` 1800 and
+`max_budget_usd` 3 added to each profile; the shipped prompts, no override.
+
+| task | roles | dispatches | result |
+|---|---|---|---|
+| add a `--times N` option, N at least 1 | `fable` (`claude-fable-5-1`, max) as planner and judge, `opus-builder` and `opus-reviewer` (`claude-opus-5-5`, high) | 4 | done in round 1 of 3; then `bottega pr` |
+
+Per dispatch (duration, and cost as Claude Code reported it):
+
+| seq | role | harness | reported model | duration | cost USD | signal |
+|---|---|---|---|---|---|---|
+| 1 | planner | claude | claude-fable-5-1 | 160 s | 0.908 | — (plan) |
+| 2 | implementer | claude | claude-opus-5-5 | 34 s | 0.243 | — |
+| 3 | reviewer | claude | claude-opus-5-5 | 30 s | 0.235 | ready |
+| 4 | judge | claude | claude-fable-5-1 | 49 s | 0.686 | ready |
+
+Four dispatches, 2.07 USD, 4 min 33 s of dispatch time.
+
+What the run showed:
+
+- Every receipt says `model_identity_source: provider-reported`, and each
+  reported name is the requested one; the starter needs no alias.
+- The planner asked nothing: it listed eight decisions in the Overview "for
+  the reviewer to audit", and seven to-do items. The implementer changed
+  only the three files the plan named; the unit suite went from 2 to 8
+  tests. The reviewer ran the suite and all nine manual QA commands, and
+  one more of its own; the judge read the diff and signalled `ready`.
+- No permission denial in any `result` event, and no warning in any
+  `run.json`: no commit by the implementer, no new untracked file left by a
+  read-only role.
+- `bottega pr` committed the three files with the task title, pushed the
+  branch over ssh and opened the pull request; a second `pr` printed
+  `pr exists: <url>`.
+- Nothing failed.
+
+Not run for 0.1.1: Codex (0.164.0 is installed; the last Codex run was
+0.163.0, in the 0.1.0 snapshot below), and the `questions`, `needs-work`,
+`blocked` and `resume` paths, which the offline suites cover.
 
 ## The 0.1.0 snapshot
 

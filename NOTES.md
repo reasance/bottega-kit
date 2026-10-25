@@ -1046,9 +1046,42 @@ probes on the owner's subscriptions:
   owner's OK, one `GET https://api.moonshot.ai/v1/models` on the owner's
   key listed `kimi-k2.6`, `kimi-k2.7-code`, `kimi-k2.7-code-highspeed`,
   `kimi-k3` and `kimi-k3.1-pro`; no dispatch has tried K3.1 Pro on the
-  Anthropic endpoint since its 404, so the examples keep `kimi-k3`; `grok-4.7` 2 / 0.50 / 6 below a 200 k
-  prompt (docs.x.ai); Gemini 3.8 Flash 0.75 / 0.075 / 3.75 until
+  Anthropic endpoint since its 404, so the examples keep `kimi-k3`;
+  `grok-4.7` 2 / 0.50 / 6 below a 200 k prompt (docs.x.ai); Gemini 3.8 Flash 0.75 / 0.075 / 3.75 until
   2026-12-31, double from 2027-01-01 (ai.google.dev). `muse-wonder-1.0` at
   4 / 0.20 / 20 comes only from third-party copies of Meta's announcement.
   Grok Build's own `cost_usd` was 0.34 times the `grok-4.7` list price on
   every dispatch of the run; why is not documented.
+
+## 2026-10-25 — 0.2.0: a live run on the new harnesses
+
+The owner gave the word for 0.2.0 ("ok per entrambe", for the release and
+the Kimi model-list check) and chose one live run of four dispatches on
+the new harnesses ("Un run, 4 dispatch") over the runs of 2026-10-24 alone
+or the Claude starter. One task, "add a `--times N` option", on a
+throwaway greeter repository pushed to a private
+`matteoscurati/bottega-probe-020`, through an install of `main` at the
+merge of the harness pull request (`05d4015`) in the session scratchpad
+(`BOTTEGA_DATA_HOME` and `BOTTEGA_BIN_HOME` there; the configuration was a
+temporary `~/.config/bottega-kit/config.json` written by `bottega init`,
+removed afterwards, since moving `XDG_CONFIG_HOME` would have moved the
+harnesses' own sign-ins too). Planner and judge `grok` (`grok-4.7`, Grok
+Build 1.0.62), implementer `muse` (`muse-wonder-1.0`, Muse Code 1.4.13),
+reviewer `gemini` on `agy` (`gemini-3.8-flash-high`, Antigravity CLI
+1.4.7), all at effort `high`, `timeout` 1800, `rounds` 1 so that a
+`needs-work` could not dispatch beyond the four authorized.
+
+Four dispatches, done in round 1 of 1; Grok Build reported 0.086 USD,
+about 0.80 USD at list prices for the whole run. `bottega pr` opened the
+pull request and a second `pr` printed `pr exists:`. No warning, nothing
+in `HARNESS_MATRIX` changes. The pull request also holds two
+`__pycache__/*.pyc` files, from the `python3 -m unittest` run in the
+worktree to check it before `pr`; the greeter has no `.gitignore` and
+`pr` commits with `git add -A`, as documented. Recorded in the snapshot as
+observed, not changed.
+
+`docs/compatibility.md`: the "Verified snapshot" is this run; the 0.1.1
+snapshot moves, unchanged, to a section of its own above the 0.1.0 one,
+marked as not re-run. The dated live sections of 2026-10-23 and
+2026-10-24 stay under the snapshot. `docs/later.md`'s "0.2.0 candidates"
+become "Next-version candidates", none of them done.

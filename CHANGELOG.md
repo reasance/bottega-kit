@@ -4,10 +4,15 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-10-25
+
+Four new harnesses: Kimi Code, Grok Build, Muse Code and the Antigravity
+CLI, next to Claude Code and Codex.
+
 **Documentation.** MiniMax M3.1 Flash and Kimi K3 as proxied `claude`
 profiles: README examples, a table of the Anthropic-compatible endpoints
 that have run live in `docs/configuration.md`, and the two live runs of
-2026-10-23 in `docs/compatibility.md`. No code changes.
+2026-10-23 in `docs/compatibility.md`.
 
 **A third harness: Kimi Code.** `"harness": "kimi"` runs a role with
 `kimi -p` on your own Kimi Code login, for instance
@@ -41,6 +46,13 @@ Verified live on 2026-10-23 with Kimi Code 2.3.1 and K3.1 Pro in every role.
 - For all three, `git push` to origin and `gh` fail through the
   environment, as for `kimi`. `bottega init` adds a `grok`, `muse` or
   `gemini` profile for each CLI it finds.
+
+**Verification.** `docs/compatibility.md` has a new verified snapshot: one
+live task on 2026-10-25 with Grok Build as planner and judge, Muse Code as
+implementer and the Antigravity CLI as reviewer, done in round 1, then
+`bottega pr` on GitHub. The 0.1.1 snapshot is kept below it, marked as not
+re-run. Kimi Code's run of 2026-10-23 and the Grok, Muse and Antigravity
+runs of 2026-10-24 are kept beside it, dated.
 
 ## [0.1.1] — 2026-10-23
 

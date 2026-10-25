@@ -4,7 +4,7 @@ Ideas that do not serve the loop in 0.1.0. Each one is a line here, not code,
 until the owner decides otherwise. Seeded from the work plan (§7 and M4) and
 refreshed for 0.1.0 on 2026-10-17 with what the milestones deferred.
 
-## 0.2.0 candidates (M4; not started without the owner's word)
+## Next-version candidates (M4; not started without the owner's word)
 
 - An `openai-compatible` text-patch harness (DeepSeek, Qwen, the GLM API, local
   endpoints): a context pack (`git ls-files`, `bottega.json`, files the plan lists

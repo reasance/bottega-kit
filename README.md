@@ -33,15 +33,15 @@ harness, which is the CLI that runs the role (`claude`, `codex`, `kimi`,
 `grok`, `muse` or `agy`), a model and an effort. One profile may serve
 several roles.
 
-## Current release: 0.1.1
+## Current release: 0.2.0
 
-Documentation: what to do after `run`, a task followed end to end, what a
-task costs. The commands are those of 0.1.0: `init`, `doctor`, `new`,
-`plan`, `approve`, `run`, `resume`, `pr` and the task commands, on the
-`claude` and `codex` harnesses. 0.1.1 was verified live on 2026-10-23 with
-Claude Code 2.1.309 and the starter configuration, through `bottega pr` on
-GitHub; 0.1.0 was verified with Claude Code 2.1.302 to 2.1.304 and Codex CLI
-0.163.0, each in every role, and a reviewer on Z.AI's endpoint. See
+Four new harnesses: `kimi` (Kimi Code), `grok` (Grok Build), `muse` (Muse
+Code) and `agy` (the Antigravity CLI), next to `claude` and `codex`; the
+commands are those of 0.1.0. 0.2.0 was verified live on 2026-10-25 with one
+task through `bottega pr` on GitHub: Grok Build 1.0.62 as planner and
+judge, Muse Code 1.4.13 as implementer, the Antigravity CLI 1.4.7 as
+reviewer. Kimi Code 2.3.1 ran every role on 2026-10-23; Claude Code was last
+verified with 2.1.309 for 0.1.1, Codex CLI with 0.163.0 for 0.1.0. See
 [docs/compatibility.md](docs/compatibility.md).
 
 ## What you need
@@ -175,7 +175,10 @@ scale, on 2026-10-23 the starter configuration above added an option to a
 minutes, three quarters of it the Fable planner and judge. On 2026-10-24
 the same task took 0.27 USD on Grok Build, as it reported it, and would
 have taken about 0.86 USD on Muse Code and 0.50 USD on the Antigravity CLI
-at API list prices (both bill a subscription). In the 0.1.0 runs, Sonnet at
+at API list prices (both bill a subscription). On 2026-10-25 the 0.2.0 run,
+with the planner and judge on Grok Build, the implementer on Muse Code and
+the reviewer on the Antigravity CLI, took 0.086 USD as Grok Build reported
+it, about 0.80 USD at list prices. In the 0.1.0 runs, Sonnet at
 effort `medium` cost 0.03 to 0.08 USD a dispatch on the same kind of task. A larger
 task costs more: more files to read, more rounds.
 [docs/compatibility.md](docs/compatibility.md) lists every dispatch of the

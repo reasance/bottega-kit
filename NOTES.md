@@ -1042,8 +1042,11 @@ probes on the owner's subscriptions:
   GLM-5.3-Flash 0.15 / 0.03 cached / 0.50 (docs.z.ai), both as the docs had
   them; kimi-k3 3 / 0.30 cached / 15, with cache writes at 3 (5 min) and
   6 (1 h), read from the source of platform.kimi.ai's price page, which
-  also lists `kimi-k3.1-pro` at 2 / 10 / 0.20 (whether the owner's key is
-  served it now was not rechecked); `grok-4.7` 2 / 0.50 / 6 below a 200 k
+  also lists `kimi-k3.1-pro` at 2 / 10 / 0.20. On 2026-10-25, with the
+  owner's OK, one `GET https://api.moonshot.ai/v1/models` on the owner's
+  key listed `kimi-k2.6`, `kimi-k2.7-code`, `kimi-k2.7-code-highspeed`,
+  `kimi-k3` and `kimi-k3.1-pro`; no dispatch has tried K3.1 Pro on the
+  Anthropic endpoint since its 404, so the examples keep `kimi-k3`; `grok-4.7` 2 / 0.50 / 6 below a 200 k
   prompt (docs.x.ai); Gemini 3.8 Flash 0.75 / 0.075 / 3.75 until
   2026-12-31, double from 2027-01-01 (ai.google.dev). `muse-wonder-1.0` at
   4 / 0.20 / 20 comes only from third-party copies of Meta's announcement.

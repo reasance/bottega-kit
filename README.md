@@ -233,8 +233,9 @@ endpoint. Both ran planner, implementer and reviewer live on 2026-10-23:
 ```
 
 The Kimi key is a Kimi Platform API key, not the login of the `kimi` CLI.
-Kimi K3.1 Pro is not on that API yet; when `GET /v1/models` lists it, change
-`model` and the three `ANTHROPIC_DEFAULT_*` values. With a Kimi Code login,
+Since 2026-10-25 `GET /v1/models` lists `kimi-k3.1-pro` too; it has not run
+through the Anthropic endpoint yet (on 2026-10-23 it answered 404 there). To
+try it, change `model` and the three `ANTHROPIC_DEFAULT_*` values. With a Kimi Code login,
 the `kimi` harness runs K3.1 Pro without a key (the `kimi` profile `init`
 writes). See [docs/configuration.md](docs/configuration.md).
 

@@ -90,7 +90,8 @@ in the README. Keys came from `secrets.env`.
 - `kimi-k3.1-pro`, released the same day, answered 404 on Moonshot's
   Anthropic endpoint for this key; `GET https://api.moonshot.ai/v1/models`
   listed `kimi-k2.6`, `kimi-k2.7-code`, `kimi-k2.7-code-highspeed` and
-  `kimi-k3`.
+  `kimi-k3`. On 2026-10-25 the same list, for the same key, also has
+  `kimi-k3.1-pro`; no dispatch has tried it since.
 
 ### Kimi Code, native, 2026-10-23
 
@@ -492,8 +493,9 @@ Still unverified after the live runs, this release's and 0.1.0's:
 - `bottega pr` with `--repo` on a GitHub Enterprise host (github.com is
   verified);
 - Codex CLI 0.164.0, in any role;
-- Kimi K3.1 Pro through Moonshot's Anthropic endpoint: not served to the
-  key used on 2026-10-23; `kimi-k3` is verified;
+- Kimi K3.1 Pro through Moonshot's Anthropic endpoint: it answered 404 on
+  2026-10-23, and `GET /v1/models` lists it since 2026-10-25, with no
+  dispatch since; `kimi-k3` is verified;
 - Kimi Code with another provider than its own Kimi Code login, and
   with a `KIMI_CODE_HOME` of its own;
 - Grok Build's `--deny MCPTool` against a call through `use_tool`;

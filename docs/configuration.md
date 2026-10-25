@@ -114,7 +114,8 @@ Set `ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL` and
 Code makes on its own also go to that model; on 2026-10-23 every MiniMax and
 Kimi receipt listed that model alone. A model the endpoint does not serve
 fails the dispatch: on 2026-10-23 `kimi-k3.1-pro` answered 404 on Moonshot's
-endpoint, and its `GET /v1/models` listed up to `kimi-k3`.
+endpoint, and its `GET /v1/models` listed up to `kimi-k3`. On 2026-10-25 the
+same list includes `kimi-k3.1-pro`; no dispatch has tried it since.
 
 Harnesses authenticate on their own: Claude Code through its login or
 keychain, Codex through `~/.codex`, Kimi Code through `kimi login` and

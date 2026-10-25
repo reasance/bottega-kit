@@ -1085,3 +1085,22 @@ snapshot moves, unchanged, to a section of its own above the 0.1.0 one,
 marked as not re-run. The dated live sections of 2026-10-23 and
 2026-10-24 stay under the snapshot. `docs/later.md`'s "0.2.0 candidates"
 become "Next-version candidates", none of them done.
+
+## 2026-10-25 — 0.2.0 published by hand
+
+The tag push ran `publish-npm.yml` (run 40174444686): the guards passed
+(tag against `package.json`, the version check with `--tag`, the npm
+wrapper test, 7 of 7), and the publish failed with `E403 OIDC permission
+denied`, as for 0.1.1 (npm/cli#9969). The owner published by hand with
+two-factor, from the main checkout rather than a worktree of the tag: it
+was at the tag's commit (`4061dea`) with nothing tracked changed, and
+`npm pack --dry-run` there gave the shasum the CI run built,
+`1d6dc7a2042eb3e7d0970773cabd91e0e704d690`; `files` in `package.json`
+keeps ignored and untracked files out of the tarball. npm serves 0.2.0 as
+`latest` since 08:06 UTC, without provenance, with the same shasum.
+
+npm warns at every publish, CI and by hand alike, that the `bin` entry
+"was invalid and removed" and suggests `npm pkg fix`; the registry keeps
+`bin: {"bottega-kit": "bin/npm-installer.mjs"}` for 0.1.1 and 0.2.0 alike,
+and `npx bottega-kit@0.2.0 --help`, from an empty npm cache, prints the
+usage. Why npm warns is not established; `package.json` is unchanged.

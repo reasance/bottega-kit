@@ -1114,4 +1114,11 @@ usage. Why npm warns is not established; `package.json` is unchanged.
   found `gh` logged out: `gh` follows `XDG_CONFIG_HOME` too. `GH_CONFIG_DIR`
   fixed it for the run. Not a bottega bug; recorded in
   `docs/compatibility.md` so the next live run isolates differently.
+- **Published by hand.** The tag `bottega-kit--v0.3.0` (merge `21f434d`)
+  ran `publish-npm.yml`: the guards passed and the publish failed with
+  `E403 OIDC permission denied`, as for 0.1.1 and 0.2.0 (npm/cli#9969). The
+  owner published by hand with two-factor from the main checkout at the
+  tag, nothing tracked changed; `npm pack --dry-run` there gave shasum
+  `b875a2c81a0b9be51093271f2e25afabc8d29db3`, and npm serves 0.3.0 as
+  `latest` with the same shasum, without provenance.
 

@@ -78,9 +78,11 @@ in the README. Keys came from `secrets.env`.
   million), about 36 times less.
 - Kimi, "add a `--shout` flag": done in round 1, 4 tests passing. Claude
   Code priced it at 0.34 USD; its tokens (1,372 input, 93,440 cache reads,
-  4,853 output) cost 0.105 USD at Moonshot's K3 price (3 input, 0.30 cache
-  hit, 15 output per million, as published copies of its price page give it;
-  the page itself renders its table in the browser), about a third.
+  4,853 output) cost 0.105 USD at Moonshot's K3 price (3 input, 0.30
+  cached input, 15 output per million; read on 2026-10-24 from the source
+  of platform.kimi.ai's price page, whose table renders only in the
+  browser), about a third. The page also prices cache writes, 3 for a
+  5-minute and 6 for a 1-hour entry; the figure counts none.
 - Every receipt says `model_identity_source: provider-reported` with the
   requested name and no other model, so no alias was needed and Claude
   Code's own requests stayed on the endpoint. No permission denial, no
@@ -88,7 +90,8 @@ in the README. Keys came from `secrets.env`.
 - `kimi-k3.1-pro`, released the same day, answered 404 on Moonshot's
   Anthropic endpoint for this key; `GET https://api.moonshot.ai/v1/models`
   listed `kimi-k2.6`, `kimi-k2.7-code`, `kimi-k2.7-code-highspeed` and
-  `kimi-k3`.
+  `kimi-k3`. On 2026-10-25 the same list, for the same key, also has
+  `kimi-k3.1-pro`; no dispatch has tried it since.
 
 ### Kimi Code, native, 2026-10-23
 
@@ -121,6 +124,100 @@ pointed nowhere:
 - `kimi -p ""` with the prompt on stdin exits 1, "Prompt cannot be empty":
   hence the prompt as an argument.
 
+### Grok Build, native, 2026-10-24
+
+Grok Build 1.0.62, signed in to grok.com, `grok-4.7` at effort `high` in
+every role, from the `more-harnesses` branch checkout, the shipped prompts,
+cap 2. The same task, "add a `--times N` option", on a local throwaway
+greeter repository whose `origin` was a local bare repository:
+
+| seq | role | duration | turns | cost USD | signal |
+|---|---|---|---|---|---|
+| 1 | planner | 195 s | 4 | 0.060 | — (plan) |
+| 2 | implementer | 88 s | 9 | 0.091 | — |
+| 3 | reviewer | 148 s | 7 | 0.082 | ready |
+| 4 | judge | 45 s | 5 | 0.039 | ready |
+
+- Done in round 1, 0.27 USD in all as Grok Build reported it; the judge's
+  verdict was "Merge: yes". Every dispatch's `cost_usd` is its tokens at
+  0.68 input, 0.17 cached input and 2.04 output per million: 0.34 times the
+  `grok-4.7` API list price on docs.x.ai on 2026-10-24 (2, 0.50, 6 below a
+  200 k prompt), at which the run would have cost 0.80 USD.
+  Every receipt reports `grok-4.7`, the requested name; `modelUsage` also
+  names `grok-4.7-build`, recorded as observed. The rails were unchanged
+  for the read-only roles; the implementer's test run left `__pycache__/`.
+- Before the run, two dispatches built by the harness: the planner could
+  read but had no write and no shell tool; the implementer ticked a box in
+  `task.md` and committed, `git push origin HEAD` and `gh auth status` were
+  denied by Grok's rules, and the bare `git push` and `/usr/bin/git push
+  origin HEAD` failed on the push guard ("'remote-bottega-push-disabled' is
+  not a git command"). The local origin kept its one commit.
+- Grok's `init` event lists `search_tool` and `use_tool` besides the
+  role's tools: the meta-tools for MCP servers it loads from
+  `~/.claude/plugins`. `--deny MCPTool` refuses their calls; that was not
+  exercised live.
+
+### Muse Code, native, 2026-10-24
+
+Muse Code 1.4.12, signed in with an active subscription,
+`muse-wonder-1.0` at effort `high` in every role, the same branch, prompts,
+cap and task:
+
+| seq | role | duration | calls | tokens in / cached / out | signal |
+|---|---|---|---|---|---|
+| 1 | planner | 26 s | 4 | 112,408 / 83,548 / 3,166 | — (plan) |
+| 2 | implementer | 33 s | 12 | 437,248 / 397,308 / 2,948 | — |
+| 3 | reviewer | 18 s | 6 | 207,231 / 170,820 / 1,196 | ready |
+| 4 | judge | 10 s | 3 | 95,255 / 62,696 / 828 | ready |
+
+- Done in round 1; the judge's verdict was "Merge: yes". Every receipt
+  reports `muse-wonder-1.0`, checked against the request. The usage went to
+  the Muse Code subscription; at the API price published for
+  `muse-wonder-1.0` (4 input, 0.20 cached input, 20 output per million, in
+  third-party copies of Meta's announcement, not read at Meta) the run
+  would have cost about 0.86 USD. The reviewer's
+  and judge's `bottega signal` wrote into the task directory from inside
+  Muse Code's sandbox.
+- Before the run, two dispatches built by the harness: the planner had no
+  write and no shell tool and could read the worktree and `task.md`; the
+  implementer ticked a box in `task.md` (outside `--workspace`) and
+  committed; `git push origin HEAD`, `git push` and `/usr/bin/git push
+  origin HEAD` failed on the push guard and `gh auth status` failed.
+- Muse Code loaded 41 user skills in every dispatch.
+
+### Antigravity CLI, native, 2026-10-24
+
+Antigravity CLI (`agy`) 1.4.7, signed in with a Google account,
+`gemini-3.8-flash-high` at effort `high` in every role, the same branch,
+prompts, cap and task:
+
+| seq | role | duration | tokens in / thinking / out | signal |
+|---|---|---|---|---|
+| 1 | planner | 79 s | 87,698 / 5,801 / 9,337 | — (plan) |
+| 2 | implementer | 144 s | 95,648 / 4,464 / 9,723 | — |
+| 3 | reviewer | 98 s | 71,939 / 3,994 / 5,719 | ready |
+| 4 | judge | 50 s | 96,316 / 2,286 / 3,249 | ready |
+
+- Done in round 1; the judge's verdict was "Merge: yes". Every receipt
+  says `requested-only`. The usage went to the Google account `agy` signs
+  in with; at the Gemini API's paid price for Gemini 3.8 Flash on
+  ai.google.dev on 2026-10-24 (0.75 input, 0.075 cached input, 3.75 output
+  and thinking per million, until 2026-12-31; double from 2027-01-01) the
+  run would have cost about 0.50 USD. No new untracked file, the rails unchanged for the
+  read-only roles, no dispatch HOME left behind. The planner's `ls -la` was
+  refused by `command(*)`; the reviewer ran the tests and both signals
+  reached the task directory from inside the sandbox.
+- Before the run, two dispatches built by an earlier version of the
+  harness: the planner's `write_file` and `echo hi` were refused by the
+  deny rules; the implementer edited `task.md` and wrote a file, `git push
+  origin HEAD`, a bare `git push` and `gh auth status` were refused by the
+  `command(...)` rules. They also showed the three faults fixed before the
+  run: the nested stream shape, the task directory taken as the working
+  directory, and git failing on an unreadable `~/.gitconfig`.
+- With an empty HOME and no link, `agy` asked for a browser sign-in and
+  timed out after 60 s: on this machine the sign-in is the
+  `antigravity-oauth-token` file, not the keychain.
+
 ## The harness matrix
 
 Every flag lives in `HARNESS_MATRIX`, in `bin/lib/bottega/harness/__init__.py`,
@@ -130,10 +227,11 @@ pins each cell.
 ### Common to all
 
 - The working directory is the task's worktree; the prompt goes on stdin,
-  except for `kimi` (below).
+  except for `kimi` and `agy` (the value of `-p`) and `grok` and `muse`
+  (`--prompt-file`).
 - The environment is yours plus the profile's `env` (see
-  [configuration.md](configuration.md) for proxied Claude profiles), and for
-  `kimi` the variables below.
+  [configuration.md](configuration.md) for proxied Claude profiles), and
+  for `kimi`, `grok`, `muse` and `agy` the variables below.
 - A profile `timeout` kills the harness's process group; the task stops with
   `timeout`. After every run the process group is killed, so nothing the
   agent started outlives the dispatch.
@@ -246,6 +344,138 @@ log leaves only `session_id`.
 Not narrowed: your Kimi Code hooks run, and your MCP servers start, though
 the agent file gives the role none of their tools.
 
+### grok
+
+Base command:
+
+```
+grok --prompt-file <run dir>/prompt.md --output-format streaming-messages-json
+  -m <model> --reasoning-effort <effort> --no-subagents --disable-web-search
+  --no-auto-update --deny MCPTool
+```
+
+Grok Build reads no prompt from stdin; `--prompt-file` makes the run
+headless.
+
+| role | added flags |
+|---|---|
+| planner | `--permission-mode dontAsk --tools read_file,grep,list_dir` |
+| implementer | `--permission-mode acceptEdits --tools read_file,grep,list_dir,search_replace,write,run_terminal_cmd --allow Bash --allow "Edit(<task dir>/**)" --deny "Bash(git push *)" --deny "Bash(gh *)"` |
+| reviewer | `--permission-mode dontAsk --tools read_file,grep,list_dir,run_terminal_cmd --allow Bash --deny "Bash(git push *)" --deny "Bash(gh *)" --deny "Bash(git commit *)"` |
+| judge | `--permission-mode dontAsk --tools read_file,grep,list_dir,run_terminal_cmd --allow "Bash(git diff *)" "Bash(git log *)" "Bash(git show *)" "Bash(<bottega> signal *)"` |
+
+The flags follow Claude Code's: `--tools` is the role's tool set, a deny
+rule beats every allow, and `dontAsk` refuses what no rule allows. Unlike
+Claude Code's, `Bash(git push *)` does not match a bare `git push`, so the
+push and gh guards below stand behind the deny rules.
+
+Environment added to yours: `GROK_CLAUDE_{AGENTS,HOOKS,MCPS,RULES,SKILLS}_ENABLED=0`
+and the same five `GROK_CURSOR_*` variables, so Grok Build does not load
+Claude Code's or Cursor's configuration; `GROK_DISABLE_AUTOUPDATER=1`; and
+the push and gh guards of `kimi` (`remote.origin.pushurl` through
+`GIT_CONFIG_*`, a `GH_TOKEN` GitHub refuses).
+
+The stream is Claude Code's `stream-json` shape and is read the same way:
+the final message, usage and `total_cost_usd` from the `result` event, the
+model from the `system/init` and `assistant` events. Grok writes the
+literal name `unknown` when it has none; that name is dropped. The model
+reported is the requested one (`grok-4.7`); `modelUsage` also names a
+`grok-4.7-build`, which is recorded as observed and never compared.
+
+Not narrowed: Grok Build's own plugins, hooks (`~/.grok/hooks`) and the
+plugins it loads from `~/.claude/plugins` still run, and the permission
+allows in `~/.claude/settings.local.json` still apply; `GROK_CONFIG` takes
+only an allowlist of keys, none of which turns them off. `--deny MCPTool`
+keeps every MCP tool from the role.
+
+### muse
+
+Base command:
+
+```
+muse exec --json --prompt-file <run dir>/prompt.md --model <model>
+  --reasoning-effort <effort> --contributor-mode off --workspace <worktree>
+  --no-session-log --no-foreign-personal-context --disable-web-tools
+  --disable-reminders --disable-request-user-input --approval-mode never
+  --approval-judge off
+```
+
+| role | added flags |
+|---|---|
+| planner | `--disable-write --disable-shell` |
+| implementer | none |
+| reviewer | `--disable-write` |
+| judge | `--disable-write` |
+
+`--contributor-mode off` is passed on every dispatch, whatever your Muse
+Code setting, so no session is shared for training. `--approval-mode never`
+with the judge off means nothing asks; the sandbox stays on. Muse Code has
+no deny rule for a shell command, so the reviewer and judge shells are
+whole, and `kimi`'s push and gh guards are set, with
+`MUSE_NO_AUTO_UPDATE=1`.
+
+Each `--json` line is a record whose `.payload.kind` says what it is. The
+final message is the `run_terminal` payload's `.text` when its `.terminal`
+is `completed`; any other terminal is a failed dispatch. The `run_usage`
+payload names each model that served the run, with its tokens: those names
+are the identity, checked against the request. No cost is reported.
+
+Not narrowed: your Muse Code user skills load (`muse exec` has no flag to
+leave them out of one run; `--no-foreign-personal-context` drops only those
+of other tools).
+
+### agy
+
+Base command, the same for every role but the implementer's `--mode`:
+
+```
+agy -p <prompt> --output-format stream-json --model <model> --effort <effort>
+  --print-timeout 0s --disable-slash-commands --sandbox
+  --add-dir <worktree> --add-dir <task dir>
+```
+
+The implementer adds `--mode accept-edits`. As for `kimi`, the receipt's
+`argv` shows the prompt as `<prompt.md>`. The workspace is the two
+`--add-dir` folders: with the task directory alone, the agent took it for
+its working directory.
+
+`agy` reads permission rules only from its settings file, so each dispatch
+runs with `HOME` set to a temporary directory holding
+`.gemini/antigravity-cli/settings.json` (a copy is kept as
+`agy-settings.json` in the run directory) and a symbolic link to your
+`antigravity-oauth-token`; the directory is deleted after the run. The
+settings set `toolPermission` `request-review`, `allowNonWorkspaceAccess`
+off, the terminal sandbox on, and these rules (`mcp(*)`, `read_url(*)` and
+`execute_url(*)` are denied to every role):
+
+| role | allow | deny, besides the three above |
+|---|---|---|
+| planner | — | `write_file(*)`, `command(*)` |
+| implementer | `command(*)` | `command(git push)`, `command(gh)` |
+| reviewer | `command(*)` | `write_file(*)`, `command(git push)`, `command(gh)`, `command(git commit)` |
+| judge | `command(git diff)`, `command(git log)`, `command(git show)`, `command(<bottega> signal)` | `write_file(*)` |
+
+A deny rule beats every allow and the workspace's default, which lets any
+file in the workspace be read and written; without a TTY a command no rule
+allows is refused. `command(...)` matches a command prefix word by word, so
+`command(git push)` denies a bare `git push` too, but not `/usr/bin/git
+push`. Environment added to yours: `HOME` as above, `BOTTEGA_DATA_HOME` (so
+`bottega signal` finds the task), the push and gh guards of `kimi`; the SSH
+session markers (`SSH_CLIENT`, `SSH_CONNECTION`, `SSH_TTY`), which keep
+`agy` off the keychain, are removed. Git runs without your global config:
+the sandbox refuses to read `~/.gitconfig`, and no role commits.
+
+Each stream-json line is `{"event": <kind>, <kind>: {...}}`. The final
+message is the `result`'s `response`, or the `agent_response` text after
+the last `tool` step; a `status` other than `SUCCESS` is a failed dispatch.
+Only `init` names the model, the requested one, so receipts say
+`requested-only`. `usage` keeps the `conversation_id` and the tokens; no
+cost is reported.
+
+Not narrowed: the tools `agy` offers (sixty on 2026-10-24, browser and
+subagent tools among them) are not trimmed; no rule names the browser
+tools.
+
 ### gh, for bottega pr
 
 ```
@@ -263,10 +493,21 @@ Still unverified after the live runs, this release's and 0.1.0's:
 - `bottega pr` with `--repo` on a GitHub Enterprise host (github.com is
   verified);
 - Codex CLI 0.164.0, in any role;
-- Kimi K3.1 Pro through Moonshot's Anthropic endpoint: not served to the
-  key used on 2026-10-23; `kimi-k3` is verified;
+- Kimi K3.1 Pro through Moonshot's Anthropic endpoint: it answered 404 on
+  2026-10-23, and `GET /v1/models` lists it since 2026-10-25, with no
+  dispatch since; `kimi-k3` is verified;
 - Kimi Code with another provider than its own Kimi Code login, and
   with a `KIMI_CODE_HOME` of its own;
+- Grok Build's `--deny MCPTool` against a call through `use_tool`;
+- `agy` and a push that no rule denies (`/usr/bin/git push`): the push
+  guard is set, but the probe of 2026-10-24 failed earlier, on the global
+  git config it then pointed at;
+- `agy` renewing its sign-in through the link in the dispatch's HOME;
+- `agy`'s other edit tools (`edit_file`, `replace_file_content`,
+  `sed_file`) against `write_file(*)` in a read-only role: the docs give
+  the `write_file` action for file edits, and only `write_file` itself was
+  tried; the rails stop a read-only role that changes tracked code;
+- Gemini CLI with `GEMINI_API_KEY` or Vertex (there is no driver);
 - the credential stripping of a proxied profile against a set
   `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`: on the 20th nothing was
   set, so there was nothing to remove. The offline suite covers it with a

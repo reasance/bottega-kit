@@ -398,6 +398,40 @@ class Transitions(LoopFixture, unittest.TestCase):
         self.assertEqual(reviewer["signal"]["status"], "ready")
         self.assertEqual(reviewer["model_identity_source"], "requested-only")
 
+    def every_role_but_the_planner_on(self, name, model, identity, tool=None):
+        self.approved(
+            "--role",
+            "implementer=" + name,
+            "--role",
+            "reviewer=" + name,
+            "--role",
+            "judge=" + name,
+        )
+        self.run_(implement(), review("ready"), judge("ready"))
+        self.assertEqual(
+            [(c["tool"], m.group(3)) for c, m in zip(self.calls, self.lines)],
+            [(tool or name, name)] * 3,
+        )
+        self.assertEqual(self.state()["phase"], "done")
+        self.assertEqual(self.lines[0].group(4), model)
+        for seq, role in ((3, "reviewer"), (4, "judge")):
+            record = self.run_json(seq, role)
+            self.assertEqual(record["signal"]["status"], "ready")
+            self.assertEqual(record["model_identity_source"], identity)
+
+    def test_grok_implementer_reviewer_and_judge(self):
+        self.every_role_but_the_planner_on("grok", "grok-4.7", "provider-reported")
+
+    def test_agy_implementer_reviewer_and_judge(self):
+        self.every_role_but_the_planner_on(
+            "gemini", "gemini-3.8-flash-high", "requested-only", tool="agy"
+        )
+
+    def test_muse_implementer_reviewer_and_judge(self):
+        self.every_role_but_the_planner_on(
+            "muse", "muse-wonder-1.0", "provider-reported"
+        )
+
 
 class Merging(LoopFixture, unittest.TestCase):
     def test_findings_cannot_add_or_end_a_section(self):

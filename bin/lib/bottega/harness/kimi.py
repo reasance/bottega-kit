@@ -22,7 +22,7 @@ from pathlib import Path
 
 from ..util import bottega_executable
 from . import HARNESS_MATRIX, Harness, Invocation, Parsed, base_env, fill
-from . import matrix_argv, read_events
+from . import git_config_env, matrix_argv, read_events
 
 AGENT_FILE = "kimi-agent.md"
 SKILLS_DIR = "kimi-skills"
@@ -44,20 +44,6 @@ def agent_file(role):
     lines += ["  - %s" % tool for tool in tools]
     lines += ["subagents: []", "---", "", "${base_prompt}", ""]
     return "\n".join(lines)
-
-
-def git_config_env(environ, settings):
-    """GIT_CONFIG_COUNT/KEY_n/VALUE_n adding `settings` after any already set."""
-    try:
-        start = int(environ.get("GIT_CONFIG_COUNT") or 0)
-    except ValueError:
-        start = 0
-    env = {}
-    for offset, (key, value) in enumerate(sorted(settings.items())):
-        env["GIT_CONFIG_KEY_%d" % (start + offset)] = key
-        env["GIT_CONFIG_VALUE_%d" % (start + offset)] = value
-    env["GIT_CONFIG_COUNT"] = str(start + len(settings))
-    return env
 
 
 def _session_id(events):

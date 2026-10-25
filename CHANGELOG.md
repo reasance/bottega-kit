@@ -21,6 +21,27 @@ they record the requested model, the effort and the tokens from Kimi Code's
 session log. `bottega init` adds a `kimi` profile when it finds `kimi`.
 Verified live on 2026-10-23 with Kimi Code 2.3.1 and K3.1 Pro in every role.
 
+**Three more harnesses: Grok Build, Muse Code and the Antigravity CLI.**
+
+- `"harness": "grok"` runs a role with `grok` on your Grok login, for
+  instance `grok-4.7`; effort `low` to `xhigh`. Each role gets its tool set
+  and Claude Code-style allow and deny rules; Claude Code's and Cursor's
+  configuration, which Grok Build otherwise loads, is switched off. The
+  model is reported and checked, and the cost recorded.
+- `"harness": "muse"` runs a role with `muse exec`, for instance
+  `muse-wonder-1.0`; effort `none` to `ultra`. The planner runs without
+  writes or shell, the reviewer and judge without writes; contributor mode
+  is off for every dispatch, whatever your setting. The models Muse Code
+  names are checked.
+- `"harness": "agy"` runs a role with the Antigravity CLI, for instance
+  `gemini-3.8-flash-high`; effort `low` to `max`. Each dispatch runs with a
+  temporary HOME whose settings hold the role's permission rules, and a
+  link to your `agy` sign-in; your own settings, hooks, plugins and MCP
+  servers stay out. Receipts say `requested-only`.
+- For all three, `git push` to origin and `gh` fail through the
+  environment, as for `kimi`. `bottega init` adds a `grok`, `muse` or
+  `gemini` profile for each CLI it finds.
+
 ## [0.1.1] — 2026-10-23
 
 Documentation only; the commands behave as in 0.1.0.

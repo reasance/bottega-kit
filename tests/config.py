@@ -64,9 +64,11 @@ class Validation(unittest.TestCase):
 
     def test_harness_must_be_registered(self):
         value = with_changes(
-            lambda c: c["profiles"]["opus-builder"].update(harness="gemini")
+            lambda c: c["profiles"]["opus-builder"].update(harness="qwen")
         )
-        self.assertProblem(value, "harness must be one of claude, codex, kimi")
+        self.assertProblem(
+            value, "harness must be one of agy, claude, codex, grok, kimi, muse"
+        )
 
     def test_model_must_be_non_empty(self):
         value = with_changes(lambda c: c["profiles"]["opus-builder"].update(model=" "))
@@ -88,6 +90,15 @@ class Validation(unittest.TestCase):
             ("kimi", "max", True),
             ("kimi", "medium", False),
             ("kimi", "xhigh", False),
+            ("grok", "low", True),
+            ("grok", "xhigh", True),
+            ("grok", "max", False),
+            ("agy", "low", True),
+            ("agy", "max", True),
+            ("agy", "default", False),
+            ("muse", "none", True),
+            ("muse", "ultra", True),
+            ("muse", "extreme", False),
         ]:
             value = with_changes(
                 lambda c, h=harness, e=effort: c["profiles"]["opus-builder"].update(
@@ -288,6 +299,30 @@ class Starter(unittest.TestCase):
         self.assertEqual(every["roles"], config.CLAUDE_ROLES)
         self.assertLessEqual({"sol-builder", "kimi"}, set(every["profiles"]))
         self.assertEqual(config.starter(["codex", "kimi"])["roles"], config.CODEX_ROLES)
+
+    def test_grok_muse_agy(self):
+        for harness, name, model in (
+            ("grok", "grok", "grok-4.7"),
+            ("muse", "muse", "muse-wonder-1.0"),
+            ("agy", "gemini", "gemini-3.8-flash-high"),
+        ):
+            with self.subTest(harness=harness):
+                alone = config.starter([harness])
+                self.assertEqual(
+                    alone["profiles"],
+                    {name: {"harness": harness, "model": model, "effort": "high"}},
+                )
+                self.assertEqual(
+                    alone["roles"],
+                    {"planner": name, "implementer": name, "reviewer": name},
+                )
+                with_claude = config.starter(["claude", harness])
+                self.assertEqual(with_claude["roles"], config.CLAUDE_ROLES)
+                self.assertIn(name, with_claude["profiles"])
+        # The first harness in the order of preference binds the roles.
+        self.assertEqual(
+            set(config.starter(["muse", "grok"])["roles"].values()), {"grok"}
+        )
 
 
 class RoleOverride(unittest.TestCase):

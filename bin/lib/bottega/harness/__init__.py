@@ -17,6 +17,7 @@ import shutil
 import subprocess
 
 from .. import config
+from ..util import bottega_executable
 
 ROLES = config.ROLES
 
@@ -41,6 +42,24 @@ PLACEHOLDER = re.compile(r"\{(model|effort|task_dir|run_dir|worktree|bottega|pro
 # the CLI before every tool call. Everything else, Agent and the web tools
 # included, is unavailable to the role.
 KIMI_READ_TOOLS = ("Read", "Glob", "Grep")
+
+# Grok Build's tool ids for `--tools` (the shell is `run_terminal_cmd`).
+GROK_READ_TOOLS = "read_file,grep,list_dir"
+GROK_SHELL_TOOL = "run_terminal_cmd"
+GROK_EDIT_TOOLS = "search_replace,write"
+
+# Antigravity CLI permission rules (`action(target)`), written per dispatch
+# into the settings file of a fresh HOME. A deny rule beats every allow and
+# the workspace default; `command(...)` matches a command prefix word by word.
+AGY_NO_REACH = ("mcp(*)", "read_url(*)", "execute_url(*)")
+AGY_READ_ONLY = ("write_file(*)",)
+AGY_NO_PUSH = ("command(git push)", "command(gh)")
+
+# For a harness without a command-line deny rule that covers every spelling
+# of a push: origin's push URL is unusable, and gh gets a token GitHub
+# refuses. GIT_CONFIG_* is appended to any the user has.
+PUSH_DISABLED = {"remote.origin.pushurl": "bottega-push-disabled://"}
+GH_DISABLED = "bottega-gh-disabled"
 
 HARNESS_MATRIX = {
     "claude": {
@@ -183,7 +202,206 @@ HARNESS_MATRIX = {
             "KIMI_CODE_BUILTIN_PRODUCT_SKILLS": "0",
             "GH_TOKEN": "bottega-kimi-gh-disabled",
         },
-        "git_config": {"remote.origin.pushurl": "bottega-push-disabled://"},
+        "git_config": PUSH_DISABLED,
+    },
+    "grok": {
+        "binary": "grok",
+        # Grok Build's permission flags follow Claude Code's: `--tools` is
+        # the role's tool set, `--deny` rules beat every allow, and
+        # `dontAsk` refuses whatever no rule allows. Its stream is Claude
+        # Code's stream-json shape.
+        "base": (
+            "--prompt-file",
+            "{run_dir}/prompt.md",
+            "--output-format",
+            "streaming-messages-json",
+            "-m",
+            "{model}",
+            "--reasoning-effort",
+            "{effort}",
+            "--no-subagents",
+            "--disable-web-search",
+            "--no-auto-update",
+            "--deny",
+            "MCPTool",
+        ),
+        "budget": None,
+        "roles": {
+            "planner": (
+                "--permission-mode",
+                "dontAsk",
+                "--tools",
+                GROK_READ_TOOLS,
+            ),
+            "implementer": (
+                "--permission-mode",
+                "acceptEdits",
+                "--tools",
+                ",".join((GROK_READ_TOOLS, GROK_EDIT_TOOLS, GROK_SHELL_TOOL)),
+                "--allow",
+                "Bash",
+                "--allow",
+                "Edit({task_dir}/**)",
+                "--deny",
+                bash_rule("git push"),
+                "--deny",
+                bash_rule("gh"),
+            ),
+            "reviewer": (
+                "--permission-mode",
+                "dontAsk",
+                "--tools",
+                ",".join((GROK_READ_TOOLS, GROK_SHELL_TOOL)),
+                "--allow",
+                "Bash",
+                "--deny",
+                bash_rule("git push"),
+                "--deny",
+                bash_rule("gh"),
+                "--deny",
+                bash_rule("git commit"),
+            ),
+            "judge": (
+                "--permission-mode",
+                "dontAsk",
+                "--tools",
+                ",".join((GROK_READ_TOOLS, GROK_SHELL_TOOL)),
+                "--allow",
+                bash_rule("git diff"),
+                "--allow",
+                bash_rule("git log"),
+                "--allow",
+                bash_rule("git show"),
+                "--allow",
+                bash_rule("{bottega} signal"),
+            ),
+        },
+        "tail": (),
+        # Grok Build reads Claude Code's and Cursor's configuration too
+        # (hooks, MCP servers, skills, rules, agents); these switch that off.
+        # A `Bash(git push *)` rule misses a bare `git push`, so the push and
+        # gh guards stand behind the deny rules.
+        "env": {
+            "GROK_CLAUDE_AGENTS_ENABLED": "0",
+            "GROK_CLAUDE_HOOKS_ENABLED": "0",
+            "GROK_CLAUDE_MCPS_ENABLED": "0",
+            "GROK_CLAUDE_RULES_ENABLED": "0",
+            "GROK_CLAUDE_SKILLS_ENABLED": "0",
+            "GROK_CURSOR_AGENTS_ENABLED": "0",
+            "GROK_CURSOR_HOOKS_ENABLED": "0",
+            "GROK_CURSOR_MCPS_ENABLED": "0",
+            "GROK_CURSOR_RULES_ENABLED": "0",
+            "GROK_CURSOR_SKILLS_ENABLED": "0",
+            "GROK_DISABLE_AUTOUPDATER": "1",
+            "GH_TOKEN": GH_DISABLED,
+        },
+        "git_config": PUSH_DISABLED,
+    },
+    "agy": {
+        "binary": "agy",
+        # Antigravity CLI in print mode. The prompt is the value of `-p`.
+        # The workspace is the `--add-dir` folders, the worktree first; the
+        # working directory alone did not make one on 2026-10-24.
+        # `agy` reads permission rules only from its settings file, so each
+        # dispatch runs with a fresh HOME whose settings hold the role's
+        # rules (below); the terminal sandbox stays on.
+        "base": (
+            "-p",
+            "{prompt}",
+            "--output-format",
+            "stream-json",
+            "--model",
+            "{model}",
+            "--effort",
+            "{effort}",
+            "--print-timeout",
+            "0s",
+            "--disable-slash-commands",
+            "--sandbox",
+            "--add-dir",
+            "{worktree}",
+            "--add-dir",
+            "{task_dir}",
+        ),
+        "budget": None,
+        "roles": {
+            "planner": (),
+            "implementer": ("--mode", "accept-edits"),
+            "reviewer": (),
+            "judge": (),
+        },
+        "tail": (),
+        # `permissions` in the dispatch's settings file. Without a TTY a
+        # tool that needs approval is refused, so a command runs only when
+        # an allow rule covers it.
+        "permissions": {
+            "planner": {
+                "allow": (),
+                "deny": AGY_NO_REACH + AGY_READ_ONLY + ("command(*)",),
+            },
+            "implementer": {
+                "allow": ("command(*)",),
+                "deny": AGY_NO_REACH + AGY_NO_PUSH,
+            },
+            "reviewer": {
+                "allow": ("command(*)",),
+                "deny": AGY_NO_REACH
+                + AGY_READ_ONLY
+                + AGY_NO_PUSH
+                + ("command(git commit)",),
+            },
+            "judge": {
+                "allow": (
+                    "command(git diff)",
+                    "command(git log)",
+                    "command(git show)",
+                    "command({bottega} signal)",
+                ),
+                "deny": AGY_NO_REACH + AGY_READ_ONLY,
+            },
+        },
+        # `command(git push)` misses `/usr/bin/git push`.
+        "env": {"GH_TOKEN": GH_DISABLED},
+        "git_config": PUSH_DISABLED,
+    },
+    "muse": {
+        "binary": "muse",
+        # `muse exec`: one prompt, headless. Contributor mode is off for
+        # every dispatch, whatever the user's setting; nothing is persisted.
+        "base": (
+            "exec",
+            "--json",
+            "--prompt-file",
+            "{run_dir}/prompt.md",
+            "--model",
+            "{model}",
+            "--reasoning-effort",
+            "{effort}",
+            "--contributor-mode",
+            "off",
+            "--workspace",
+            "{worktree}",
+            "--no-session-log",
+            "--no-foreign-personal-context",
+            "--disable-web-tools",
+            "--disable-reminders",
+            "--disable-request-user-input",
+            "--approval-mode",
+            "never",
+            "--approval-judge",
+            "off",
+        ),
+        "budget": None,
+        "roles": {
+            "planner": ("--disable-write", "--disable-shell"),
+            "implementer": (),
+            "reviewer": ("--disable-write",),
+            "judge": ("--disable-write",),
+        },
+        "tail": (),
+        # Muse Code has no deny rule for a shell command.
+        "env": {"MUSE_NO_AUTO_UPDATE": "1", "GH_TOKEN": GH_DISABLED},
+        "git_config": PUSH_DISABLED,
     },
 }
 
@@ -378,12 +596,15 @@ class Harness:
 
 def get(name):
     """The registered harness called `name`."""
-    from . import claude, codex, kimi
+    from . import agy, claude, codex, grok, kimi, muse
 
     registry = {
+        "agy": agy.AgyHarness,
         "claude": claude.ClaudeHarness,
         "codex": codex.CodexHarness,
+        "grok": grok.GrokHarness,
         "kimi": kimi.KimiHarness,
+        "muse": muse.MuseHarness,
     }
     if name not in registry:
         raise config.ConfigError(
@@ -400,6 +621,46 @@ def base_env(profile, environ=None):
     extra = config.expand_env(profile, config.environment(environ))
     environ.update(extra)
     return environ, sorted(extra)
+
+
+def git_config_env(environ, settings):
+    """GIT_CONFIG_COUNT/KEY_n/VALUE_n adding `settings` after any already set."""
+    try:
+        start = int(environ.get("GIT_CONFIG_COUNT") or 0)
+    except ValueError:
+        start = 0
+    env = {}
+    for offset, (key, value) in enumerate(sorted(settings.items())):
+        env["GIT_CONFIG_KEY_%d" % (start + offset)] = key
+        env["GIT_CONFIG_VALUE_%d" % (start + offset)] = value
+    env["GIT_CONFIG_COUNT"] = str(start + len(settings))
+    return env
+
+
+def guarded_env(name, profile, values):
+    """base_env plus the harness's own `env` (placeholders filled) and its
+    `git_config`. Returns (env, names set)."""
+    spec = HARNESS_MATRIX[name]
+    env, env_set = base_env(profile)
+    harness_env = {
+        key: fill([value], values)[0] for key, value in spec.get("env", {}).items()
+    }
+    if spec.get("git_config"):
+        harness_env.update(git_config_env(env, spec["git_config"]))
+    env.update(harness_env)
+    return env, sorted(set(env_set) | set(harness_env))
+
+
+def dispatch_values(profile, worktree, task_dir, run_dir):
+    """The placeholder values every harness fills."""
+    return {
+        "model": profile["model"],
+        "effort": profile["effort"],
+        "task_dir": str(task_dir),
+        "run_dir": str(run_dir),
+        "worktree": str(worktree),
+        "bottega": bottega_executable(),
+    }
 
 
 def binding_report(cfg, bindings, probe_cache=None):

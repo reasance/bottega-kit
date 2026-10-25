@@ -32,7 +32,7 @@ the roles. With none of them, it is the
     "fable":         {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
     "opus-builder":  {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"},
     "opus-reviewer": {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"},
-    "sol-builder":   {"harness": "codex",  "model": "gpt-5.6-sol",     "effort": "high"}
+    "sol-builder":   {"harness": "codex",  "model": "gpt-6.1-sol",     "effort": "high"}
   },
   "roles": {"planner": "fable", "implementer": "opus-builder",
             "reviewer": "opus-reviewer", "judge": "fable"},
@@ -57,7 +57,7 @@ A profile is a harness, a model and an effort.
 |---|---|---|
 | `harness` | yes | `claude` (Claude Code), `codex` (Codex CLI), `kimi` (Kimi Code), `grok` (Grok Build), `muse` (Muse Code) or `agy` (Antigravity CLI) |
 | `model` | yes | the model name passed to the harness; for `kimi`, a model alias of Kimi Code's `config.toml`, such as `kimi-code/k3.1-pro` |
-| `effort` | yes | `claude`: `low`, `medium`, `high`, `xhigh`, `max`. `codex`: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. `kimi`: `low`, `high`, `max`. `grok`: `low`, `medium`, `high`, `xhigh`. `muse`: `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, `ultra`. `agy`: `low`, `medium`, `high`, `xhigh`, `max`, as far as the model takes them |
+| `effort` | yes | `claude`: `low`, `medium`, `high`, `xhigh`, `max`. `codex`: `low`, `medium`, `high`, `xhigh`, `max`, `ultra`. `kimi`: `low`, `high`, `max`. `grok`: `low`, `medium`, `high`, `xhigh`. `muse`: `minimal`, `low`, `medium`, `high`, `xhigh`, `max`, `ultra`. `agy`: `low`, `medium`, `high`, `xhigh`, `max`, as far as the model takes them |
 | `env` | no | environment variables set for the harness; values may reference your environment as `${NAME}` |
 | `aliases` | no | other model names the harness may report for this model |
 | `timeout` | no | seconds; the dispatch is killed after it and the task stops with `timeout` |
@@ -107,15 +107,17 @@ Endpoints that have run live, each with the model name it reported:
 |---|---|---|---|---|
 | Z.AI | `https://api.z.ai/api/anthropic` | `glm-5.3-flash` | `glm-5.3-flash` | a Z.AI API key |
 | MiniMax | `https://api.minimax.io/anthropic` | `MiniMax-M3.1-Flash` | `MiniMax-M3.1-Flash` | a MiniMax API key |
-| Moonshot (Kimi) | `https://api.moonshot.ai/anthropic` | `kimi-k3` | `kimi-k3` | a Kimi Platform API key, not the `kimi` CLI's login |
+| Moonshot (Kimi) | `https://api.moonshot.ai/anthropic` | `kimi-k3.1-pro` | `kimi-k3.1-pro` | a Kimi Platform API key, not the `kimi` CLI's login |
 
 Set `ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL` and
 `ANTHROPIC_DEFAULT_HAIKU_MODEL` to the same `model`, so the requests Claude
 Code makes on its own also go to that model; on 2026-10-23 every MiniMax and
-Kimi receipt listed that model alone. A model the endpoint does not serve
-fails the dispatch: on 2026-10-23 `kimi-k3.1-pro` answered 404 on Moonshot's
-endpoint, and its `GET /v1/models` listed up to `kimi-k3`. On 2026-10-25 the
-same list includes `kimi-k3.1-pro`; no dispatch has tried it since.
+Kimi receipt listed that model alone, and so did the K3.1 Pro receipt of
+2026-10-25. A model the endpoint does not serve fails the dispatch: on
+2026-10-23 `kimi-k3.1-pro` answered 404 on Moonshot's endpoint, whose
+`GET /v1/models` listed up to `kimi-k3`. On 2026-10-25 the list includes
+`kimi-k3.1-pro`, and a planner dispatch on it found a code hidden in a 22K-token
+document. K3 is retired.
 
 Harnesses authenticate on their own: Claude Code through its login or
 keychain, Codex through `~/.codex`, Kimi Code through `kimi login` and

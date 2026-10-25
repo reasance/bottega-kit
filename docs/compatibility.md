@@ -10,7 +10,56 @@ before tagging. Numbers are never carried forward from an earlier release.
 
 ## Verified snapshot
 
-**0.2.0, verified live on 2026-10-25** on macOS 26.5.1 (Darwin 25.5.0),
+**0.3.0, verified live on 2026-10-25** on macOS 26.5.1 (Darwin 25.5.0),
+python3 3.15.1, git 2.50.1 and gh 2.103.2, from the release branch checkout
+(`bin/bottega` run in place) with `XDG_CONFIG_HOME`, `XDG_DATA_HOME` and
+`XDG_STATE_HOME` in a scratch directory. CLI: Codex CLI 0.164.0. One task on
+a throwaway private GitHub repository created for the run: the 21-line
+Python greeter with its two-test unittest suite, as for 0.2.0. One profile,
+`sol-builder` (`codex`, `gpt-6.1-sol`, effort `high`), the starter profile
+0.3.0 changed, bound to the planner, the implementer and the reviewer, no
+judge, `rounds` 1; the shipped prompts, no override.
+
+| task | dispatches | result |
+|---|---|---|
+| add a `--times N` option, N at least 1 | 3 | done in round 1 of 1; then `bottega pr` |
+
+| seq | role | harness | requested model | duration | input tokens (cached) | output tokens | signal |
+|---|---|---|---|---|---|---|---|
+| 1 | planner | codex | gpt-6.1-sol | 42 s | 136,728 (109,056) | 1,462 | — (plan) |
+| 2 | implementer | codex | gpt-6.1-sol | 38 s | 256,139 (226,176) | 2,670 | — |
+| 3 | reviewer | codex | gpt-6.1-sol | 38 s | 272,172 (238,592) | 1,601 | ready |
+
+Codex reports tokens, not cost, on the plan. Every receipt says
+`model_identity_source: requested-only`, as the `codex` section says it
+must.
+
+What the run showed:
+
+- `gpt-6.1-sol` at `high` takes the effort through `-c
+  model_reasoning_effort`, as 0.3.0's effort table says; no dispatch was
+  refused.
+- The planner asked nothing: two phases, five to-do items. The implementer
+  changed only `greet.py` and `test_greet.py`; the suite went from 2 to 4
+  tests. The reviewer verified the five items and signalled `ready`.
+- No warning in any `run.json`.
+- `bottega pr` committed the worktree, then failed on `gh`: with
+  `XDG_CONFIG_HOME` in a scratch directory, `gh` reads its configuration
+  from there and is logged out. With `GH_CONFIG_DIR` set to the real one,
+  a second `pr` pushed the branch and opened the pull request, and a third
+  printed `pr exists: <url>`. Isolate with `BOTTEGA_DATA_HOME` and a
+  separate config file rather than `XDG_CONFIG_HOME` when `pr` must reach
+  GitHub.
+
+Not run for 0.3.0: Claude Code, Kimi Code, Grok Build, Muse Code and the
+Antigravity CLI. Their starter profiles did not change in 0.3.0; each one
+answered a single dispatch through its harness on 2026-10-25 in
+controller-models' smoke checks (a code hidden in a 24K-token document,
+found and counted), which is not an end-to-end run.
+
+### End to end on Grok Build, Muse Code and agy, 0.2.0, 2026-10-25
+
+0.2.0, verified live on 2026-10-25 on macOS 26.5.1 (Darwin 25.5.0),
 python3 3.15.0, git 2.50.1 and gh 2.103.2, through an install of `main` at
 the merge of the harness pull request (`05d4015`) in a scratch directory.
 CLIs: Grok Build 1.0.62, Muse Code 1.4.13, Antigravity CLI 1.4.7. One task

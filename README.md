@@ -33,16 +33,14 @@ harness, which is the CLI that runs the role (`claude`, `codex`, `kimi`,
 `grok`, `muse` or `agy`), a model and an effort. One profile may serve
 several roles.
 
-## Current release: 0.2.0
+## Current release: 0.3.0
 
-Four new harnesses: `kimi` (Kimi Code), `grok` (Grok Build), `muse` (Muse
-Code) and `agy` (the Antigravity CLI), next to `claude` and `codex`; the
-commands are those of 0.1.0. 0.2.0 was verified live on 2026-10-25 with one
-task through `bottega pr` on GitHub: Grok Build 1.0.62 as planner and
-judge, Muse Code 1.4.13 as implementer, the Antigravity CLI 1.4.7 as
-reviewer. Kimi Code 2.3.1 ran every role on 2026-10-23; Claude Code was last
-verified with 2.1.309 for 0.1.1, Codex CLI with 0.163.0 for 0.1.0. See
-[docs/compatibility.md](docs/compatibility.md).
+Models only: the `codex` efforts are `low` to `max` plus `ultra` (no `none`
+or `minimal`), `muse` no longer takes `none`, and the `sol-builder` starter
+profile runs `gpt-6.1-sol`. 0.3.0 was verified live on 2026-10-25 with one
+task through `bottega pr` on GitHub, `sol-builder` on Codex CLI 0.164.0 as
+planner, implementer and reviewer. 0.2.0 added the `kimi`, `grok`, `muse`
+and `agy` harnesses. See [docs/compatibility.md](docs/compatibility.md).
 
 ## What you need
 

@@ -4,6 +4,12 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-10-25
+
+Models only: no command, harness or role changes. Removing two `codex`
+efforts and one `muse` effort would break a configuration that names them,
+so the release is a minor one.
+
 **Models.** Kept in line with controller-models' registry, which now
 generates the effort table and the starter profiles in `config.py` between
 `controller-models` markers.

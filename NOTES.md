@@ -1104,3 +1104,14 @@ npm warns at every publish, CI and by hand alike, that the `bin` entry
 `bin: {"bottega-kit": "bin/npm-installer.mjs"}` for 0.1.1 and 0.2.0 alike,
 and `npx bottega-kit@0.2.0 --help`, from an empty npm cache, prints the
 usage. Why npm warns is not established; `package.json` is unchanged.
+
+## 2026-10-25 — 0.3.0
+
+- **Model data from controller-models.** The effort table and the starter
+  profiles in `config.py` sit between `controller-models` markers and are
+  written by that tool from its registry; edit the registry, not the block.
+- **The live run used isolated XDG directories**, and `bottega pr` then
+  found `gh` logged out: `gh` follows `XDG_CONFIG_HOME` too. `GH_CONFIG_DIR`
+  fixed it for the run. Not a bottega bug; recorded in
+  `docs/compatibility.md` so the next live run isolates differently.
+

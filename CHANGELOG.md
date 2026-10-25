@@ -4,6 +4,19 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
+**Models.** Kept in line with controller-models' registry, which now
+generates the effort table and the starter profiles in `config.py` between
+`controller-models` markers.
+
+- `codex` efforts are `low` to `max` plus `ultra`, the levels Codex lists
+  for the models it serves. `none` and `minimal` are no longer accepted.
+- `muse` no longer accepts `none`: Muse models reject it.
+- The `sol-builder` starter profile runs `gpt-6.1-sol`, because GPT-5.6 Sol
+  is retired.
+- The Kimi example on Moonshot's Anthropic-compatible endpoint uses
+  `kimi-k3.1-pro`, which ran a planner dispatch there on 2026-10-25. K3 is
+  retired.
+
 ## [0.2.0] — 2026-10-25
 
 Four new harnesses: Kimi Code, Grok Build, Muse Code and the Antigravity

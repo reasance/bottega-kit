@@ -94,7 +94,7 @@ is on PATH:
 ```
 
 With `codex` on PATH as well, `init` also writes a `sol-builder` profile
-(`codex`, `gpt-5.6-sol`, effort `high`) and binds it to no role. With `codex`
+(`codex`, `gpt-6.1-sol`, effort `high`) and binds it to no role. With `codex`
 alone, `sol-builder` is the planner, the implementer and the reviewer, and
 there is no judge. With `kimi` on PATH, `init` writes a `kimi` profile
 (`kimi-code/k3.1-pro`, effort `high`) the same way: bound to the planner,
@@ -194,7 +194,7 @@ Code pointed at Z.AI's Anthropic-compatible endpoint:
   "schema_version": 1,
   "profiles": {
     "fable":        {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
-    "sol-builder":  {"harness": "codex",  "model": "gpt-5.6-sol",     "effort": "high"},
+    "sol-builder":  {"harness": "codex",  "model": "gpt-6.1-sol",     "effort": "high"},
     "glm-reviewer": {"harness": "claude", "model": "glm-5.3-flash",   "effort": "max",
                      "env": {"ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
                              "ANTHROPIC_AUTH_TOKEN": "${ZAI_API_KEY}",
@@ -218,7 +218,9 @@ name stops the run as `identity-mismatch` (on 2026-10-20 Z.AI reported
 role for one task only, pass `--role implementer=sol-builder` to `bottega new`.
 
 MiniMax and Kimi run the same way, each through its own Anthropic-compatible
-endpoint. Both ran planner, implementer and reviewer live on 2026-10-23:
+endpoint. MiniMax ran planner, implementer and reviewer live on 2026-10-23.
+Kimi K3.1 Pro answered a planner dispatch on 2026-10-25; K3, which ran all
+three roles on 2026-10-23, is retired:
 
 ```json
 "minimax": {"harness": "claude", "model": "MiniMax-M3.1-Flash", "effort": "high",
@@ -227,18 +229,17 @@ endpoint. Both ran planner, implementer and reviewer live on 2026-10-23:
                     "ANTHROPIC_DEFAULT_OPUS_MODEL": "MiniMax-M3.1-Flash",
                     "ANTHROPIC_DEFAULT_SONNET_MODEL": "MiniMax-M3.1-Flash",
                     "ANTHROPIC_DEFAULT_HAIKU_MODEL": "MiniMax-M3.1-Flash"}},
-"kimi-k3": {"harness": "claude", "model": "kimi-k3", "effort": "high",
-            "env": {"ANTHROPIC_BASE_URL": "https://api.moonshot.ai/anthropic",
-                    "ANTHROPIC_AUTH_TOKEN": "${KIMI_API_KEY}",
-                    "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k3",
-                    "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k3",
-                    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "kimi-k3"}}
+"kimi-k3.1-pro": {"harness": "claude", "model": "kimi-k3.1-pro", "effort": "high",
+                  "env": {"ANTHROPIC_BASE_URL": "https://api.moonshot.ai/anthropic",
+                          "ANTHROPIC_AUTH_TOKEN": "${KIMI_API_KEY}",
+                          "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k3.1-pro",
+                          "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k3.1-pro",
+                          "ANTHROPIC_DEFAULT_HAIKU_MODEL": "kimi-k3.1-pro"}}
 ```
 
 The Kimi key is a Kimi Platform API key, not the login of the `kimi` CLI.
-Since 2026-10-25 `GET /v1/models` lists `kimi-k3.1-pro` too; it has not run
-through the Anthropic endpoint yet (on 2026-10-23 it answered 404 there). To
-try it, change `model` and the three `ANTHROPIC_DEFAULT_*` values. With a Kimi Code login,
+On 2026-10-23 `kimi-k3.1-pro` answered 404 on that endpoint; since
+2026-10-25 it runs there. With a Kimi Code login,
 the `kimi` harness runs K3.1 Pro without a key (the `kimi` profile `init`
 writes). See [docs/configuration.md](docs/configuration.md).
 

@@ -65,6 +65,14 @@ A profile is a harness, a model and an effort.
 
 Any other key is an error.
 
+**GPT-6.1 Terra.** An optional Codex profile can use
+`{"harness": "codex", "model": "gpt-6.1-terra", "effort": "low"}`.
+The starter stays on Sol; add the profile and bind roles explicitly in your
+configuration. Terra's Codex efforts are `low`, `medium`, `high`, `xhigh`,
+`max` and `ultra`; API-only `none` is not a Codex CLI effort. Offline harness
+tests cover forwarding Terra's model and `low`/`max` efforts for every role;
+they do not establish live provider availability or quality.
+
 **Model identity.** After each dispatch, the model the harness reports must be
 the requested `model` or one of `aliases`. Anything else stops the task with
 `identity-mismatch`. For Claude Code the check uses the session's model and

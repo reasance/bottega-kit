@@ -4,6 +4,8 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
+- Document an optional GPT-6.1 Terra Codex profile and verify model/effort forwarding for every role with fake harness runs. Starter profiles and runtime behavior stay unchanged.
+
 ## [0.3.0] — 2026-10-25
 
 Models only: no command, harness or role changes. Removing two `codex`

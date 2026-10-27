@@ -1122,3 +1122,8 @@ usage. Why npm warns is not established; `package.json` is unchanged.
   `b875a2c81a0b9be51093271f2e25afabc8d29db3`, and npm serves 0.3.0 as
   `latest` with the same shasum, without provenance.
 
+
+## 2026-10-27 — 0.3.1 Terra verification
+
+- The optional Terra Codex profile completed the greeter task through `new`, `plan`, `approve`, one `run` round and `pr` with the shipped prompts. Three owner-authorized dispatches at `low`, no judge, retry or fallback; the lead independently verified the three-file scope, five tests and CLI exit/output checks.
+- Receipts report requested-only identity and no dollar cost. The starter profiles and harness implementation did not change.

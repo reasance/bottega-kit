@@ -10,6 +10,37 @@ before tagging. Numbers are never carried forward from an earlier release.
 
 ## Verified snapshot
 
+**0.3.1, verified live on 2026-10-27** on macOS with Codex CLI `0.164.0`,
+from this release candidate run in place. Configuration and task data were
+isolated in a scratch directory. A disposable private GitHub repository held
+a 16-line Python greeter and two existing unit tests. One personal profile,
+`terra-release` (`codex`, `gpt-6.1-terra`, effort `low`), served the planner,
+implementer and reviewer, with no judge and a one-round cap. Shipped prompts
+were used without overrides.
+
+| seq | role | requested model | effort | duration | input tokens (cached) | output tokens | result |
+|---|---|---|---|---|---|---|---|
+| 1 | planner | gpt-6.1-terra | low | 16.796 s | 64,104 (31,616) | 721 | planned |
+| 2 | implementer | gpt-6.1-terra | low | 28.017 s | 245,203 (208,000) | 1,458 | done |
+| 3 | reviewer | gpt-6.1-terra | low | 21.554 s | 260,921 (221,440) | 861 | ready |
+
+The task added a positive-integer `--times N` option. The lead independently
+verified the diff changed only `greet.py`, `test_greet.py` and `README.md`,
+ran the five-test unittest suite, and checked default output, three repeated
+lines, and argparse exit 2 for zero, negative and non-integer counts.
+`bottega pr` then committed, pushed and opened the disposable repository's
+pull request. Exactly three model dispatches ran, with no retry or fallback.
+
+Codex did not report model identity or cost. Receipts record the requested
+model with `model_identity_source: requested-only`; this run verifies the
+harness workflow, not provider-attested identity or comparative quality.
+Other harnesses were not dispatched for 0.3.1.
+
+Offline release gate: 13 suites passed in 49 seconds, 7 npm-wrapper tests,
+ruff, ShellCheck and the version consistency check.
+
+### Earlier releases
+
 **0.3.0, verified live on 2026-10-25** on macOS 26.5.1 (Darwin 25.5.0),
 python3 3.15.1, git 2.50.1 and gh 2.103.2, from the release branch checkout
 (`bin/bottega` run in place) with `XDG_CONFIG_HOME`, `XDG_DATA_HOME` and

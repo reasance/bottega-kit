@@ -406,6 +406,20 @@ class Matrix(Fixture, unittest.TestCase):
             if role == "planner":
                 self.assertNotIn("--add-dir", argv)
 
+    def test_terra_model_and_effort_reach_codex_for_every_role(self):
+        profile = self.cfg["profiles"]["sol-builder"]
+        profile["model"] = "gpt-6.1-terra"
+        for effort in ("low", "max"):
+            profile["effort"] = effort
+            self.box.write_config(self.cfg)
+            for _, argv in self.check("codex", "sol-builder", CODEX_BASE, CODEX_ROLES):
+                self.assertTrue(contains_run(argv, ("-m", "gpt-6.1-terra")))
+                self.assertTrue(
+                    contains_run(
+                        argv, ("-c", "model_reasoning_effort=" + json.dumps(effort))
+                    )
+                )
+
     def test_kimi_every_cell_every_role(self):
         for role, argv in self.check("kimi", "kimi", KIMI_BASE, KIMI_ROLES):
             run_dir = Path(argv[argv.index("--agent-file") + 1]).parent

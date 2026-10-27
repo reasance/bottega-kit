@@ -33,14 +33,12 @@ harness, which is the CLI that runs the role (`claude`, `codex`, `kimi`,
 `grok`, `muse` or `agy`), a model and an effort. One profile may serve
 several roles.
 
-## Current release: 0.3.0
+## Current release: 0.3.1
 
-Models only: the `codex` efforts are `low` to `max` plus `ultra` (no `none`
-or `minimal`), `muse` no longer takes `none`, and the `sol-builder` starter
-profile runs `gpt-6.1-sol`. 0.3.0 was verified live on 2026-10-25 with one
-task through `bottega pr` on GitHub, `sol-builder` on Codex CLI 0.164.0 as
-planner, implementer and reviewer. 0.2.0 added the `kimi`, `grok`, `muse`
-and `agy` harnesses. See [docs/compatibility.md](docs/compatibility.md).
+GPT-6.1 Terra can be selected in a personal Codex profile. This patch documents
+that configuration and verifies model and effort forwarding for every role;
+the starter profiles and runtime behavior stay unchanged. See
+[docs/compatibility.md](docs/compatibility.md) for the release checks.
 
 ## What you need
 

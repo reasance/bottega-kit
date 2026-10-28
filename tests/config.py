@@ -282,8 +282,12 @@ class Starter(unittest.TestCase):
 
     def test_codex_only(self):
         value = config.starter(["codex"])
-        self.assertEqual(set(value["profiles"]), {"sol-builder"})
-        self.assertEqual(set(value["roles"].values()), {"sol-builder"})
+        self.assertEqual(
+            set(value["profiles"]), {"sol-builder", "astra-reviewer", "terra-builder"}
+        )
+        self.assertEqual(
+            set(value["roles"].values()), {"sol-builder", "astra-reviewer"}
+        )
         self.assertNotIn("judge", value["roles"])
 
     def test_both_and_none(self):

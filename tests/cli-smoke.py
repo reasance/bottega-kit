@@ -43,7 +43,7 @@ class Basics(unittest.TestCase):
             "harnesses found on PATH: agy, claude, codex, grok, kimi, muse", proc.stdout
         )
         written = json.loads(self.box.config_file.read_text())
-        self.assertEqual(written["roles"]["planner"], "fable")
+        self.assertEqual(written["roles"]["planner"], "opus-planner")
         self.assertEqual(written["profiles"]["sol-builder"]["harness"], "codex")
         self.box.bottega("init", rc=2)
         self.box.config_file.write_text("{}")
@@ -57,7 +57,7 @@ class Basics(unittest.TestCase):
         self.assertEqual(by_check["gh"]["status"], "warn")  # not on the test PATH
         self.assertEqual(by_check["git"]["status"], "ok")
         self.assertIn("2.1.302 (Claude Code)", by_check["role planner"]["detail"])
-        self.assertIn("claude-fable-5-1", by_check["role judge"]["detail"])
+        self.assertIn("claude-opus-5-5", by_check["role judge"]["detail"])
         text = self.box.bottega("doctor").stdout
         self.assertIn("[WARN] gh", text)
         self.assertIn("0 failure(s)", text)
@@ -69,7 +69,9 @@ class Basics(unittest.TestCase):
         path = "%s:%s:/usr/bin:/bin" % (only_codex, self.box.root / "bin")
         self.box.bottega("init", env={"PATH": path})
         written = json.loads(self.box.config_file.read_text())
-        self.assertEqual(set(written["roles"].values()), {"sol-builder"})
+        self.assertEqual(
+            set(written["roles"].values()), {"sol-builder", "astra-reviewer"}
+        )
         self.box.bottega("doctor", env={"PATH": path})
 
     def test_doctor_without_config_fails(self):

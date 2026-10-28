@@ -4,6 +4,12 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-10-28
+
+- Refresh starter role choices using the Artificial Analysis v5 snapshot. New Claude setups use Opus/high for planning and Opus/max for the optional judge; implementation and review stay Opus/high.
+- New Codex setups use Astra/high for review alongside Sol/high planning and implementation, and include Terra/high as an optional builder.
+- Generate role bindings from controller-models as well as profile definitions. Existing user configurations remain unchanged. Separate OpenAI roles are not cross-vendor review.
+
 ## [0.3.1] — 2026-10-27
 
 - Document an optional GPT-6.1 Terra Codex profile and verify model/effort forwarding for every role with fake harness runs. Starter profiles and runtime behavior stay unchanged.

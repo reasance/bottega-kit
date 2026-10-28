@@ -1127,3 +1127,16 @@ usage. Why npm warns is not established; `package.json` is unchanged.
 
 - The optional Terra Codex profile completed the greeter task through `new`, `plan`, `approve`, one `run` round and `pr` with the shipped prompts. Three owner-authorized dispatches at `low`, no judge, retry or fallback; the lead independently verified the three-file scope, five tests and CLI exit/output checks.
 - Receipts report requested-only identity and no dollar cost. The starter profiles and harness implementation did not change.
+
+## 2026-10-28 — AA v5 starter choices
+
+The owner approved the AA v5 migration and the 0.4.0 release. New Claude
+initialization uses Opus/high for planning and Opus/max for the optional judge.
+Codex initialization uses Astra/high for review and exposes an optional
+Terra/high builder. The controller now generates role bindings as well as
+profiles. Existing personal configurations are not rewritten. These product
+choices do not certify review quality or cross-vendor independence.
+
+The authorized release check consumed three Opus/high dispatches on an isolated
+greeter task, with no judge, retry or fallback. The lead verified its tests and
+CLI behavior independently and completed the PR workflow.

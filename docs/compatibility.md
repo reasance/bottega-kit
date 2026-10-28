@@ -10,6 +10,42 @@ before tagging. Numbers are never carried forward from an earlier release.
 
 ## Verified snapshot
 
+**0.4.0, verified live on 2026-10-28** on macOS with Claude Code `2.1.312`,
+Codex CLI `0.165.0`, Python `3.15.2` and gh `2.103.3`, from the release
+candidate run in place. Configuration and task data were isolated. A private
+[disposable repository](https://github.com/reasance/bottega-aa-v5-release-check-71w_6fec/pull/1) held a Python
+greeter and two baseline unit tests.
+
+The new Claude starter profiles ran at `claude-opus-5-5` / `high`: planner
+`opus-planner`, implementer `opus-builder`, reviewer `opus-reviewer`. The
+optional judge was omitted and the round cap was one. Shipped prompts were
+used. Exactly these three dispatches were authorized and consumed; no retries
+or fallback ran.
+
+| role | profile | duration | uncached input | cache created | cache read | reported USD cost |
+|---|---|---|---|---|---|---|
+| planner | opus-planner | 48.516 s | 6 | 8040 | 23723 | $0.175029 |
+| implementer | opus-builder | 35.991 s | 12 | 19369 | 107965 | $0.251453 |
+| reviewer | opus-reviewer | 29.320 s | 10 | 23318 | 100968 | $0.265158 |
+
+The native CLI reported content-model identity (`provider-reported`) and list
+cost. These are CLI-reported usage/cost facts, not an invoice or a comparative
+quality result. Other harnesses, optional Terra and the optional judge were not
+dispatched for this release.
+
+The task added positive-integer `--times N`. The lead independently checked the
+three-file diff, all 11 unit tests, default output, three repeated lines,
+name + two repetitions, and exit 2 for zero, negative and non-integer values.
+The reviewer signaled ready in round one; `bottega pr` committed as Mayla,
+pushed and opened the disposable PR.
+
+Offline gate: 13 suites, 7 npm-wrapper tests, ruff, ShellCheck and version
+consistency passed. New Codex starter choices are covered with fake harnesses;
+this live run does not certify them.
+
+### Earlier releases
+
+
 **0.3.1, verified live on 2026-10-27** on macOS with Codex CLI `0.164.0`,
 from this release candidate run in place. Configuration and task data were
 isolated in a scratch directory. A disposable private GitHub repository held
@@ -39,7 +75,7 @@ Other harnesses were not dispatched for 0.3.1.
 Offline release gate: 13 suites passed in 49 seconds, 7 npm-wrapper tests,
 ruff, ShellCheck and the version consistency check.
 
-### Earlier releases
+### Additional earlier releases
 
 **0.3.0, verified live on 2026-10-25** on macOS 26.5.1 (Darwin 25.5.0),
 python3 3.15.1, git 2.50.1 and gh 2.103.2, from the release branch checkout

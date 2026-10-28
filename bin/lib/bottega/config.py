@@ -312,35 +312,45 @@ CLAUDE_PROFILES = {
         "model": "claude-opus-5-5",
         "effort": "high",
     },
+    "opus-planner": {"harness": "claude", "model": "claude-opus-5-5", "effort": "high"},
+    "opus-judge": {"harness": "claude", "model": "claude-opus-5-5", "effort": "max"},
 }
 # END controller-models: claude-profiles
+# BEGIN controller-models: claude-roles
 CLAUDE_ROLES = {
-    "planner": "fable",
+    "planner": "opus-planner",
     "implementer": "opus-builder",
     "reviewer": "opus-reviewer",
-    "judge": "fable",
+    "judge": "opus-judge",
 }
+# END controller-models: claude-roles
 # BEGIN controller-models: codex-profiles
 CODEX_PROFILES = {
     "sol-builder": {"harness": "codex", "model": "gpt-6.1-sol", "effort": "high"},
+    "astra-reviewer": {"harness": "codex", "model": "gpt-6-astra", "effort": "high"},
+    "terra-builder": {"harness": "codex", "model": "gpt-6.1-terra", "effort": "high"},
 }
 # END controller-models: codex-profiles
+# BEGIN controller-models: codex-roles
 CODEX_ROLES = {
     "planner": "sol-builder",
     "implementer": "sol-builder",
-    "reviewer": "sol-builder",
+    "reviewer": "astra-reviewer",
 }
+# END controller-models: codex-roles
 # A model alias of Kimi Code's own config.toml, provisioned by `kimi login`.
 # BEGIN controller-models: kimi-profiles
 KIMI_PROFILES = {
     "kimi": {"harness": "kimi", "model": "kimi-code/k3.1-pro", "effort": "high"},
 }
 # END controller-models: kimi-profiles
+# BEGIN controller-models: kimi-roles
 KIMI_ROLES = {
     "planner": "kimi",
     "implementer": "kimi",
     "reviewer": "kimi",
 }
+# END controller-models: kimi-roles
 
 
 # BEGIN controller-models: grok-profiles

@@ -29,13 +29,14 @@ the roles. With none of them, it is the
 {
   "schema_version": 1,
   "profiles": {
-    "fable":         {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
+    "opus-planner":  {"harness": "claude", "model": "claude-opus-5-5", "effort": "high"},
+    "opus-judge":    {"harness": "claude", "model": "claude-opus-5-5", "effort": "max"},
     "opus-builder":  {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"},
     "opus-reviewer": {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"},
     "sol-builder":   {"harness": "codex",  "model": "gpt-6.1-sol",     "effort": "high"}
   },
-  "roles": {"planner": "fable", "implementer": "opus-builder",
-            "reviewer": "opus-reviewer", "judge": "fable"},
+  "roles": {"planner": "opus-planner", "implementer": "opus-builder",
+            "reviewer": "opus-reviewer", "judge": "opus-judge"},
   "rounds": 3
 }
 ```
@@ -271,3 +272,15 @@ profile, its effort, its harness answering `--version`, and its `${NAME}`
 variables, saying whether each comes from the environment or from the key
 file. Any failure exits 2. `./doctor.sh`, in a clone, also compares the
 installed version with the clone's.
+
+## Starter choices after the AA v5 refresh
+
+New Claude configurations bind planner to Opus/high, implementer and reviewer
+to Opus/high, and the optional judge to Opus/max. New Codex configurations use
+Sol/high for planning and implementation, Astra/high for review, and include
+Terra/high as an optional bounded-work builder. Existing configurations are not
+rewritten. The reviewer is a separate run; Astra and Sol share a provider, so
+this does not establish cross-vendor independence.
+
+The Artificial Analysis v5 snapshot informed these choices; it does not qualify
+security review or predict the cost of a repository task.

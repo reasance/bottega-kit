@@ -33,7 +33,7 @@ harness, which is the CLI that runs the role (`claude`, `codex`, `kimi`,
 `grok`, `muse` or `agy`), a model and an effort. One profile may serve
 several roles.
 
-## Current release: 0.3.1
+## Current release: 0.4.0
 
 GPT-6.1 Terra can be selected in a personal Codex profile. This patch documents
 that configuration and verifies model and effort forwarding for every role;
@@ -70,7 +70,7 @@ Both copy the command to `~/.local/share/bottega-kit` and link
 `~/.local/bin/bottega`. `./uninstall.sh`, from a clone, removes them and keeps
 your tasks and configuration.
 
-## Example: Fable plans and judges, Opus implements and reviews
+## Example: Opus plans, implements, reviews and judges
 
 `~/.config/bottega-kit/config.json`, which `bottega init` writes when `claude`
 is on PATH:
@@ -79,12 +79,13 @@ is on PATH:
 {
   "schema_version": 1,
   "profiles": {
-    "fable":         {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
+    "opus-planner":  {"harness": "claude", "model": "claude-opus-5-5", "effort": "high"},
+    "opus-judge":    {"harness": "claude", "model": "claude-opus-5-5", "effort": "max"},
     "opus-builder":  {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"},
     "opus-reviewer": {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"}
   },
-  "roles": {"planner": "fable", "implementer": "opus-builder",
-            "reviewer": "opus-reviewer", "judge": "fable"},
+  "roles": {"planner": "opus-planner", "implementer": "opus-builder",
+            "reviewer": "opus-reviewer", "judge": "opus-judge"},
   "rounds": 3
 }
 ```
@@ -117,7 +118,9 @@ bottega pr dry-run-flag
 ```
 
 `plan` and `run` print one line per dispatch on stdout, and `plan` adds the
-planner's questions when it has any; everything else goes to stderr:
+planner's questions when it has any; everything else goes to stderr. The following
+is a historical example from before 0.4.0; current starter role choices are listed
+in the configuration example above:
 
 ```
 001 planner fable claude-fable-5-1 → planned (2m41s)

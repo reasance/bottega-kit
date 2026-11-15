@@ -1163,3 +1163,25 @@ inventory. Google documents the CLI IDs; current local agy 1.5.6 does not
 list Carbon. An unavailable selection is refused before any model dispatch.
 No API harness, automatic model switch or personal-config rewrite is added.
 No live model calls are part of the integration verification.
+
+## 2026-11-15 — 0.5.0 release verification
+
+The owner authorized three Opus 5.5/high calls for an isolated planner,
+implementer and reviewer run. They completed with a ready review in one
+round, no judge, retry or fallback. The lead independently verified ten
+fixture tests, CLI output and argument failures, then completed the real PR
+step. Isolating XDG_CONFIG_HOME also hid gh authentication; GH_CONFIG_DIR
+was set explicitly for the lead's PR step, without a further model call.
+
+## 2026-11-15 — automatic npm publication recovered
+
+The trusted-publisher inspection found `createStagedPackage` only, while the
+workflow used `npm publish`. The owner requested automatic publishing. The
+same package, repository and workflow association was recreated with both
+`createPackage` and `createStagedPackage`; no GitHub OIDC subject setting
+was changed and no long-lived npm token was added. Run 40718609683 attempt 3
+published 0.4.0 with provenance. Public registry metadata and the bin entry
+were verified, rather than treating the green workflow as publication.
+Earlier notes attributed E403 to immutable subject claims; that was not
+established for this package, and publication now works with those claims
+still enabled.

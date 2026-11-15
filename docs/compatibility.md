@@ -10,6 +10,41 @@ before tagging. Numbers are never carried forward from an earlier release.
 
 ## Verified snapshot
 
+**0.5.0, verified live on 2026-11-15** on macOS with Claude Code
+`2.1.323`, Codex CLI `0.168.0`, agy `1.5.9`, Python `3.15.2` and gh
+`2.104.0`, from this release candidate. Configuration and task data were
+isolated from the maintainer's normal installation.
+
+The complete `new`, `plan`, `approve`, `run`, `pr` path ran on a throwaway
+private repository. One explicit `release-opus` profile (`claude`,
+`claude-opus-5-5`, effort `high`) served planner, implementer and reviewer.
+Exactly three calls ran; no judge, retry or fallback was used. All three
+reported the requested content model. The reviewer returned `ready` in the
+first and only round. These checks establish transport reachability and the
+workflow, not the quality of the new Fable, Hydrogen or Carbon profiles.
+
+| Step | Role | Duration | CLI-reported USD | Result |
+|---|---|---:|---:|---|
+| 1 | planner | 47.09 s | 0.177456 | planned |
+| 2 | implementer | 38.31 s | 0.272967 | done |
+| 3 | reviewer | 25.47 s | 0.245844 | ready |
+
+The task added a positive `--times` CLI option. The lead independently ran
+all 10 fixture tests and checked default output, repeated named output and
+exit 2 for zero, negative and non-integer input. Only the three approved
+fixture files changed. The first PR attempt failed because isolated
+`XDG_CONFIG_HOME` also hid GitHub CLI authentication; setting `GH_CONFIG_DIR`
+to the existing authenticated directory completed the PR step without
+another model call.
+
+Offline release gate: 13 suites passed in 48 seconds and 7 npm-wrapper tests
+passed. Ruff 0.13.0, ShellCheck and version consistency passed. The AA v5.0.1
+reference was regenerated from all 741 rows on November 15. Metadata-only
+`agy models` exposed Hydrogen but not Carbon; Carbon remains an optional
+exact-account-ID selection and no Google inference was dispatched.
+
+### Previous verified snapshot
+
 **0.4.0, verified live on 2026-10-28** on macOS with Claude Code `2.1.312`,
 Codex CLI `0.165.0`, Python `3.15.2` and gh `2.103.3`, from the release
 candidate run in place. Configuration and task data were isolated. A private

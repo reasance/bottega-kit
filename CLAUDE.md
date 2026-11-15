@@ -121,13 +121,15 @@ that is wrong here.
   tag against `package.json`, runs the version check with `--tag` and the npm
   wrapper test, refuses a version already on npm, and publishes through npm
   trusted publishing, with provenance and no token (the package's Trusted
-  Publisher names this repository and `publish-npm.yml`). **Today that step
-  fails** with `E403 OIDC permission denied`: the repository was created
-  after 2026-07-15, so GitHub signs its OIDC tokens with immutable subject
-  claims, which npm does not match yet (npm/cli#9969). Until npm fixes it,
-  the owner publishes by hand from a clean worktree at the tag, with
-  two-factor, and the release has no provenance; 0.1.0 and 0.1.1 were
-  published so, see `NOTES.md`. The npm package is the wrapper only;
+  Publisher names this repository and `publish-npm.yml`).The trusted publisher must allow `createPackage` for direct
+  `npm publish`; `createStagedPackage` alone only authorizes staging. On
+  2026-11-15 the actual configuration was inspected and found to allow only
+  staging. Recreating the same `reasance/bottega-kit` + `publish-npm.yml`
+  association with both permissions recovered 0.4.0 automatically through
+  CI, with provenance, while immutable GitHub subject claims stayed enabled.
+  The earlier immutable-subject diagnosis was not established for this
+  repository. Manual publication remains a last resort and lacks provenance.
+  The npm package is the wrapper only;
   `npx bottega-kit` clones the tag `bottega-kit--v<its version>`, so the tag
   must exist before anyone runs it.
 - **Sync the showcase site last**, once npm serves the version: in

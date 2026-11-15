@@ -414,6 +414,10 @@ def agy_main(argv):
     if "--version" in argv:
         print("1.4.7")
         return 0
+    if argv == ["models"]:
+        for model in load_scenario().get("agy_models", ["gemini-4-hydrogen-high"]):
+            print(model)
+        return 0
     prompt = option(argv, "-p", "--print", "--prompt")
     if not prompt:
         sys.stderr.write("Error: no prompt given\n")

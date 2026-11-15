@@ -26,10 +26,13 @@ Each stream-json line is `{"event": <kind>, <kind>: {...}}`: one `init`
 
 import json
 import os
+import shutil
+import subprocess
 import tempfile
 from pathlib import Path
 
 from .. import xdg
+from ..util import BottegaError
 from . import HARNESS_MATRIX, Harness, Invocation, Parsed, dispatch_values, fill
 from . import guarded_env, matrix_argv, read_events
 
@@ -78,6 +81,35 @@ class AgyHarness(Harness):
             env.pop(name, None)
         moved = {"HOME": home, "BOTTEGA_DATA_HOME": str(xdg.data_dir())}
         env.update(moved)
+        if profile["model"].startswith("gemini-4-carbon"):
+            try:
+                inventory = subprocess.run(
+                    ["agy", "models"],
+                    env=env,
+                    cwd=home,
+                    stdin=subprocess.DEVNULL,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=False,
+                )
+                listed = {
+                    line.split("\t", 1)[0].strip()
+                    for line in inventory.stdout.splitlines()
+                }
+                if inventory.returncode or profile["model"] not in listed:
+                    raise BottegaError(
+                        "agy does not expose %s; Carbon requires an enabled Ultra/Enterprise account"
+                        % profile["model"]
+                    )
+            except (OSError, subprocess.TimeoutExpired):
+                shutil.rmtree(home, ignore_errors=True)
+                raise BottegaError(
+                    "could not verify the Carbon model in agy models"
+                ) from None
+            except BottegaError:
+                shutil.rmtree(home, ignore_errors=True)
+                raise
         return Invocation(
             argv,
             env,

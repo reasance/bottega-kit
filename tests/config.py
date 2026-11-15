@@ -33,6 +33,20 @@ class Validation(unittest.TestCase):
         with self.assertRaises(config.ConfigError):
             config.validate(value)
 
+    def test_new_gemini_models_reject_unsupported_efforts(self):
+        for model, effort in [
+            ("gemini-4-hydrogen-high", "max"),
+            ("gemini-4-carbon-high", "xhigh"),
+        ]:
+            with self.subTest(model=model):
+                c = copy.deepcopy(CANONICAL)
+                c["profiles"]["gemini"] = {
+                    "harness": "agy",
+                    "model": model,
+                    "effort": effort,
+                }
+                self.assertProblem(c, "unsupported effort")
+
     def test_canonical_example_is_valid(self):
         self.assertEqual(config.problems(CANONICAL), [])
         self.assertEqual(config.validate(CANONICAL)["rounds"], 3)
@@ -310,14 +324,22 @@ class Starter(unittest.TestCase):
         for harness, name, model in (
             ("grok", "grok", "grok-4.7"),
             ("muse", "muse", "muse-wonder-1.0"),
-            ("agy", "gemini", "gemini-3.8-flash-high"),
+            ("agy", "gemini", "gemini-4-hydrogen-high"),
         ):
             with self.subTest(harness=harness):
                 alone = config.starter([harness])
                 self.assertEqual(
-                    alone["profiles"],
-                    {name: {"harness": harness, "model": model, "effort": "high"}},
+                    alone["profiles"][name],
+                    {"harness": harness, "model": model, "effort": "high"},
                 )
+                if harness == "agy":
+                    self.assertEqual(
+                        alone["profiles"]["hydrogen-deep"]["effort"], "xhigh"
+                    )
+                    self.assertEqual(
+                        alone["profiles"]["carbon-judge"]["model"],
+                        "gemini-4-carbon-high",
+                    )
                 self.assertEqual(
                     alone["roles"],
                     {"planner": name, "implementer": name, "reviewer": name},

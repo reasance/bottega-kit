@@ -461,6 +461,42 @@ class Matrix(Fixture, unittest.TestCase):
             self.assertNotEqual(init["fake_home"], self.box.env["HOME"])
             self.assertFalse(Path(init["fake_home"]).exists())
 
+    def test_carbon_requires_exact_inventory_before_a_model_dispatch(self):
+        from bottega.util import BottegaError
+
+        self.cfg["profiles"]["carbon"] = {
+            "harness": "agy",
+            "model": "gemini-4-carbon-high",
+            "effort": "high",
+        }
+        with self.assertRaisesRegex(
+            BottegaError, "does not expose gemini-4-carbon-high"
+        ):
+            self.dispatch(
+                "planner",
+                "carbon",
+                extra_env={
+                    "BOTTEGA_FAKE_SCENARIO": json.dumps(
+                        {"agy_models": ["gemini-4-carbon-high-extra"]}
+                    )
+                },
+            )
+        self.assertFalse(list((self.dir / "runs").glob("*/run.json")))
+        outcome, _ = self.dispatch(
+            "planner",
+            "carbon",
+            extra_env={
+                "BOTTEGA_FAKE_SCENARIO": json.dumps(
+                    {
+                        "agy_models": ["gemini-4-carbon-high"],
+                        "default": {"final": "done"},
+                    }
+                )
+            },
+        )
+        self.assertTrue(outcome.ok)
+        self.assertEqual(outcome.record["requested_model"], "gemini-4-carbon-high")
+
     def test_muse_every_cell_every_role(self):
         for role, argv in self.check("muse", "muse", MUSE_BASE, MUSE_ROLES):
             self.assertEqual(argv[0], "exec")

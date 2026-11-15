@@ -1163,3 +1163,12 @@ inventory. Google documents the CLI IDs; current local agy 1.5.6 does not
 list Carbon. An unavailable selection is refused before any model dispatch.
 No API harness, automatic model switch or personal-config rewrite is added.
 No live model calls are part of the integration verification.
+
+## 2026-11-15 — 0.5.0 release verification
+
+The owner authorized three Opus 5.5/high calls for an isolated planner,
+implementer and reviewer run. They completed with a ready review in one
+round, no judge, retry or fallback. The lead independently verified ten
+fixture tests, CLI output and argument failures, then completed the real PR
+step. Isolating XDG_CONFIG_HOME also hid gh authentication; GH_CONFIG_DIR
+was set explicitly for the lead's PR step, without a further model call.

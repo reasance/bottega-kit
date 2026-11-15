@@ -33,12 +33,14 @@ harness, which is the CLI that runs the role (`claude`, `codex`, `kimi`,
 `grok`, `muse` or `agy`), a model and an effort. One profile may serve
 several roles.
 
-## Current release: 0.4.0
+## Current release: 0.5.0
 
-GPT-6.1 Terra can be selected in a personal Codex profile. This patch documents
-that configuration and verifies model and effort forwarding for every role;
-the starter profiles and runtime behavior stay unchanged. See
-[docs/compatibility.md](docs/compatibility.md) for the release checks.
+New Claude setups use Opus/high for planning, implementation and review, and
+Fable 5.2/high for the optional judge. New agy setups use Hydrogen/high, with
+optional medium/xhigh profiles and account-gated Carbon/high planning and
+judgement. Existing personal configurations are preserved.
+
+See [the changelog](CHANGELOG.md) and [compatibility checks](docs/compatibility.md).
 
 ## What you need
 

@@ -4,11 +4,12 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-11-15
+
 - Use Hydrogen/high for new agy setups. Add explicit Hydrogen/xhigh and medium profiles plus optional Carbon/high planner and judge profiles. Carbon checks exact account inventory before dispatch; old personal profiles are preserved.
 
 - Use Fable 5.2/high for the optional judge in new Claude setups and add an explicit fable-max option. Planning, implementation and review remain Opus/high. Claude Code >=2.1.321 is required; existing user configurations are preserved.
 - Refresh the model reference to AA v5.0.1. Carbon uses officially documented agy IDs with per-account gating; no API harness is introduced.
-
 
 ## [0.4.0] — 2026-10-28
 

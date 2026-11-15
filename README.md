@@ -70,7 +70,7 @@ Both copy the command to `~/.local/share/bottega-kit` and link
 `~/.local/bin/bottega`. `./uninstall.sh`, from a clone, removes them and keeps
 your tasks and configuration.
 
-## Example: Opus plans, implements, reviews and judges
+## Example: Opus works, Fable judges
 
 `~/.config/bottega-kit/config.json`, which `bottega init` writes when `claude`
 is on PATH:
@@ -79,13 +79,15 @@ is on PATH:
 {
   "schema_version": 1,
   "profiles": {
+    "fable":        {"harness": "claude", "model": "claude-fable-5-2", "effort": "high"},
+    "fable-max":    {"harness": "claude", "model": "claude-fable-5-2", "effort": "max"},
     "opus-planner":  {"harness": "claude", "model": "claude-opus-5-5", "effort": "high"},
     "opus-judge":    {"harness": "claude", "model": "claude-opus-5-5", "effort": "max"},
     "opus-builder":  {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"},
     "opus-reviewer": {"harness": "claude", "model": "claude-opus-5-5",  "effort": "high"}
   },
   "roles": {"planner": "opus-planner", "implementer": "opus-builder",
-            "reviewer": "opus-reviewer", "judge": "opus-judge"},
+            "reviewer": "opus-reviewer", "judge": "fable"},
   "rounds": 3
 }
 ```
@@ -134,6 +136,15 @@ in the configuration example above:
 `pr` prints the pull request's URL, or `pr exists: <url>`.
 [docs/process.md](docs/process.md#a-task-end-to-end) follows one task
 through every command, with the `task.md` it ends with.
+
+## Google profiles
+
+New agy setups use `gemini` (Hydrogen/high) for ordinary planning,
+implementation and review. `hydrogen-deep` selects xhigh and `hydrogen-scout`
+selects medium. `carbon-planner` and `carbon-judge` select Carbon/high only when
+the exact CLI ID is available to the account (Ultra/Enterprise). A missing
+model is refused before dispatch. Flash and Argon remain optional profiles.
+Existing personal configurations are preserved. See [the model reference](docs/model-benchmarks.md).
 
 ## After `run`
 
@@ -192,7 +203,7 @@ Code pointed at Z.AI's Anthropic-compatible endpoint:
 {
   "schema_version": 1,
   "profiles": {
-    "fable":        {"harness": "claude", "model": "claude-fable-5-1", "effort": "max"},
+    "fable":        {"harness": "claude", "model": "claude-fable-5-2", "effort": "high"},
     "sol-builder":  {"harness": "codex",  "model": "gpt-6.1-sol",     "effort": "high"},
     "glm-reviewer": {"harness": "claude", "model": "glm-5.3-flash",   "effort": "max",
                      "env": {"ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
@@ -317,3 +328,9 @@ role, the profiles across vendors and the receipts are this project's. See
 
 MIT. The process and parts of the prompts and the template come from
 [vdaubry/bottega](https://github.com/vdaubry/bottega), also MIT; see `NOTICE`.
+
+<!-- BEGIN controller-models: benchmark-reference -->
+## Model benchmarks and availability
+
+[Current v5.0.1 reference](docs/model-benchmarks.md): Fable 5.2 and Carbon scores, provider contracts and integration choices. Carbon is optional via agy; agy selections use exact inventory checks; Carbon needs Ultra/Enterprise.
+<!-- END controller-models: benchmark-reference -->

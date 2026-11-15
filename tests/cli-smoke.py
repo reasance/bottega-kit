@@ -57,7 +57,7 @@ class Basics(unittest.TestCase):
         self.assertEqual(by_check["gh"]["status"], "warn")  # not on the test PATH
         self.assertEqual(by_check["git"]["status"], "ok")
         self.assertIn("2.1.302 (Claude Code)", by_check["role planner"]["detail"])
-        self.assertIn("claude-opus-5-5", by_check["role judge"]["detail"])
+        self.assertIn("claude-fable-5-2", by_check["role judge"]["detail"])
         text = self.box.bottega("doctor").stdout
         self.assertIn("[WARN] gh", text)
         self.assertIn("0 failure(s)", text)

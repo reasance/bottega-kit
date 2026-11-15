@@ -1140,3 +1140,26 @@ choices do not certify review quality or cross-vendor independence.
 The authorized release check consumed three Opus/high dispatches on an isolated
 greeter task, with no judge, retry or fallback. The lead verified its tests and
 CLI behavior independently and completed the PR workflow.
+
+## 2026-11-10 — Fable 5.2 and the Carbon CLI boundary
+
+The owner approved Fable 5.2/high for demanding premium/judgement work, with
+max as an explicit quality option, after the AA v5.0.1 review. New Claude
+starters use Fable/high for the optional judge; planning, implementation and
+review keep Opus/high. Existing personal configurations are not rewritten.
+These are benchmark-informed defaults, not a qualification of judge quality.
+No new live model calls have been authorized or executed for this change.
+
+Carbon is public on Google APIs but the owner requires Antigravity/agy and
+explicitly chose to wait for its rollout. Neither local agy 1.5.4 nor Gemini
+CLI 0.67.0 lists it. The kit adds no API harness and invents no CLI model ID.
+
+## 2026-11-13 — Hydrogen defaults and optional Carbon CLI profiles
+
+The owner approved Hydrogen as the operational Google model: high for the
+agy starter, optional xhigh for deeper work and medium for scouting. Carbon
+adds explicit planner/judge profiles at high, gated by the exact account
+inventory. Google documents the CLI IDs; current local agy 1.5.6 does not
+list Carbon. An unavailable selection is refused before any model dispatch.
+No API harness, automatic model switch or personal-config rewrite is added.
+No live model calls are part of the integration verification.

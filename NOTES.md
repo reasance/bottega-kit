@@ -1185,3 +1185,18 @@ were verified, rather than treating the green workflow as publication.
 Earlier notes attributed E403 to immutable subject claims; that was not
 established for this package, and publication now works with those claims
 still enabled.
+
+## 2026-11-16 — Optional Qwen4 model configuration
+
+Added controller-derived Qwen4 Max benchmark/contract documentation and an
+explicit Claude-harness Token Plan profile for implementation. No native Qwen
+harness, role binding, dependency or personal configuration change. The final
+model's OpenAI API ping is evidence of account access only; Anthropic/Claude
+compatibility and coding quality remain unqualified. AA's default score is
+not attributed to a specific effort. Release/version changes remain separate.
+
+The authorized November 16 Claude/Anthropic follow-up now passed on final
+qwen4-max at requested high effort: 13.5 seconds, exact verification code and
+five paragraphs, model reported qwen4-max. This supersedes the initial
+unqualified-transport status; it does not establish coding quality. The
+reported cost basis was unknown, so the CLI USD is not a credit invoice.

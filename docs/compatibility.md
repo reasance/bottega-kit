@@ -10,6 +10,48 @@ before tagging. Numbers are never carried forward from an earlier release.
 
 ## Verified snapshot
 
+**0.5.1, verified on 2026-11-16** on macOS with Claude Code `2.1.325`,
+Codex CLI `0.169.0`, Qwen Code `0.27.1`, agy `1.5.9`, Python `3.15.2`
+and gh `2.104.0`. The functional workflow ran immediately before the
+metadata-only 0.5.0 → 0.5.1 bump; no harness code changed in this patch.
+
+The complete `new`, `plan`, `approve`, `run`, `pr` path ran on a fresh private
+throwaway repository, isolated config/data/state/cache, and an explicit
+`release-opus` profile (`claude-opus-5-5`, high) for planner, implementer and
+reviewer. Exactly three authorized native invocations ran, with no retry,
+fallback or judge. All three reported `claude-opus-5-5`; the reviewer returned
+`ready` in round 1 of 1.
+
+| Role | Duration | CLI-reported USD | Result |
+|---|---:|---:|---|
+| planner | 42.458 s | 0.1637022 | planned |
+| implementer | 34.289 s | 0.2434110 | done |
+| reviewer | 28.845 s | 0.2629048 | ready |
+
+The lead independently ran all **9 fixture tests** and checked default output,
+three repeated named greetings, and exit 2 for zero, negative, non-integer and
+text counts. Only `greet.py`, `test_greet.py` and `README.md` changed. The PR
+step completed without another model call. CLI-reported USD is not a
+subscription invoice.
+
+**Qwen4 on the existing Claude harness:** a separate authorized requested-high
+check through `https://token-plan.maas.qwencloudapi.com/apps/anthropic`
+returned the hidden code and all five paragraphs, provider-reported
+`qwen4-max`, in 13.5 seconds. Claude reported 257 output tokens and zero
+thinking tokens for this short extraction; its displayed USD 0.0353435 has
+unknown cost basis. This verifies transport and context use, not implementation
+quality or a measured AA effort. Role defaults remain unchanged.
+
+The complete 742-row AA v5.0.1 refresh includes Qwen4's unnamed 42.9 score;
+it is not assigned to high/xhigh. Official Singapore API rates are reference
+prices, not Token Plan credit billing. Existing personal configuration and
+credentials remain user-owned.
+
+Offline release gate: **13 suites passed in 50 seconds**, 7 npm-wrapper tests,
+Ruff 0.13.0, ShellCheck and version consistency passed.
+
+### Previous snapshot — 0.5.0
+
 **0.5.0, verified live on 2026-11-15** on macOS with Claude Code
 `2.1.323`, Codex CLI `0.168.0`, agy `1.5.9`, Python `3.15.2` and gh
 `2.104.0`, from this release candidate. Configuration and task data were

@@ -21,7 +21,7 @@ Generated from controller-models; snapshot 2026-11-16. Each score belongs to its
 | Gemini 3.8 Flash | high | 30.8 | $7.77 | registered transports |
 | Gemini 3.8 Flash | medium | 30.1 | $6.26 | registered transports |
 | Gemini 3.8 Flash | low | 22.5 | unknown | registered transports |
-| Qwen4 Max | default | 42.9 | $3.27 | Token Plan API and Claude/Anthropic checked; Qwen CLI pending |
+| Qwen4 Max | default | 42.9 | $3.27 | Claude/Anthropic context check verified; Qwen Code is not a harness |
 
 ## Integration decision
 

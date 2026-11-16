@@ -33,12 +33,13 @@ harness, which is the CLI that runs the role (`claude`, `codex`, `kimi`,
 `grok`, `muse` or `agy`), a model and an effort. One profile may serve
 several roles.
 
-## Current release: 0.5.0
+## Current release: 0.5.1
 
-New Claude setups use Opus/high for planning, implementation and review, and
-Fable 5.2/high for the optional judge. New agy setups use Hydrogen/high, with
-optional medium/xhigh profiles and account-gated Carbon/high planning and
-judgement. Existing personal configurations are preserved.
+Qwen4 Max is an optional implementation profile on the existing Claude harness
+with an explicit QwenCloud Token Plan endpoint. Its Claude/Anthropic access and
+structured context check are verified; role defaults and personal profiles
+stay unchanged. The refreshed AA v5.0.1 reference keeps unnamed effort results
+separate from high/xhigh.
 
 See [the changelog](CHANGELOG.md) and [compatibility checks](docs/compatibility.md).
 
@@ -331,8 +332,10 @@ role, the profiles across vendors and the receipts are this project's. See
 MIT. The process and parts of the prompts and the template come from
 [vdaubry/bottega](https://github.com/vdaubry/bottega), also MIT; see `NOTICE`.
 
+Qwen4 Max is available as an [optional implementation profile](docs/configuration.md#optional-qwen4-implementation-profile) through the existing Claude harness and an explicit QwenCloud Token Plan endpoint. Its API and Claude/Anthropic context checks are verified; coding quality is not qualified. Planner, reviewer and judge defaults stay as configured.
+
 <!-- BEGIN controller-models: benchmark-reference -->
 ## Model benchmarks and availability
 
-[Current v5.0.1 reference](docs/model-benchmarks.md): Fable 5.2 and Carbon scores, provider contracts and integration choices. Carbon is optional via agy; agy selections use exact inventory checks; Carbon needs Ultra/Enterprise.
+[Current v5.0.1 reference](docs/model-benchmarks.md): Qwen4 Max, Fable 5.2 and Carbon scores, provider contracts and integration choices. Carbon is optional via agy; agy selections use exact inventory checks; Carbon needs Ultra/Enterprise.
 <!-- END controller-models: benchmark-reference -->

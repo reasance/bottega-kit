@@ -4,6 +4,13 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-11-16
+
+### Changed
+
+- Document optional Qwen4 Max implementation through the existing Claude harness and a dedicated QwenCloud Token Plan endpoint. Refresh the generated AA v5.0.1 reference, provider limits and precise API-access evidence; no role defaults change and the optional Claude/Anthropic path is verified against final qwen4-max.
+
+
 ## [0.5.0] — 2026-11-15
 
 - Use Hydrogen/high for new agy setups. Add explicit Hydrogen/xhigh and medium profiles plus optional Carbon/high planner and judge profiles. Carbon checks exact account inventory before dispatch; old personal profiles are preserved.

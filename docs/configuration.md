@@ -130,6 +130,58 @@ Kimi receipt listed that model alone, and so did the K3.1 Pro receipt of
 `kimi-k3.1-pro`, and a planner dispatch on it found a code hidden in a 22K-token
 document. K3 is retired.
 
+## Optional Qwen4 implementation profile
+
+QwenCloud documents final `qwen4-max` on its Anthropic-compatible Token Plan
+endpoint. Use it through the existing Claude harness; bottega does not add a
+native `qwen` harness or change planner/reviewer/judge defaults. Add this entry
+to your own `profiles` object, then bind `implementer` to `qwen4-builder` only
+when you want that model:
+
+```json
+{
+  "qwen4-builder": {
+    "harness": "claude",
+    "model": "qwen4-max",
+    "effort": "high",
+    "env": {
+      "ANTHROPIC_BASE_URL": "https://token-plan.maas.qwencloudapi.com/apps/anthropic",
+      "ANTHROPIC_AUTH_TOKEN": "${QWEN_TOKEN_PLAN_API_KEY}",
+      "ANTHROPIC_DEFAULT_OPUS_MODEL": "qwen4-max",
+      "ANTHROPIC_DEFAULT_SONNET_MODEL": "qwen4-max",
+      "ANTHROPIC_DEFAULT_HAIKU_MODEL": "qwen4-max",
+      "CLAUDE_CODE_MAX_CONTEXT_TOKENS": "983616"
+    }
+  }
+}
+```
+
+Set `QWEN_TOKEN_PLAN_API_KEY` privately in bottega's owner-only `secrets.env`
+or the environment. The proxied harness strips inherited Anthropic credentials
+and uses a temporary Claude configuration. Keep all model mappings on
+`qwen4-max`; do not use the provider's `auto` examples, which could select
+another model. Existing role bindings and personal configurations stay yours.
+
+The high effort is explicit. The provider supports low/high/xhigh; its
+262,144-token API ceiling combines thinking and the answer, while thinking
+input is limited to 983,616 tokens. These API limits do not establish Claude
+Code's actual output budget. Claude Code's USD cost table is not a Token Plan
+credit invoice.
+
+The November 16 OpenAI-compatible API ping returned HTTP 200, PONG and
+provider-reported qwen4-max. A separate check through this actual
+Claude/Anthropic harness with requested high effort returned the exact hidden
+code and all five paragraphs in 13.5 seconds, with provider-reported
+qwen4-max. Claude reported 257 output tokens and no thinking tokens for this
+short extraction. Its displayed USD 0.0353435 has unknown cost basis and is
+not a Token Plan credit invoice. These checks establish transport/context
+use, not implementation quality. AA v5.0.1 reports 42.9 for a default variant
+with no effort disclosed; there is no separate coding score or reviewer
+qualification. This option does not replace the premium judge or reviewer.
+
+[Final model contract](https://docs.qwencloud.com/developer-guides/getting-started/latest-model)
+· [Model benchmark and availability](model-benchmarks.md)
+
 Harnesses authenticate on their own: Claude Code through its login or
 keychain, Codex through `~/.codex`, Kimi Code through `kimi login` and
 `~/.kimi-code` (or `KIMI_CODE_HOME`), Grok Build through `grok login`, Muse

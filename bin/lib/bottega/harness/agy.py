@@ -81,7 +81,8 @@ class AgyHarness(Harness):
             env.pop(name, None)
         moved = {"HOME": home, "BOTTEGA_DATA_HOME": str(xdg.data_dir())}
         env.update(moved)
-        if profile["model"].startswith("gemini-4-carbon"):
+        model = profile["model"]
+        if model.startswith(("gemini-4-carbon", "gemini-4-neon")):
             try:
                 inventory = subprocess.run(
                     ["agy", "models"],
@@ -97,15 +98,19 @@ class AgyHarness(Harness):
                     line.split("\t", 1)[0].strip()
                     for line in inventory.stdout.splitlines()
                 }
-                if inventory.returncode or profile["model"] not in listed:
+                if inventory.returncode or model not in listed:
+                    plan = (
+                        "an eligible Pro, Ultra, or Enterprise account"
+                        if model.startswith("gemini-4-neon")
+                        else "an enabled Ultra/Enterprise account"
+                    )
                     raise BottegaError(
-                        "agy does not expose %s; Carbon requires an enabled Ultra/Enterprise account"
-                        % profile["model"]
+                        "agy does not expose %s; requires %s" % (model, plan)
                     )
             except (OSError, subprocess.TimeoutExpired):
                 shutil.rmtree(home, ignore_errors=True)
                 raise BottegaError(
-                    "could not verify the Carbon model in agy models"
+                    "could not verify %s in agy models" % model
                 ) from None
             except BottegaError:
                 shutil.rmtree(home, ignore_errors=True)

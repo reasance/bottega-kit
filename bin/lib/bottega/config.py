@@ -124,6 +124,7 @@ def profile_problems(name, profile):
     if harness == "agy" and isinstance(model, str):
         for prefix, accepted in (
             ("gemini-4-hydrogen", {"low", "medium", "high", "xhigh"}),
+            ("gemini-4-neon", {"low", "medium", "high", "xhigh"}),
             ("gemini-4-carbon", {"low", "medium", "high"}),
         ):
             if (
@@ -132,6 +133,8 @@ def profile_problems(name, profile):
                 and effort not in accepted
             ):
                 problems.append("%s: unsupported effort for %s" % (where, prefix))
+        if model.startswith("gemini-4-neon-") and model != "gemini-4-neon-%s" % effort:
+            problems.append("%s: Neon CLI model ID must match its effort" % where)
     return problems
 
 
@@ -404,6 +407,13 @@ AGY_PROFILES = {
         "model": "gemini-3.8-flash-high",
         "effort": "high",
     },
+    "neon-builder": {"harness": "agy", "model": "gemini-4-neon-high", "effort": "high"},
+    "neon-planner": {
+        "harness": "agy",
+        "model": "gemini-4-neon-xhigh",
+        "effort": "xhigh",
+    },
+    "neon-judge": {"harness": "agy", "model": "gemini-4-neon-xhigh", "effort": "xhigh"},
 }
 # END controller-models: agy-profiles
 # BEGIN controller-models: muse-profiles

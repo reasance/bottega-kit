@@ -347,3 +347,7 @@ Carbon/high. For example, bind `planner` to `carbon-planner` and `implementer`
 to `gemini` deliberately in your configuration. Carbon requires its exact
 `gemini-4-carbon-high` ID in `agy models`; unsupported accounts are refused
 before a model run, with no provider or model substitution.
+
+Neon is available through `neon-builder` at high and through `neon-planner`
+or `neon-judge` at xhigh. Bind those profiles to the roles you intend to use.
+The selected Neon effort must match the exact ID listed by `agy models`.

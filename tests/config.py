@@ -36,6 +36,7 @@ class Validation(unittest.TestCase):
     def test_new_gemini_models_reject_unsupported_efforts(self):
         for model, effort in [
             ("gemini-4-hydrogen-high", "max"),
+            ("gemini-4-neon-high", "max"),
             ("gemini-4-carbon-high", "xhigh"),
         ]:
             with self.subTest(model=model):

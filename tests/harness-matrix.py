@@ -462,40 +462,44 @@ class Matrix(Fixture, unittest.TestCase):
             self.assertFalse(Path(init["fake_home"]).exists())
 
     def test_carbon_requires_exact_inventory_before_a_model_dispatch(self):
+        self.assert_exact_agy_inventory("gemini-4-carbon-high", "high")
+
+    def test_neon_requires_exact_inventory_before_a_model_dispatch(self):
+        self.assert_exact_agy_inventory("gemini-4-neon-xhigh", "xhigh")
+
+    def assert_exact_agy_inventory(self, model, effort):
         from bottega.util import BottegaError
 
-        self.cfg["profiles"]["carbon"] = {
+        self.cfg["profiles"]["frontier"] = {
             "harness": "agy",
-            "model": "gemini-4-carbon-high",
-            "effort": "high",
+            "model": model,
+            "effort": effort,
         }
-        with self.assertRaisesRegex(
-            BottegaError, "does not expose gemini-4-carbon-high"
-        ):
+        with self.assertRaisesRegex(BottegaError, "does not expose %s" % model):
             self.dispatch(
                 "planner",
-                "carbon",
+                "frontier",
                 extra_env={
                     "BOTTEGA_FAKE_SCENARIO": json.dumps(
-                        {"agy_models": ["gemini-4-carbon-high-extra"]}
+                        {"agy_models": [model + "-extra"]}
                     )
                 },
             )
         self.assertFalse(list((self.dir / "runs").glob("*/run.json")))
         outcome, _ = self.dispatch(
             "planner",
-            "carbon",
+            "frontier",
             extra_env={
                 "BOTTEGA_FAKE_SCENARIO": json.dumps(
                     {
-                        "agy_models": ["gemini-4-carbon-high"],
+                        "agy_models": [model],
                         "default": {"final": "done"},
                     }
                 )
             },
         )
         self.assertTrue(outcome.ok)
-        self.assertEqual(outcome.record["requested_model"], "gemini-4-carbon-high")
+        self.assertEqual(outcome.record["requested_model"], model)
 
     def test_muse_every_cell_every_role(self):
         for role, argv in self.check("muse", "muse", MUSE_BASE, MUSE_ROLES):

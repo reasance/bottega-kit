@@ -33,13 +33,11 @@ harness, which is the CLI that runs the role (`claude`, `codex`, `kimi`,
 `grok`, `muse` or `agy`), a model and an effort. One profile may serve
 several roles.
 
-## Current release: 0.5.1
+## Current release: 0.6.0
 
-Qwen4 Max is an optional implementation profile on the existing Claude harness
-with an explicit QwenCloud Token Plan endpoint. Its Claude/Anthropic access and
-structured context check are verified; role defaults and personal profiles
-stay unchanged. The refreshed AA v5.0.1 reference keeps unnamed effort results
-separate from high/xhigh.
+Gemini 4 Neon adds optional Antigravity profiles for implementation, planning
+and judgment. Bottega checks the exact account-enabled model ID before launch.
+The benchmark reference uses Artificial Analysis v5.0.2.
 
 See [the changelog](CHANGELOG.md) and [compatibility checks](docs/compatibility.md).
 
@@ -337,5 +335,5 @@ Qwen4 Max is available as an [optional implementation profile](docs/configuratio
 <!-- BEGIN controller-models: benchmark-reference -->
 ## Model benchmarks and availability
 
-[Current v5.0.1 reference](docs/model-benchmarks.md): Qwen4 Max, Fable 5.2 and Carbon scores, provider contracts and integration choices. Carbon is optional via agy; agy selections use exact inventory checks; Carbon needs Ultra/Enterprise.
+[Current v5.0.2 reference](docs/model-benchmarks.md): Qwen4 Max, Fable 5.2 and Carbon scores, provider contracts and integration choices. Carbon is optional via agy; agy selections use exact inventory checks; Carbon needs Ultra/Enterprise.
 <!-- END controller-models: benchmark-reference -->

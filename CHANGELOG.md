@@ -4,6 +4,17 @@ All notable changes to bottega-kit. Dates are when the version was cut.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-11-25
+
+### Added
+
+- Add `neon-builder` at high and `neon-planner` and `neon-judge` at xhigh for Antigravity.
+
+### Changed
+
+- Check the exact account-enabled Neon effort ID before launching the CLI.
+- Refresh the model reference to Artificial Analysis Intelligence Index v5.0.2.
+
 ## [0.5.1] — 2026-11-16
 
 ### Changed
